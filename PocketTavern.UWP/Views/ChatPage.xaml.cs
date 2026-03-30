@@ -57,6 +57,7 @@ namespace PocketTavern.UWP.Views
         {
             base.OnNavigatedFrom(e);
             _vm.PropertyChanged -= OnVmPropertyChanged;
+            _vm.Cleanup();
         }
 
         private void OnVmPropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)

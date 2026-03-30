@@ -12,6 +12,11 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
+        <!-- Hidden JS extension sandbox — zero-size, opacity 0 so JS still runs -->
+        <WebView x:Name="ExtSandbox" Grid.Row="0"
+                 Width="1" Height="1"
+                 Opacity="0" IsHitTestVisible="False" />
+
         <!--
             Optional theme background image / GIF (sand_and_sea etc.)
             Sits behind everything, spans all rows.

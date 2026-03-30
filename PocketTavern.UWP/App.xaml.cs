@@ -18,6 +18,7 @@ namespace PocketTavern.UWP
         public static PresetStorage Presets { get; private set; }
         public static NavigationService Navigation { get; private set; }
         public static ThemeManager Theme { get; private set; }
+        public static JsExtensionHost Extensions { get; private set; }
 
         private static Exception _startupException;
 
@@ -36,6 +37,7 @@ namespace PocketTavern.UWP
                 Presets = new PresetStorage();
                 Navigation = new NavigationService();
                 Theme = new ThemeManager();
+                Extensions = new JsExtensionHost();
             }
             catch (Exception ex)
             {

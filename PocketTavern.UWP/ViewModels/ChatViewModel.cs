@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
@@ -62,6 +63,9 @@ namespace PocketTavern.UWP.ViewModels
             _characterAvatar = characterAvatar;
             Character = await App.Characters.GetCharacterAsync(characterAvatar);
             if (Character == null) return;
+
+            // Subscribe to extension-triggered sends
+            App.Extensions.MessageSendRequested += OnExtensionMessageSend;
 
             // Load API indicator
             RefreshApiIndicator();
@@ -160,10 +164,31 @@ namespace PocketTavern.UWP.ViewModels
             var userMsg = new ChatMessage { Content = userText, IsUser = true };
             Messages.Add(userMsg);
 
+            // Notify extensions: message sent
+            var sentData = Newtonsoft.Json.JsonConvert.SerializeObject(new
+            {
+                text  = userText,
+                index = Messages.Count - 1,
+                isUser = true
+            });
+            await App.Extensions.DispatchEventAsync("MESSAGE_SENT", sentData);
+
             await GenerateResponseAsync();
         }
 
         public void StopGeneration() => _generationCts?.Cancel();
+
+        public void Cleanup()
+        {
+            App.Extensions.MessageSendRequested -= OnExtensionMessageSend;
+        }
+
+        private async void OnExtensionMessageSend(object sender, string text)
+        {
+            if (string.IsNullOrWhiteSpace(text) || IsGenerating) return;
+            InputText = text;
+            await SendMessageAsync();
+        }
 
         public async Task ClearChatAsync()
         {
@@ -255,6 +280,18 @@ namespace PocketTavern.UWP.ViewModels
             IsGenerating = true;
             _generationCts = new CancellationTokenSource();
 
+            // Push context to JS sandbox before generation
+            var contextJson = Newtonsoft.Json.JsonConvert.SerializeObject(new
+            {
+                characterName = Character?.Name ?? "",
+                userName      = App.Settings.GetUserPersonaName(),
+                messageCount  = Messages.Count
+            });
+            await App.Extensions.UpdateContextAsync(contextJson);
+            await App.Extensions.PushMessageHeadersAsync(
+                App.Extensions.GetMessageHeaders()
+                    .ToDictionary(kv => kv.Key, kv => kv.Value));
+
             // Add placeholder AI message
             var aiMsg = new ChatMessage { Content = "", IsUser = false, SenderName = Character?.Name ?? "" };
             Messages.Add(aiMsg);
@@ -281,15 +318,27 @@ namespace PocketTavern.UWP.ViewModels
                 else if (evt is StreamEvent.Complete c)
                 {
                     CurrentStreamingText = "";
+                    var filteredText = App.Extensions.ApplyOutputFilters(c.FullText);
                     var final = new ChatMessage
                     {
                         Id = aiMsg.Id,
-                        Content = c.FullText,
+                        Content = filteredText,
                         IsUser = false,
                         Timestamp = aiMsg.Timestamp
                     };
                     if (aiIdx < Messages.Count)
                         Messages[aiIdx] = final;
+                    aiMsg = final;
+
+                    // Notify extensions: message received
+                    var receivedData = Newtonsoft.Json.JsonConvert.SerializeObject(new
+                    {
+                        text   = filteredText,
+                        index  = aiIdx,
+                        isUser = false
+                    });
+                    // Fire-and-forget — runs on UI thread via Dispatcher
+                    var _ = App.Extensions.DispatchEventAsync("MESSAGE_RECEIVED", receivedData);
                 }
                 else if (evt is StreamEvent.Error e)
                 {
@@ -362,6 +411,7 @@ namespace PocketTavern.UWP.ViewModels
             var order = preset?.PromptOrder ?? OaiPromptOrderItem.DefaultOrder();
             var personaName = App.Settings.GetUserPersonaName();
             var personaDesc = App.Settings.GetUserPersonaDesc();
+            var injections = App.Extensions.GetPromptInjections().ToList();
 
             foreach (var item in order)
             {
@@ -369,12 +419,22 @@ namespace PocketTavern.UWP.ViewModels
                 switch (item.Id)
                 {
                     case "main_prompt":
+                        // Extension injections at BEFORE_CHAR_DEFS (pos=0)
+                        foreach (var inj in injections.Where(i => i.Position == 0))
+                            if (!string.IsNullOrEmpty(inj.Text))
+                                messages.Add(Msg("system", inj.Text));
+
                         // Character system prompt takes priority; fall back to preset content
                         var mainContent = !string.IsNullOrEmpty(Character?.SystemPrompt)
                             ? ApplyMacros(Character.SystemPrompt)
                             : ApplyMacros(item.Content ?? "");
                         if (!string.IsNullOrEmpty(mainContent))
                             messages.Add(Msg("system", mainContent));
+
+                        // Extension injections at AFTER_CHAR_DEFS (pos=1)
+                        foreach (var inj in injections.Where(i => i.Position == 1))
+                            if (!string.IsNullOrEmpty(inj.Text))
+                                messages.Add(Msg("system", inj.Text));
                         break;
 
                     case "persona_description":

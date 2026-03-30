@@ -35,6 +35,10 @@ namespace PocketTavern.UWP.Views
             await _vm.LoadAsync();
             ConnectionLabel.Text = _vm.ApiDisplayName;
             ApplyThemeAssets();
+
+            // Initialize JS extension sandbox (once per app lifetime)
+            App.Extensions.Initialize(ExtSandbox);
+            await App.Extensions.LoadAsync();
         }
 
         protected override void OnNavigatedFrom(NavigationEventArgs e)

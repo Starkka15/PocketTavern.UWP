@@ -127,6 +127,7 @@ namespace PocketTavern.UWP.Views
                     await ShowError(_vm.InstallError);
                 _vm.ClearInstallError();
                 RebuildJsList();
+                await App.Extensions.ReloadAsync();
             }
             else if (result == ContentDialogResult.Secondary)
             {
@@ -152,6 +153,7 @@ namespace PocketTavern.UWP.Views
                 await ShowError(_vm.InstallError);
             _vm.ClearInstallError();
             RebuildJsList();
+            await App.Extensions.ReloadAsync();
         }
 
         private async System.Threading.Tasks.Task ShowError(string message)
@@ -226,10 +228,11 @@ namespace PocketTavern.UWP.Views
             topRow.Children.Add(infoStack);
 
             var toggle = new ToggleSwitch { IsOn = ext.Enabled, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, -8, 0) };
-            toggle.Toggled += (s, e) =>
+            toggle.Toggled += async (s, e) =>
             {
                 _vm.SetJsExtensionEnabled(ext.Id, toggle.IsOn);
                 RebuildJsList();
+                await App.Extensions.ReloadAsync();
             };
             Grid.SetColumn(toggle, 2);
             topRow.Children.Add(toggle);
@@ -319,6 +322,7 @@ namespace PocketTavern.UWP.Views
                     {
                         _vm.Uninstall(ext.Id);
                         RebuildJsList();
+                        await App.Extensions.ReloadAsync();
                     }
                 };
                 Grid.SetColumn(uninstallBtn, 1);
