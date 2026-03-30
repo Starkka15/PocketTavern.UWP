@@ -173,6 +173,17 @@ namespace PocketTavern.UWP.Data
             Set("sillytavern_forge", c.SdWebuiUrl?.TrimEnd('/') ?? "");
         }
 
+        // ── Native Extensions ─────────────────────────────────────────────────────
+
+        public bool GetExtQuickReplyEnabled() => GetBool("ext_quick_reply_enabled", true);
+        public void SetExtQuickReplyEnabled(bool v) => SetBool("ext_quick_reply_enabled", v);
+
+        public bool GetExtRegexEnabled() => GetBool("ext_regex_enabled", true);
+        public void SetExtRegexEnabled(bool v) => SetBool("ext_regex_enabled", v);
+
+        public bool GetExtTokenCounterEnabled() => GetBool("ext_token_counter_enabled", false);
+        public void SetExtTokenCounterEnabled(bool v) => SetBool("ext_token_counter_enabled", v);
+
         // ── Theme ─────────────────────────────────────────────────────────────────
 
         public string GetThemeKey() => Get("app_theme_key", "default");

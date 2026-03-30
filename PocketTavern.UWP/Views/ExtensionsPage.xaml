@@ -15,7 +15,6 @@
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="48" />
                 <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
             <Button Grid.Column="0" Background="Transparent" BorderThickness="0"
                     Foreground="{StaticResource TextPrimaryBrush}" Click="OnBackClick"
@@ -24,56 +23,149 @@
             </Button>
             <TextBlock Grid.Column="1" Text="Extensions" Style="{StaticResource TitleTextStyle}"
                        VerticalAlignment="Center" Margin="4,0" />
-            <Button Grid.Column="2" Margin="0,0,8,0" Background="Transparent" BorderThickness="0"
-                    Foreground="{StaticResource AccentPrimaryBrush}" Click="OnRefreshClick">
-                <TextBlock Text="&#xE72C;" FontFamily="Segoe MDL2 Assets" FontSize="18" />
-            </Button>
         </Grid>
 
-        <!-- Extensions list -->
-        <ListView Grid.Row="1" x:Name="ExtList"
-                  SelectionMode="None" Background="Transparent" Padding="0,4,0,4">
-            <ListView.ItemContainerStyle>
-                <Style TargetType="ListViewItem">
-                    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-                    <Setter Property="Padding" Value="0" />
-                </Style>
-            </ListView.ItemContainerStyle>
-            <ListView.ItemTemplate>
-                <DataTemplate>
-                    <Border Margin="16,4" Background="{StaticResource BackgroundCardBrush}"
-                            CornerRadius="12" Padding="16,12">
+        <!-- Scrollable content -->
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+            <StackPanel Margin="0,8,0,32">
+
+                <!-- ── Native Extensions ────────────────────────────────────── -->
+                <TextBlock Text="NATIVE EXTENSIONS" FontSize="11" FontWeight="SemiBold"
+                           Foreground="{StaticResource AccentPrimaryBrush}"
+                           Margin="16,8,16,6" />
+
+                <!-- Quick Reply -->
+                <Border Margin="12,0,12,8" Background="{StaticResource BackgroundCardBrush}"
+                        CornerRadius="10" Padding="16,12">
+                    <StackPanel>
                         <Grid>
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="44" />
+                                <ColumnDefinition Width="40" />
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
-
-                            <Border Width="36" Height="36" CornerRadius="18"
-                                    Background="#3356E9A4">
-                                <TextBlock Text="&#xE74C;" FontFamily="Segoe MDL2 Assets" FontSize="16"
-                                           HorizontalAlignment="Center" VerticalAlignment="Center"
-                                           Foreground="#56E9A4" />
-                            </Border>
-
+                            <TextBlock Text="&#xE8BD;" FontFamily="Segoe MDL2 Assets" FontSize="22"
+                                       Foreground="{StaticResource AccentPrimaryBrush}"
+                                       VerticalAlignment="Center" />
                             <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="10,0">
-                                <TextBlock Text="{Binding Name}"
-                                           Foreground="{StaticResource TextPrimaryBrush}"
-                                           FontSize="15" FontWeight="SemiBold" />
-                                <TextBlock Text="{Binding Description}"
-                                           Style="{StaticResource SubtitleTextStyle}"
-                                           MaxLines="2" TextTrimming="CharacterEllipsis"
-                                           Margin="0,2,0,0" />
+                                <TextBlock Text="Quick Reply" FontSize="15" FontWeight="SemiBold"
+                                           Foreground="{StaticResource TextPrimaryBrush}" />
+                                <TextBlock Text="Preset message buttons shown above the chat input."
+                                           Style="{StaticResource SubtitleTextStyle}" Margin="0,2,0,0" />
                             </StackPanel>
-
-                            <ToggleSwitch Grid.Column="2" IsOn="{Binding Enabled, Mode=TwoWay}"
-                                          Foreground="{StaticResource TextPrimaryBrush}"
-                                          VerticalAlignment="Center" Margin="0,0,-8,0" />
+                            <ToggleSwitch Grid.Column="2" x:Name="QuickReplyToggle"
+                                          VerticalAlignment="Center" Margin="0,0,-8,0"
+                                          Toggled="OnQuickReplyToggled" />
                         </Grid>
-                    </Border>
-                </DataTemplate>
-            </ListView.ItemTemplate>
-        </ListView>
+                        <Rectangle Height="1" Fill="{StaticResource BackgroundSurfaceBrush}" Margin="0,10,0,6" />
+                        <Button HorizontalAlignment="Right" Background="Transparent"
+                                BorderThickness="0" Foreground="{StaticResource AccentPrimaryBrush}"
+                                Click="OnQuickReplySettingsClick" Padding="0">
+                            <StackPanel Orientation="Horizontal" Spacing="4">
+                                <TextBlock Text="Settings" FontSize="13" />
+                                <TextBlock Text="&#xE76C;" FontFamily="Segoe MDL2 Assets" FontSize="13"
+                                           VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+                </Border>
+
+                <!-- Regex -->
+                <Border Margin="12,0,12,8" Background="{StaticResource BackgroundCardBrush}"
+                        CornerRadius="10" Padding="16,12">
+                    <StackPanel>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="40" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="&#xE943;" FontFamily="Segoe MDL2 Assets" FontSize="22"
+                                       Foreground="{StaticResource AccentPrimaryBrush}"
+                                       VerticalAlignment="Center" />
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="10,0">
+                                <TextBlock Text="Regex" FontSize="15" FontWeight="SemiBold"
+                                           Foreground="{StaticResource TextPrimaryBrush}" />
+                                <TextBlock Text="Find-and-replace rules applied to AI output or your messages."
+                                           Style="{StaticResource SubtitleTextStyle}" Margin="0,2,0,0" />
+                            </StackPanel>
+                            <ToggleSwitch Grid.Column="2" x:Name="RegexToggle"
+                                          VerticalAlignment="Center" Margin="0,0,-8,0"
+                                          Toggled="OnRegexToggled" />
+                        </Grid>
+                        <Rectangle Height="1" Fill="{StaticResource BackgroundSurfaceBrush}" Margin="0,10,0,6" />
+                        <Button HorizontalAlignment="Right" Background="Transparent"
+                                BorderThickness="0" Foreground="{StaticResource AccentPrimaryBrush}"
+                                Click="OnRegexSettingsClick" Padding="0">
+                            <StackPanel Orientation="Horizontal" Spacing="4">
+                                <TextBlock Text="Settings" FontSize="13" />
+                                <TextBlock Text="&#xE76C;" FontFamily="Segoe MDL2 Assets" FontSize="13"
+                                           VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+                </Border>
+
+                <!-- Token Counter -->
+                <Border Margin="12,0,12,8" Background="{StaticResource BackgroundCardBrush}"
+                        CornerRadius="10" Padding="16,12">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="40" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="&#xE8EF;" FontFamily="Segoe MDL2 Assets" FontSize="22"
+                                   Foreground="{StaticResource AccentPrimaryBrush}"
+                                   VerticalAlignment="Center" />
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="10,0">
+                            <TextBlock Text="Token Counter" FontSize="15" FontWeight="SemiBold"
+                                       Foreground="{StaticResource TextPrimaryBrush}" />
+                            <TextBlock Text="Show estimated token count while you type (~4 chars per token)."
+                                       Style="{StaticResource SubtitleTextStyle}" Margin="0,2,0,0" />
+                        </StackPanel>
+                        <ToggleSwitch Grid.Column="2" x:Name="TokenCounterToggle"
+                                      VerticalAlignment="Center" Margin="0,0,-8,0"
+                                      Toggled="OnTokenCounterToggled" />
+                    </Grid>
+                </Border>
+
+                <!-- ── JavaScript Extensions ────────────────────────────────── -->
+                <Grid Margin="16,12,12,6">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="JAVASCRIPT EXTENSIONS" FontSize="11" FontWeight="SemiBold"
+                               Foreground="{StaticResource AccentPrimaryBrush}"
+                               VerticalAlignment="Center" />
+                    <Button Grid.Column="1" Background="Transparent" BorderThickness="0"
+                            Foreground="{StaticResource AccentPrimaryBrush}"
+                            Click="OnInstallExtensionClick"
+                            ToolTipService.ToolTip="Install extension">
+                        <TextBlock Text="&#xE710;" FontFamily="Segoe MDL2 Assets" FontSize="20" />
+                    </Button>
+                </Grid>
+
+                <!-- JS extension list (built programmatically in code-behind) -->
+                <StackPanel x:Name="JsExtensionsList" />
+
+                <!-- Empty state -->
+                <StackPanel x:Name="JsEmptyState" Visibility="Collapsed"
+                            HorizontalAlignment="Center" Margin="32,16">
+                    <TextBlock Text="&#xE74C;" FontFamily="Segoe MDL2 Assets" FontSize="40"
+                               HorizontalAlignment="Center"
+                               Foreground="{StaticResource TextSecondaryBrush}" />
+                    <TextBlock Text="No JavaScript extensions installed"
+                               FontSize="14" Foreground="{StaticResource TextSecondaryBrush}"
+                               HorizontalAlignment="Center" Margin="0,8,0,4"
+                               TextWrapping="Wrap" TextAlignment="Center" />
+                    <TextBlock Text="Tap + to install from a URL or .js / .zip file"
+                               FontSize="12" Foreground="{StaticResource TextSecondaryBrush}"
+                               HorizontalAlignment="Center" TextWrapping="Wrap" TextAlignment="Center" />
+                </StackPanel>
+
+            </StackPanel>
+        </ScrollViewer>
     </Grid>
 </Page>
