@@ -47,6 +47,9 @@ namespace PocketTavern.UWP.Services
         /// Fired when an extension calls PT.sendMessage(text).
         public event EventHandler<string> MessageSendRequested;
 
+        /// Fired when PT.registerButtons or PT.clearButtons changes the button sets.
+        public event EventHandler ButtonSetsChanged;
+
         /// Fired when an extension calls PT.showEditDialog(...)
         public event EventHandler<EditDialogRequest> EditDialogRequested;
 
@@ -214,11 +217,13 @@ namespace PocketTavern.UWP.Services
                         _buttonSets[id] = buttons ?? new List<object>();
                     }
                     catch { }
+                    ButtonSetsChanged?.Invoke(this, EventArgs.Empty);
                     break;
                 }
 
                 case "clearButtons":
                     _buttonSets.Remove(msg.Value<string>("id") ?? "");
+                    ButtonSetsChanged?.Invoke(this, EventArgs.Empty);
                     break;
 
                 case "setMessageHeader":

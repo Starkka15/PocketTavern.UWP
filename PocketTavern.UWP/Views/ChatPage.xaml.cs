@@ -1,9 +1,12 @@
 using System;
 using Windows.ApplicationModel.DataTransfer;
 using Windows.System;
+using Windows.UI;
+using Windows.UI.Text;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Input;
+using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Navigation;
 using PocketTavern.UWP.Models;
 using PocketTavern.UWP.ViewModels;
@@ -50,6 +53,7 @@ namespace PocketTavern.UWP.Views
             MessagesList.ItemsSource = _vm.Messages;
             _vm.PropertyChanged += OnVmPropertyChanged;
             RefreshApiIndicator();
+            RebuildQuickReplyBar();
             ScrollToBottom();
         }
 
@@ -66,12 +70,17 @@ namespace PocketTavern.UWP.Views
             {
                 SendButton.Visibility = _vm.IsGenerating ? Visibility.Collapsed : Visibility.Visible;
                 StopButton.Visibility = _vm.IsGenerating ? Visibility.Visible : Visibility.Collapsed;
+                // Hide quick reply bar while generating, show it again when done
+                QuickReplyBar.Visibility = _vm.IsGenerating || _vm.QuickReplyButtons.Count == 0
+                    ? Visibility.Collapsed : Visibility.Visible;
             }
             if (e.PropertyName == nameof(ChatViewModel.Messages))
                 ScrollToBottom();
             if (e.PropertyName == nameof(ChatViewModel.CurrentApiName) ||
                 e.PropertyName == nameof(ChatViewModel.CurrentModelName))
                 RefreshApiIndicator();
+            if (e.PropertyName == nameof(ChatViewModel.QuickReplyButtons))
+                RebuildQuickReplyBar();
         }
 
         private void RefreshApiIndicator()
@@ -373,6 +382,64 @@ namespace PocketTavern.UWP.Views
 
             flyout.ShowAt(anchor, pos);
         }
+
+        // ── Quick Reply bar ───────────────────────────────────────────────────
+
+        private void RebuildQuickReplyBar()
+        {
+            QuickReplyPanel.Children.Clear();
+
+            var buttons = _vm.QuickReplyButtons;
+            if (buttons.Count == 0 || _vm.IsGenerating)
+            {
+                QuickReplyBar.Visibility = Visibility.Collapsed;
+                return;
+            }
+
+            var surface = (SolidColorBrush)Application.Current.Resources["BackgroundCardBrush"];
+            var textPri = (SolidColorBrush)Application.Current.Resources["TextPrimaryBrush"];
+            var accent  = (SolidColorBrush)Application.Current.Resources["AccentPrimaryBrush"];
+
+            foreach (var btn in buttons)
+            {
+                var button = new Button
+                {
+                    Content         = btn.Label,
+                    Padding         = new Thickness(12, 5, 12, 5),
+                    Background      = surface,
+                    Foreground      = textPri,
+                    BorderBrush     = accent,
+                    BorderThickness = new Thickness(1),
+                    FontSize        = 13,
+                    Margin          = new Thickness(0)
+                };
+
+                var captured = btn;
+                button.Click += async (s, e) =>
+                {
+                    await _vm.SendQuickReplyAsync(captured);
+                    ScrollToBottom();
+                };
+
+                QuickReplyPanel.Children.Add(button);
+            }
+
+            // Show bar; respect user's collapsed preference
+            QuickReplyBar.Visibility = Visibility.Visible;
+            var expanded = App.Settings.GetQuickReplyBarVisible();
+            QuickReplyScroll.Visibility  = expanded ? Visibility.Visible : Visibility.Collapsed;
+            QuickReplyChevron.Text = expanded ? "\uE70E" : "\uE70D"; // chevron up / chevron down
+        }
+
+        private void OnQuickReplyToggleClick(object sender, RoutedEventArgs e)
+        {
+            var nowExpanded = QuickReplyScroll.Visibility == Visibility.Collapsed;
+            App.Settings.SetQuickReplyBarVisible(nowExpanded);
+            QuickReplyScroll.Visibility  = nowExpanded ? Visibility.Visible : Visibility.Collapsed;
+            QuickReplyChevron.Text = nowExpanded ? "\uE70E" : "\uE70D";
+        }
+
+        // ── Scroll ────────────────────────────────────────────────────────────
 
         private void ScrollToBottom()
         {

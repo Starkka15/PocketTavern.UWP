@@ -12,6 +12,7 @@
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
         <!-- Header: back | avatar | name | menu -->
@@ -172,8 +173,46 @@
             </StackPanel>
         </Border>
 
+        <!-- Quick Reply bar (Row 4) -->
+        <Border x:Name="QuickReplyBar" Grid.Row="4"
+                Background="{StaticResource BackgroundSurfaceBrush}"
+                Visibility="Collapsed">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <!-- Scrollable button row — collapses when user hides it -->
+                <ScrollViewer x:Name="QuickReplyScroll"
+                              Grid.Column="0"
+                              HorizontalScrollBarVisibility="Hidden"
+                              VerticalScrollBarVisibility="Disabled"
+                              HorizontalScrollMode="Enabled"
+                              VerticalScrollMode="Disabled"
+                              Visibility="Collapsed">
+                    <StackPanel x:Name="QuickReplyPanel"
+                                Orientation="Horizontal"
+                                Spacing="6"
+                                Padding="8,6" />
+                </ScrollViewer>
+
+                <!-- Toggle chevron — always visible when bar is shown -->
+                <Button x:Name="QuickReplyToggleBtn" Grid.Column="1"
+                        Background="Transparent" BorderThickness="0"
+                        Padding="8,6"
+                        Click="OnQuickReplyToggleClick"
+                        VerticalAlignment="Center">
+                    <TextBlock x:Name="QuickReplyChevron"
+                               Text="&#xE70E;"
+                               FontFamily="Segoe MDL2 Assets" FontSize="12"
+                               Foreground="{StaticResource TextSecondaryBrush}" />
+                </Button>
+            </Grid>
+        </Border>
+
         <!-- Input area -->
-        <Grid Grid.Row="4" Background="{StaticResource BackgroundSurfaceBrush}" Padding="8,8">
+        <Grid Grid.Row="5" Background="{StaticResource BackgroundSurfaceBrush}" Padding="8,8">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />

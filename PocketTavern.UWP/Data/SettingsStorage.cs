@@ -184,6 +184,9 @@ namespace PocketTavern.UWP.Data
         public bool GetExtTokenCounterEnabled() => GetBool("ext_token_counter_enabled", false);
         public void SetExtTokenCounterEnabled(bool v) => SetBool("ext_token_counter_enabled", v);
 
+        public bool GetQuickReplyBarVisible() => GetBool("quick_reply_bar_visible", true);
+        public void SetQuickReplyBarVisible(bool v) => SetBool("quick_reply_bar_visible", v);
+
         // ── Theme ─────────────────────────────────────────────────────────────────
 
         public string GetThemeKey() => Get("app_theme_key", "default");

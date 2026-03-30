@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
+using PocketTavern.UWP.Data;
 using PocketTavern.UWP.Models;
 using PocketTavern.UWP.Services;
 
@@ -13,6 +14,7 @@ namespace PocketTavern.UWP.ViewModels
     public class ChatViewModel : ViewModelBase
     {
         private readonly LlmService _llm = new LlmService();
+        private readonly QuickReplyStorage _qrStorage = new QuickReplyStorage();
 
         private string _characterAvatar;
         private Character _character;
@@ -58,14 +60,25 @@ namespace PocketTavern.UWP.ViewModels
             set => Set(ref _currentStreamingText, value);
         }
 
+        private ObservableCollection<QuickReplyButton> _quickReplyButtons = new ObservableCollection<QuickReplyButton>();
+        public ObservableCollection<QuickReplyButton> QuickReplyButtons
+        {
+            get => _quickReplyButtons;
+            set => Set(ref _quickReplyButtons, value);
+        }
+
         public async Task InitializeAsync(string characterAvatar)
         {
             _characterAvatar = characterAvatar;
             Character = await App.Characters.GetCharacterAsync(characterAvatar);
             if (Character == null) return;
 
-            // Subscribe to extension-triggered sends
-            App.Extensions.MessageSendRequested += OnExtensionMessageSend;
+            // Subscribe to extension-triggered sends and button set changes
+            App.Extensions.MessageSendRequested    += OnExtensionMessageSend;
+            App.Extensions.ButtonSetsChanged       += OnButtonSetsChanged;
+
+            // Load native quick reply buttons
+            RefreshQuickReplyButtons();
 
             // Load API indicator
             RefreshApiIndicator();
@@ -181,7 +194,62 @@ namespace PocketTavern.UWP.ViewModels
         public void Cleanup()
         {
             App.Extensions.MessageSendRequested -= OnExtensionMessageSend;
+            App.Extensions.ButtonSetsChanged    -= OnButtonSetsChanged;
         }
+
+        public async Task SendQuickReplyAsync(QuickReplyButton button)
+        {
+            if (IsGenerating) return;
+
+            // Action buttons dispatch BUTTON_CLICKED event to extensions instead of sending a message
+            if (!string.IsNullOrEmpty(button.Action))
+            {
+                var payload = Newtonsoft.Json.JsonConvert.SerializeObject(new
+                {
+                    action = button.Action,
+                    label  = button.Label
+                });
+                await App.Extensions.DispatchEventAsync("BUTTON_CLICKED", payload);
+                return;
+            }
+
+            var text = ApplyMacros(button.Message).Trim();
+            if (string.IsNullOrEmpty(text)) return;
+
+            InputText = text;
+            await SendMessageAsync();
+        }
+
+        public void RefreshQuickReplyButtons()
+        {
+            var enabled = App.Settings.GetExtQuickReplyEnabled();
+            _quickReplyButtons.Clear();
+
+            if (!enabled) return;
+
+            // Native presets
+            var presets = _qrStorage.Load();
+            foreach (var preset in presets.Where(p => p.Enabled))
+                foreach (var btn in preset.Buttons)
+                    _quickReplyButtons.Add(btn);
+
+            // JS-registered buttons (from extensions)
+            foreach (var set in App.Extensions.GetButtonSets().Values)
+                foreach (var obj in set)
+                {
+                    if (obj is Newtonsoft.Json.Linq.JObject jo)
+                        _quickReplyButtons.Add(new QuickReplyButton
+                        {
+                            Label   = jo.Value<string>("label")   ?? "",
+                            Message = jo.Value<string>("message") ?? "",
+                            Action  = jo.Value<string>("action")  ?? ""
+                        });
+                }
+
+            OnPropertyChanged(nameof(QuickReplyButtons));
+        }
+
+        private void OnButtonSetsChanged(object sender, EventArgs e) => RefreshQuickReplyButtons();
 
         private async void OnExtensionMessageSend(object sender, string text)
         {
@@ -393,6 +461,8 @@ namespace PocketTavern.UWP.ViewModels
             {
                 IsGenerating = false;
                 await SaveChatAsync();
+                var _ = App.Extensions.DispatchEventAsync("GENERATION_STOPPED");
+                OnPropertyChanged(nameof(QuickReplyButtons));
             }
         }
 
