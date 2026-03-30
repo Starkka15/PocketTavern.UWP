@@ -1,0 +1,28 @@
+# Visual Studio
+.vs/
+*.user
+*.suo
+
+# Build output
+bin/
+obj/
+AppXLayout/
+AppXLayoutARM/
+*.appx
+*.appxbundle
+
+# NuGet
+packages/
+*.nupkg
+
+# .NET Native temp
+AppPackages/
+BundleArtifacts/
+
+# Keys (never commit)
+*.pfx
+*.snk
+
+# OS
+Thumbs.db
+Desktop.ini

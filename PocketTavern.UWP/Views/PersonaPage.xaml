@@ -1,0 +1,103 @@
+<Page
+    x:Class="PocketTavern.UWP.Views.PersonaPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:PocketTavern.UWP.Controls"
+    Background="{StaticResource BackgroundDeepBrush}">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Grid Grid.Row="0" Background="{StaticResource BackgroundSurfaceBrush}" Padding="4,8">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="48" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <Button Grid.Column="0" Background="Transparent" BorderThickness="0"
+                    Foreground="{StaticResource TextPrimaryBrush}" Click="OnBackClick"
+                    HorizontalAlignment="Center" VerticalAlignment="Center">
+                <TextBlock Text="&#xE72B;" FontFamily="Segoe MDL2 Assets" FontSize="18" />
+            </Button>
+            <TextBlock Grid.Column="1" Text="Your Persona" Style="{StaticResource TitleTextStyle}"
+                       VerticalAlignment="Center" Margin="4,0" />
+            <Button Grid.Column="2" Style="{StaticResource AccentButtonStyle}"
+                    Margin="0,0,8,0" Click="OnSaveClick">
+                <controls:SpacedPanel Orientation="Horizontal" Spacing="6">
+                    <TextBlock Text="&#xE74E;" FontFamily="Segoe MDL2 Assets" FontSize="14" VerticalAlignment="Center" />
+                    <TextBlock Text="Save" VerticalAlignment="Center" />
+                </controls:SpacedPanel>
+            </Button>
+        </Grid>
+
+        <ScrollViewer Grid.Row="1" Padding="16">
+            <StackPanel>
+
+                <!-- Avatar circle -->
+                <Border Width="80" Height="80" CornerRadius="40"
+                        Background="{StaticResource BackgroundCardBrush}"
+                        HorizontalAlignment="Center" Margin="0,16,0,0">
+                    <TextBlock x:Name="AvatarInitial" Text="U"
+                               HorizontalAlignment="Center" VerticalAlignment="Center"
+                               FontSize="36" FontWeight="Bold"
+                               Foreground="{StaticResource AccentPrimaryBrush}" />
+                </Border>
+
+                <!-- Fields card -->
+                <Border Background="{StaticResource BackgroundCardBrush}" CornerRadius="12"
+                        Padding="16,12" Margin="0,16,0,0">
+                    <controls:SpacedPanel Spacing="4">
+                        <TextBlock Text="Display Name" Style="{StaticResource SubtitleTextStyle}" Margin="0,0,0,4" />
+                        <TextBox x:Name="NameBox" Style="{StaticResource DarkTextBoxStyle}"
+                                 PlaceholderText="Your name" TextChanged="OnNameChanged" />
+
+                        <TextBlock Text="Description" Style="{StaticResource SubtitleTextStyle}" Margin="0,12,0,4" />
+                        <TextBox x:Name="DescBox" Style="{StaticResource DarkTextBoxStyle}"
+                                 PlaceholderText="Description injected into the prompt"
+                                 AcceptsReturn="True" Height="100" />
+                    </controls:SpacedPanel>
+                </Border>
+
+                <!-- Injection settings -->
+                <Border Background="{StaticResource BackgroundCardBrush}" CornerRadius="12"
+                        Padding="16,12" Margin="0,8,0,0">
+                    <controls:SpacedPanel Spacing="8">
+                        <TextBlock Text="Injection Position" Style="{StaticResource SubtitleTextStyle}" />
+                        <ComboBox x:Name="PositionCombo" HorizontalAlignment="Stretch"
+                                  Background="{StaticResource BackgroundSurfaceBrush}"
+                                  Foreground="{StaticResource TextPrimaryBrush}"
+                                  SelectionChanged="OnPositionChanged">
+                            <ComboBoxItem Content="In System Prompt" />
+                            <ComboBoxItem Content="In Chat at Depth" />
+                            <ComboBoxItem Content="Top of Author's Note" />
+                            <ComboBoxItem Content="Bottom of Author's Note" />
+                        </ComboBox>
+
+                        <!-- Depth — only visible when position = In Chat at Depth -->
+                        <StackPanel x:Name="DepthRow" Visibility="Collapsed">
+                            <TextBlock Text="Injection Depth (messages from bottom)"
+                                       Style="{StaticResource SubtitleTextStyle}" Margin="0,0,0,4" />
+                            <TextBox x:Name="DepthBox" Style="{StaticResource DarkTextBoxStyle}"
+                                     InputScope="Number" PlaceholderText="2" />
+                        </StackPanel>
+
+                        <TextBlock Text="Role" Style="{StaticResource SubtitleTextStyle}" />
+                        <ComboBox x:Name="RoleCombo" HorizontalAlignment="Stretch"
+                                  Background="{StaticResource BackgroundSurfaceBrush}"
+                                  Foreground="{StaticResource TextPrimaryBrush}">
+                            <ComboBoxItem Content="System" />
+                            <ComboBoxItem Content="User" />
+                            <ComboBoxItem Content="Assistant" />
+                        </ComboBox>
+                    </controls:SpacedPanel>
+                </Border>
+
+                <Border Height="24" />
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</Page>

@@ -1,0 +1,118 @@
+<Page
+    x:Class="PocketTavern.UWP.Views.ThemePage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:PocketTavern.UWP.Controls"
+    Background="{StaticResource BackgroundDeepBrush}">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Grid Grid.Row="0" Background="{StaticResource BackgroundSurfaceBrush}" Padding="4,8">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="48" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <Button Grid.Column="0" Background="Transparent" BorderThickness="0"
+                    Foreground="{StaticResource TextPrimaryBrush}" Click="OnBackClick"
+                    HorizontalAlignment="Center" VerticalAlignment="Center">
+                <TextBlock Text="&#xE72B;" FontFamily="Segoe MDL2 Assets" FontSize="18" />
+            </Button>
+            <TextBlock Grid.Column="1" Text="Appearance" Style="{StaticResource TitleTextStyle}"
+                       VerticalAlignment="Center" Margin="4,0" />
+        </Grid>
+
+        <ScrollViewer Grid.Row="1" Padding="16">
+            <StackPanel>
+
+                <TextBlock Text="Choose a theme" Style="{StaticResource SubtitleTextStyle}"
+                           Margin="0,12,0,12" FontSize="14" />
+
+                <!-- Theme cards -->
+                <ListView x:Name="ThemeList"
+                          SelectionMode="None" IsItemClickEnabled="True"
+                          ItemClick="OnThemeClicked"
+                          Background="Transparent">
+                    <ListView.ItemContainerStyle>
+                        <Style TargetType="ListViewItem">
+                            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                            <Setter Property="Padding" Value="0" />
+                            <Setter Property="Margin" Value="0,0,0,8" />
+                        </Style>
+                    </ListView.ItemContainerStyle>
+                    <ListView.ItemTemplate>
+                        <DataTemplate>
+                            <!--
+                                Each card shows a mini color swatch row (background + accent circles)
+                                plus the theme name and a checkmark if currently active.
+                            -->
+                            <Border Background="{StaticResource BackgroundCardBrush}"
+                                    CornerRadius="16" Padding="16,14">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <StackPanel>
+                                        <!-- Color swatch strip -->
+                                        <controls:SpacedPanel Orientation="Horizontal" Spacing="6" Margin="0,0,0,10">
+                                            <Border Width="28" Height="28" CornerRadius="14"
+                                                    Background="{Binding SwatchDeep}" />
+                                            <Border Width="28" Height="28" CornerRadius="14"
+                                                    Background="{Binding SwatchSurface}" />
+                                            <Border Width="28" Height="28" CornerRadius="14"
+                                                    Background="{Binding SwatchAccent}" />
+                                            <Border Width="28" Height="28" CornerRadius="14"
+                                                    Background="{Binding SwatchSecondary}" />
+                                        </controls:SpacedPanel>
+
+                                        <!-- Name -->
+                                        <TextBlock Text="{Binding Name}"
+                                                   Foreground="{StaticResource TextPrimaryBrush}"
+                                                   FontSize="16" FontWeight="SemiBold" />
+
+                                        <!-- Particle hint -->
+                                        <TextBlock Text="{Binding ParticleHint}"
+                                                   Style="{StaticResource SubtitleTextStyle}"
+                                                   Margin="0,3,0,0" />
+                                    </StackPanel>
+
+                                    <!-- Active checkmark -->
+                                    <Border Grid.Column="1" Width="32" Height="32" CornerRadius="16"
+                                            Background="{StaticResource AccentPrimaryBrush}"
+                                            VerticalAlignment="Center"
+                                            Visibility="{Binding IsActiveVisibility}">
+                                        <TextBlock Text="&#xE73E;" FontFamily="Segoe MDL2 Assets"
+                                                   FontSize="16" Foreground="White"
+                                                   HorizontalAlignment="Center"
+                                                   VerticalAlignment="Center" />
+                                    </Border>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ListView.ItemTemplate>
+                </ListView>
+
+                <!-- Info note -->
+                <Border Background="{StaticResource BackgroundCardBrush}" CornerRadius="12"
+                        Padding="16,12" Margin="0,8,0,0">
+                    <controls:SpacedPanel Orientation="Horizontal" Spacing="10">
+                        <TextBlock Text="&#xE7BA;" FontFamily="Segoe MDL2 Assets" FontSize="16"
+                                   Foreground="{StaticResource TextSecondaryBrush}"
+                                   VerticalAlignment="Center" />
+                        <TextBlock Text="Theme changes apply instantly. Particle effects play on the home screen."
+                                   Style="{StaticResource SubtitleTextStyle}"
+                                   VerticalAlignment="Center" TextWrapping="Wrap" />
+                    </controls:SpacedPanel>
+                </Border>
+
+                <Border Height="24" />
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</Page>

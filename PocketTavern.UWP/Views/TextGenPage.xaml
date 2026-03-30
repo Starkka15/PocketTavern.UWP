@@ -1,0 +1,339 @@
+<Page
+    x:Class="PocketTavern.UWP.Views.TextGenPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:PocketTavern.UWP.Controls"
+    Background="{StaticResource BackgroundDeepBrush}">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Grid Grid.Row="0" Background="{StaticResource BackgroundSurfaceBrush}" Padding="4,8">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="48" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <Button Grid.Column="0" Background="Transparent" BorderThickness="0"
+                    Foreground="{StaticResource TextPrimaryBrush}" Click="OnBackClick"
+                    HorizontalAlignment="Center" VerticalAlignment="Center">
+                <TextBlock Text="&#xE72B;" FontFamily="Segoe MDL2 Assets" FontSize="18" />
+            </Button>
+            <TextBlock Grid.Column="1" Text="Text Generation" Style="{StaticResource TitleTextStyle}"
+                       VerticalAlignment="Center" Margin="4,0" />
+            <Button Grid.Column="2" Style="{StaticResource AccentButtonStyle}"
+                    Margin="0,0,8,0" Click="OnSaveClick">
+                <controls:SpacedPanel Orientation="Horizontal" Spacing="6">
+                    <TextBlock Text="&#xE74E;" FontFamily="Segoe MDL2 Assets" FontSize="14" VerticalAlignment="Center" />
+                    <TextBlock Text="Save" VerticalAlignment="Center" />
+                </controls:SpacedPanel>
+            </Button>
+        </Grid>
+
+        <ScrollViewer Grid.Row="1" Padding="16">
+            <StackPanel>
+
+                <!-- Preset selector -->
+                <Border Background="{StaticResource BackgroundCardBrush}" CornerRadius="12"
+                        Padding="16,12" Margin="0,8,0,0">
+                    <controls:SpacedPanel Spacing="8">
+                        <TextBlock Text="Preset" Style="{StaticResource SubtitleTextStyle}" />
+                        <ComboBox x:Name="PresetCombo" HorizontalAlignment="Stretch"
+                                  Background="{StaticResource BackgroundSurfaceBrush}"
+                                  Foreground="{StaticResource TextPrimaryBrush}"
+                                  SelectionChanged="OnPresetSelectionChanged" />
+                    </controls:SpacedPanel>
+                </Border>
+
+                <!-- Basic sampling -->
+                <Border Background="{StaticResource BackgroundCardBrush}" CornerRadius="12"
+                        Padding="16,12" Margin="0,8,0,0">
+                    <controls:SpacedPanel Spacing="12">
+
+                        <Grid>
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                            <TextBlock Text="Temperature" Style="{StaticResource SubtitleTextStyle}" VerticalAlignment="Center" />
+                            <TextBlock x:Name="TempLabel" Grid.Column="1" Style="{StaticResource SubtitleTextStyle}" Foreground="{StaticResource AccentPrimaryBrush}" />
+                        </Grid>
+                        <Slider x:Name="TempSlider" Minimum="0" Maximum="2" StepFrequency="0.05"
+                                Foreground="{StaticResource AccentPrimaryBrush}" ValueChanged="OnSliderLabelChanged" Tag="TempLabel" />
+
+                        <Grid>
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                            <TextBlock Text="Top P" Style="{StaticResource SubtitleTextStyle}" VerticalAlignment="Center" />
+                            <TextBlock x:Name="TopPLabel" Grid.Column="1" Style="{StaticResource SubtitleTextStyle}" Foreground="{StaticResource AccentPrimaryBrush}" />
+                        </Grid>
+                        <Slider x:Name="TopPSlider" Minimum="0" Maximum="1" StepFrequency="0.01"
+                                Foreground="{StaticResource AccentPrimaryBrush}" ValueChanged="OnSliderLabelChanged" Tag="TopPLabel" />
+
+                        <Grid>
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                            <TextBlock Text="Min P" Style="{StaticResource SubtitleTextStyle}" VerticalAlignment="Center" />
+                            <TextBlock x:Name="MinPLabel" Grid.Column="1" Style="{StaticResource SubtitleTextStyle}" Foreground="{StaticResource AccentPrimaryBrush}" />
+                        </Grid>
+                        <Slider x:Name="MinPSlider" Minimum="0" Maximum="1" StepFrequency="0.01"
+                                Foreground="{StaticResource AccentPrimaryBrush}" ValueChanged="OnSliderLabelChanged" Tag="MinPLabel" />
+
+                        <Grid>
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                            <TextBlock Text="Top A" Style="{StaticResource SubtitleTextStyle}" VerticalAlignment="Center" />
+                            <TextBlock x:Name="TopALabel" Grid.Column="1" Style="{StaticResource SubtitleTextStyle}" Foreground="{StaticResource AccentPrimaryBrush}" />
+                        </Grid>
+                        <Slider x:Name="TopASlider" Minimum="0" Maximum="1" StepFrequency="0.01"
+                                Foreground="{StaticResource AccentPrimaryBrush}" ValueChanged="OnSliderLabelChanged" Tag="TopALabel" />
+
+                        <Grid>
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                            <TextBlock Text="Typical P" Style="{StaticResource SubtitleTextStyle}" VerticalAlignment="Center" />
+                            <TextBlock x:Name="TypicalPLabel" Grid.Column="1" Style="{StaticResource SubtitleTextStyle}" Foreground="{StaticResource AccentPrimaryBrush}" />
+                        </Grid>
+                        <Slider x:Name="TypicalPSlider" Minimum="0" Maximum="1" StepFrequency="0.01"
+                                Foreground="{StaticResource AccentPrimaryBrush}" ValueChanged="OnSliderLabelChanged" Tag="TypicalPLabel" />
+
+                        <Grid>
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                            <TextBlock Text="TFS" Style="{StaticResource SubtitleTextStyle}" VerticalAlignment="Center" />
+                            <TextBlock x:Name="TfsLabel" Grid.Column="1" Style="{StaticResource SubtitleTextStyle}" Foreground="{StaticResource AccentPrimaryBrush}" />
+                        </Grid>
+                        <Slider x:Name="TfsSlider" Minimum="0" Maximum="1" StepFrequency="0.01"
+                                Foreground="{StaticResource AccentPrimaryBrush}" ValueChanged="OnSliderLabelChanged" Tag="TfsLabel" />
+
+                        <TextBlock Text="Top K" Style="{StaticResource SubtitleTextStyle}" />
+                        <TextBox x:Name="TopKBox" Style="{StaticResource DarkTextBoxStyle}" InputScope="Number" />
+
+                        <TextBlock Text="Max New Tokens" Style="{StaticResource SubtitleTextStyle}" />
+                        <TextBox x:Name="MaxTokensBox" Style="{StaticResource DarkTextBoxStyle}"
+                                 InputScope="Number" PlaceholderText="e.g. 512 (blank = server default)" />
+
+                        <TextBlock Text="Min Tokens" Style="{StaticResource SubtitleTextStyle}" />
+                        <TextBox x:Name="MinTokensBox" Style="{StaticResource DarkTextBoxStyle}" InputScope="Number" />
+
+                        <TextBlock Text="Context Length (Truncation)" Style="{StaticResource SubtitleTextStyle}" />
+                        <TextBox x:Name="ContextLenBox" Style="{StaticResource DarkTextBoxStyle}" InputScope="Number" />
+
+                    </controls:SpacedPanel>
+                </Border>
+
+                <!-- Repetition penalties -->
+                <Border Background="{StaticResource BackgroundCardBrush}" CornerRadius="12"
+                        Padding="16,12" Margin="0,8,0,0">
+                    <controls:SpacedPanel Spacing="12">
+                        <TextBlock Text="Repetition Penalties" Foreground="{StaticResource TextPrimaryBrush}"
+                                   FontSize="14" FontWeight="SemiBold" />
+
+                        <Grid>
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                            <TextBlock Text="Repetition Penalty" Style="{StaticResource SubtitleTextStyle}" VerticalAlignment="Center" />
+                            <TextBlock x:Name="RepPenLabel" Grid.Column="1" Style="{StaticResource SubtitleTextStyle}" Foreground="{StaticResource AccentPrimaryBrush}" />
+                        </Grid>
+                        <Slider x:Name="RepPenSlider" Minimum="1" Maximum="2" StepFrequency="0.01"
+                                Foreground="{StaticResource AccentPrimaryBrush}" ValueChanged="OnSliderLabelChanged" Tag="RepPenLabel" />
+
+                        <TextBlock Text="Rep Pen Range" Style="{StaticResource SubtitleTextStyle}" />
+                        <TextBox x:Name="RepPenRangeBox" Style="{StaticResource DarkTextBoxStyle}" InputScope="Number" />
+
+                        <Grid>
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                            <TextBlock Text="Rep Pen Slope" Style="{StaticResource SubtitleTextStyle}" VerticalAlignment="Center" />
+                            <TextBlock x:Name="RepPenSlopeLabel" Grid.Column="1" Style="{StaticResource SubtitleTextStyle}" Foreground="{StaticResource AccentPrimaryBrush}" />
+                        </Grid>
+                        <Slider x:Name="RepPenSlopeSlider" Minimum="0" Maximum="10" StepFrequency="0.1"
+                                Foreground="{StaticResource AccentPrimaryBrush}" ValueChanged="OnSliderLabelChanged" Tag="RepPenSlopeLabel" />
+
+                        <Grid>
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                            <TextBlock Text="Frequency Penalty" Style="{StaticResource SubtitleTextStyle}" VerticalAlignment="Center" />
+                            <TextBlock x:Name="FreqPenLabel" Grid.Column="1" Style="{StaticResource SubtitleTextStyle}" Foreground="{StaticResource AccentPrimaryBrush}" />
+                        </Grid>
+                        <Slider x:Name="FreqPenSlider" Minimum="0" Maximum="2" StepFrequency="0.01"
+                                Foreground="{StaticResource AccentPrimaryBrush}" ValueChanged="OnSliderLabelChanged" Tag="FreqPenLabel" />
+
+                        <Grid>
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                            <TextBlock Text="Presence Penalty" Style="{StaticResource SubtitleTextStyle}" VerticalAlignment="Center" />
+                            <TextBlock x:Name="PresPenLabel" Grid.Column="1" Style="{StaticResource SubtitleTextStyle}" Foreground="{StaticResource AccentPrimaryBrush}" />
+                        </Grid>
+                        <Slider x:Name="PresPenSlider" Minimum="0" Maximum="2" StepFrequency="0.01"
+                                Foreground="{StaticResource AccentPrimaryBrush}" ValueChanged="OnSliderLabelChanged" Tag="PresPenLabel" />
+
+                    </controls:SpacedPanel>
+                </Border>
+
+                <!-- DRY sampler -->
+                <Border Background="{StaticResource BackgroundCardBrush}" CornerRadius="12"
+                        Padding="16,12" Margin="0,8,0,0">
+                    <controls:SpacedPanel Spacing="12">
+                        <TextBlock Text="DRY Sampler" Foreground="{StaticResource TextPrimaryBrush}"
+                                   FontSize="14" FontWeight="SemiBold" />
+
+                        <Grid>
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                            <TextBlock Text="DRY Multiplier" Style="{StaticResource SubtitleTextStyle}" VerticalAlignment="Center" />
+                            <TextBlock x:Name="DryMultLabel" Grid.Column="1" Style="{StaticResource SubtitleTextStyle}" Foreground="{StaticResource AccentPrimaryBrush}" />
+                        </Grid>
+                        <Slider x:Name="DryMultSlider" Minimum="0" Maximum="2" StepFrequency="0.01"
+                                Foreground="{StaticResource AccentPrimaryBrush}" ValueChanged="OnSliderLabelChanged" Tag="DryMultLabel" />
+
+                        <Grid>
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                            <TextBlock Text="DRY Base" Style="{StaticResource SubtitleTextStyle}" VerticalAlignment="Center" />
+                            <TextBlock x:Name="DryBaseLabel" Grid.Column="1" Style="{StaticResource SubtitleTextStyle}" Foreground="{StaticResource AccentPrimaryBrush}" />
+                        </Grid>
+                        <Slider x:Name="DryBaseSlider" Minimum="1" Maximum="4" StepFrequency="0.01"
+                                Foreground="{StaticResource AccentPrimaryBrush}" ValueChanged="OnSliderLabelChanged" Tag="DryBaseLabel" />
+
+                        <TextBlock Text="DRY Allowed Length" Style="{StaticResource SubtitleTextStyle}" />
+                        <TextBox x:Name="DryAllowedLenBox" Style="{StaticResource DarkTextBoxStyle}" InputScope="Number" />
+
+                        <TextBlock Text="DRY Penalty Last N" Style="{StaticResource SubtitleTextStyle}" />
+                        <TextBox x:Name="DryLastNBox" Style="{StaticResource DarkTextBoxStyle}" InputScope="Number" />
+
+                    </controls:SpacedPanel>
+                </Border>
+
+                <!-- Mirostat -->
+                <Border Background="{StaticResource BackgroundCardBrush}" CornerRadius="12"
+                        Padding="16,12" Margin="0,8,0,0">
+                    <controls:SpacedPanel Spacing="12">
+                        <TextBlock Text="Mirostat" Foreground="{StaticResource TextPrimaryBrush}"
+                                   FontSize="14" FontWeight="SemiBold" />
+
+                        <TextBlock Text="Mirostat Mode (0=off, 1=v1, 2=v2)" Style="{StaticResource SubtitleTextStyle}" />
+                        <ComboBox x:Name="MirostatModeCombo" HorizontalAlignment="Stretch"
+                                  Background="{StaticResource BackgroundSurfaceBrush}"
+                                  Foreground="{StaticResource TextPrimaryBrush}">
+                            <ComboBoxItem Content="0 — Disabled" />
+                            <ComboBoxItem Content="1 — Mirostat v1" />
+                            <ComboBoxItem Content="2 — Mirostat v2" />
+                        </ComboBox>
+
+                        <Grid>
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                            <TextBlock Text="Mirostat Tau" Style="{StaticResource SubtitleTextStyle}" VerticalAlignment="Center" />
+                            <TextBlock x:Name="MiroTauLabel" Grid.Column="1" Style="{StaticResource SubtitleTextStyle}" Foreground="{StaticResource AccentPrimaryBrush}" />
+                        </Grid>
+                        <Slider x:Name="MiroTauSlider" Minimum="0" Maximum="10" StepFrequency="0.1"
+                                Foreground="{StaticResource AccentPrimaryBrush}" ValueChanged="OnSliderLabelChanged" Tag="MiroTauLabel" />
+
+                        <Grid>
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                            <TextBlock Text="Mirostat Eta" Style="{StaticResource SubtitleTextStyle}" VerticalAlignment="Center" />
+                            <TextBlock x:Name="MiroEtaLabel" Grid.Column="1" Style="{StaticResource SubtitleTextStyle}" Foreground="{StaticResource AccentPrimaryBrush}" />
+                        </Grid>
+                        <Slider x:Name="MiroEtaSlider" Minimum="0" Maximum="1" StepFrequency="0.01"
+                                Foreground="{StaticResource AccentPrimaryBrush}" ValueChanged="OnSliderLabelChanged" Tag="MiroEtaLabel" />
+
+                    </controls:SpacedPanel>
+                </Border>
+
+                <!-- XTC -->
+                <Border Background="{StaticResource BackgroundCardBrush}" CornerRadius="12"
+                        Padding="16,12" Margin="0,8,0,0">
+                    <controls:SpacedPanel Spacing="12">
+                        <TextBlock Text="XTC Sampler" Foreground="{StaticResource TextPrimaryBrush}"
+                                   FontSize="14" FontWeight="SemiBold" />
+
+                        <Grid>
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                            <TextBlock Text="XTC Threshold" Style="{StaticResource SubtitleTextStyle}" VerticalAlignment="Center" />
+                            <TextBlock x:Name="XtcThreshLabel" Grid.Column="1" Style="{StaticResource SubtitleTextStyle}" Foreground="{StaticResource AccentPrimaryBrush}" />
+                        </Grid>
+                        <Slider x:Name="XtcThreshSlider" Minimum="0" Maximum="1" StepFrequency="0.01"
+                                Foreground="{StaticResource AccentPrimaryBrush}" ValueChanged="OnSliderLabelChanged" Tag="XtcThreshLabel" />
+
+                        <Grid>
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                            <TextBlock Text="XTC Probability" Style="{StaticResource SubtitleTextStyle}" VerticalAlignment="Center" />
+                            <TextBlock x:Name="XtcProbLabel" Grid.Column="1" Style="{StaticResource SubtitleTextStyle}" Foreground="{StaticResource AccentPrimaryBrush}" />
+                        </Grid>
+                        <Slider x:Name="XtcProbSlider" Minimum="0" Maximum="1" StepFrequency="0.01"
+                                Foreground="{StaticResource AccentPrimaryBrush}" ValueChanged="OnSliderLabelChanged" Tag="XtcProbLabel" />
+
+                    </controls:SpacedPanel>
+                </Border>
+
+                <!-- Other sampling -->
+                <Border Background="{StaticResource BackgroundCardBrush}" CornerRadius="12"
+                        Padding="16,12" Margin="0,8,0,0">
+                    <controls:SpacedPanel Spacing="12">
+                        <TextBlock Text="Other" Foreground="{StaticResource TextPrimaryBrush}"
+                                   FontSize="14" FontWeight="SemiBold" />
+
+                        <Grid>
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                            <TextBlock Text="Skew" Style="{StaticResource SubtitleTextStyle}" VerticalAlignment="Center" />
+                            <TextBlock x:Name="SkewLabel" Grid.Column="1" Style="{StaticResource SubtitleTextStyle}" Foreground="{StaticResource AccentPrimaryBrush}" />
+                        </Grid>
+                        <Slider x:Name="SkewSlider" Minimum="-5" Maximum="5" StepFrequency="0.01"
+                                Foreground="{StaticResource AccentPrimaryBrush}" ValueChanged="OnSliderLabelChanged" Tag="SkewLabel" />
+
+                        <Grid>
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                            <TextBlock Text="Smoothing Factor" Style="{StaticResource SubtitleTextStyle}" VerticalAlignment="Center" />
+                            <TextBlock x:Name="SmoothingFactorLabel" Grid.Column="1" Style="{StaticResource SubtitleTextStyle}" Foreground="{StaticResource AccentPrimaryBrush}" />
+                        </Grid>
+                        <Slider x:Name="SmoothingFactorSlider" Minimum="0" Maximum="10" StepFrequency="0.01"
+                                Foreground="{StaticResource AccentPrimaryBrush}" ValueChanged="OnSliderLabelChanged" Tag="SmoothingFactorLabel" />
+
+                        <Grid>
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                            <TextBlock Text="Smoothing Curve" Style="{StaticResource SubtitleTextStyle}" VerticalAlignment="Center" />
+                            <TextBlock x:Name="SmoothingCurveLabel" Grid.Column="1" Style="{StaticResource SubtitleTextStyle}" Foreground="{StaticResource AccentPrimaryBrush}" />
+                        </Grid>
+                        <Slider x:Name="SmoothingCurveSlider" Minimum="0" Maximum="10" StepFrequency="0.01"
+                                Foreground="{StaticResource AccentPrimaryBrush}" ValueChanged="OnSliderLabelChanged" Tag="SmoothingCurveLabel" />
+
+                        <Grid>
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                            <TextBlock Text="Guidance Scale (CFG)" Style="{StaticResource SubtitleTextStyle}" VerticalAlignment="Center" />
+                            <TextBlock x:Name="GuidanceScaleLabel" Grid.Column="1" Style="{StaticResource SubtitleTextStyle}" Foreground="{StaticResource AccentPrimaryBrush}" />
+                        </Grid>
+                        <Slider x:Name="GuidanceScaleSlider" Minimum="0" Maximum="3" StepFrequency="0.01"
+                                Foreground="{StaticResource AccentPrimaryBrush}" ValueChanged="OnSliderLabelChanged" Tag="GuidanceScaleLabel" />
+
+                    </controls:SpacedPanel>
+                </Border>
+
+                <!-- Special tokens -->
+                <Border Background="{StaticResource BackgroundCardBrush}" CornerRadius="12"
+                        Padding="16,12" Margin="0,8,0,0">
+                    <controls:SpacedPanel Spacing="8">
+                        <TextBlock Text="Token Handling" Foreground="{StaticResource TextPrimaryBrush}"
+                                   FontSize="14" FontWeight="SemiBold" />
+
+                        <Grid>
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                            <StackPanel VerticalAlignment="Center">
+                                <TextBlock Text="Add BOS Token" Foreground="{StaticResource TextPrimaryBrush}" FontSize="14" />
+                            </StackPanel>
+                            <CheckBox x:Name="AddBosCheck" Grid.Column="1" Foreground="{StaticResource TextPrimaryBrush}" />
+                        </Grid>
+
+                        <Grid>
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                            <StackPanel VerticalAlignment="Center">
+                                <TextBlock Text="Ban EOS Token" Foreground="{StaticResource TextPrimaryBrush}" FontSize="14" />
+                            </StackPanel>
+                            <CheckBox x:Name="BanEosCheck" Grid.Column="1" Foreground="{StaticResource TextPrimaryBrush}" />
+                        </Grid>
+
+                        <Grid>
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                            <StackPanel VerticalAlignment="Center">
+                                <TextBlock Text="Skip Special Tokens" Foreground="{StaticResource TextPrimaryBrush}" FontSize="14" />
+                            </StackPanel>
+                            <CheckBox x:Name="SkipSpecialCheck" Grid.Column="1" Foreground="{StaticResource TextPrimaryBrush}" />
+                        </Grid>
+
+                    </controls:SpacedPanel>
+                </Border>
+
+                <Border Height="24" />
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</Page>

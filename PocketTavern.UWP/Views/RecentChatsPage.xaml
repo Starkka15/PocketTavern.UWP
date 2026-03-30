@@ -1,0 +1,89 @@
+<Page
+    x:Class="PocketTavern.UWP.Views.RecentChatsPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:PocketTavern.UWP.Controls"
+    Background="{StaticResource BackgroundDeepBrush}">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Grid Grid.Row="0" Background="{StaticResource BackgroundSurfaceBrush}" Padding="4,8">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="48" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <Button Grid.Column="0" Background="Transparent" BorderThickness="0"
+                    Foreground="{StaticResource TextPrimaryBrush}" Click="OnBackClick"
+                    HorizontalAlignment="Center" VerticalAlignment="Center">
+                <TextBlock Text="&#xE72B;" FontFamily="Segoe MDL2 Assets" FontSize="18" />
+            </Button>
+            <TextBlock Grid.Column="1" Text="Recent Chats" Style="{StaticResource TitleTextStyle}"
+                       VerticalAlignment="Center" Margin="4,0" />
+        </Grid>
+
+        <!-- Empty state -->
+        <StackPanel x:Name="EmptyState" Grid.Row="1" Visibility="Collapsed"
+                    HorizontalAlignment="Center" VerticalAlignment="Center">
+            <TextBlock Text="&#xE8BD;" FontFamily="Segoe MDL2 Assets" FontSize="64"
+                       HorizontalAlignment="Center" Foreground="{StaticResource TextSecondaryBrush}" />
+            <TextBlock Text="No recent chats" Style="{StaticResource SubtitleTextStyle}"
+                       HorizontalAlignment="Center" Margin="0,12,0,0" FontSize="16" />
+        </StackPanel>
+
+        <!-- Chats list -->
+        <ListView Grid.Row="1" x:Name="ChatsList"
+                  SelectionMode="None" IsItemClickEnabled="True"
+                  ItemClick="OnChatClicked"
+                  Background="Transparent" Padding="0,4,0,4">
+            <ListView.ItemContainerStyle>
+                <Style TargetType="ListViewItem">
+                    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                    <Setter Property="Padding" Value="0" />
+                </Style>
+            </ListView.ItemContainerStyle>
+            <ListView.ItemTemplate>
+                <DataTemplate>
+                    <Grid Padding="16,10" Background="Transparent">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="56" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <Border Width="48" Height="48" CornerRadius="24"
+                                Background="{StaticResource BackgroundCardBrush}">
+                            <Grid>
+                                <Image Source="{Binding AvatarLocalPath}" Stretch="UniformToFill"
+                                       Visibility="{Binding HasAvatar, Converter={StaticResource BoolToVisibilityConverter}}" />
+                                <TextBlock Text="{Binding CharacterInitial}"
+                                           HorizontalAlignment="Center" VerticalAlignment="Center"
+                                           FontSize="20" FontWeight="SemiBold"
+                                           Foreground="{StaticResource AccentSecondaryBrush}"
+                                           Visibility="{Binding HasAvatar, Converter={StaticResource InverseBoolToVisibilityConverter}}" />
+                            </Grid>
+                        </Border>
+
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="10,0">
+                            <TextBlock Text="{Binding CharacterName}"
+                                       Foreground="{StaticResource TextPrimaryBrush}"
+                                       FontSize="15" FontWeight="SemiBold" />
+                            <TextBlock Text="{Binding LastMessage}"
+                                       Style="{StaticResource SubtitleTextStyle}"
+                                       MaxLines="1" TextTrimming="CharacterEllipsis"
+                                       Margin="0,2,0,0" />
+                        </StackPanel>
+
+                        <TextBlock Grid.Column="2" Text="{Binding DateLabel}"
+                                   Style="{StaticResource SubtitleTextStyle}"
+                                   FontSize="11" VerticalAlignment="Top" Margin="8,2,0,0" />
+                    </Grid>
+                </DataTemplate>
+            </ListView.ItemTemplate>
+        </ListView>
+    </Grid>
+</Page>

@@ -1,0 +1,77 @@
+<Page
+    x:Class="PocketTavern.UWP.Views.FormattingPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:PocketTavern.UWP.Controls"
+    Background="{StaticResource BackgroundDeepBrush}">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Grid Grid.Row="0" Background="{StaticResource BackgroundSurfaceBrush}" Padding="4,8">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="48" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <Button Grid.Column="0" Background="Transparent" BorderThickness="0"
+                    Foreground="{StaticResource TextPrimaryBrush}" Click="OnBackClick"
+                    HorizontalAlignment="Center" VerticalAlignment="Center">
+                <TextBlock Text="&#xE72B;" FontFamily="Segoe MDL2 Assets" FontSize="18" />
+            </Button>
+            <TextBlock Grid.Column="1" Text="Formatting" Style="{StaticResource TitleTextStyle}"
+                       VerticalAlignment="Center" Margin="4,0" />
+            <Button Grid.Column="2" Style="{StaticResource AccentButtonStyle}"
+                    Margin="0,0,8,0" Click="OnSaveClick">
+                <controls:SpacedPanel Orientation="Horizontal" Spacing="6">
+                    <TextBlock Text="&#xE74E;" FontFamily="Segoe MDL2 Assets" FontSize="14" VerticalAlignment="Center" />
+                    <TextBlock Text="Save" VerticalAlignment="Center" />
+                </controls:SpacedPanel>
+            </Button>
+        </Grid>
+
+        <ScrollViewer Grid.Row="1" Padding="16">
+            <StackPanel>
+
+                <!-- Template selectors -->
+                <Border Background="{StaticResource BackgroundCardBrush}" CornerRadius="12"
+                        Padding="16,12" Margin="0,8,0,0">
+                    <controls:SpacedPanel Spacing="12">
+
+                        <TextBlock Text="Instruct Template" Style="{StaticResource SubtitleTextStyle}" />
+                        <ComboBox x:Name="InstructCombo" HorizontalAlignment="Stretch"
+                                  Background="{StaticResource BackgroundSurfaceBrush}"
+                                  Foreground="{StaticResource TextPrimaryBrush}" />
+
+                        <TextBlock Text="Context Template" Style="{StaticResource SubtitleTextStyle}" />
+                        <ComboBox x:Name="ContextCombo" HorizontalAlignment="Stretch"
+                                  Background="{StaticResource BackgroundSurfaceBrush}"
+                                  Foreground="{StaticResource TextPrimaryBrush}" />
+
+                        <TextBlock Text="System Prompt Preset" Style="{StaticResource SubtitleTextStyle}" />
+                        <ComboBox x:Name="SyspromptCombo" HorizontalAlignment="Stretch"
+                                  Background="{StaticResource BackgroundSurfaceBrush}"
+                                  Foreground="{StaticResource TextPrimaryBrush}" />
+                    </controls:SpacedPanel>
+                </Border>
+
+                <!-- Custom system prompt -->
+                <Border Background="{StaticResource BackgroundCardBrush}" CornerRadius="12"
+                        Padding="16,12" Margin="0,8,0,0">
+                    <controls:SpacedPanel Spacing="8">
+                        <TextBlock Text="Custom System Prompt" Style="{StaticResource SubtitleTextStyle}" />
+                        <TextBox x:Name="CustomSysPromptBox" Style="{StaticResource DarkTextBoxStyle}"
+                                 AcceptsReturn="True" Height="100"
+                                 PlaceholderText="Override system prompt for all chats" />
+                    </controls:SpacedPanel>
+                </Border>
+
+                <Border Height="24" />
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</Page>

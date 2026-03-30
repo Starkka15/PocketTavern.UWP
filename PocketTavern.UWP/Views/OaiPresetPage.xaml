@@ -1,0 +1,398 @@
+<Page
+    x:Class="PocketTavern.UWP.Views.OaiPresetPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:PocketTavern.UWP.Controls"
+    Background="{StaticResource BackgroundDeepBrush}">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Grid Grid.Row="0" Background="{StaticResource BackgroundSurfaceBrush}" Padding="4,8">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="48" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <Button Grid.Column="0" Background="Transparent" BorderThickness="0"
+                    Foreground="{StaticResource TextPrimaryBrush}" Click="OnBackClick"
+                    HorizontalAlignment="Center" VerticalAlignment="Center">
+                <TextBlock Text="&#xE72B;" FontFamily="Segoe MDL2 Assets" FontSize="18" />
+            </Button>
+            <TextBlock Grid.Column="1" Text="OAI Preset" Style="{StaticResource TitleTextStyle}"
+                       VerticalAlignment="Center" Margin="4,0" />
+            <Button Grid.Column="2" Style="{StaticResource AccentButtonStyle}"
+                    Margin="0,0,8,0" Click="OnSaveClick">
+                <controls:SpacedPanel Orientation="Horizontal" Spacing="6">
+                    <TextBlock Text="&#xE74E;" FontFamily="Segoe MDL2 Assets" FontSize="14" VerticalAlignment="Center" />
+                    <TextBlock Text="Save" VerticalAlignment="Center" />
+                </controls:SpacedPanel>
+            </Button>
+        </Grid>
+
+        <ScrollViewer Grid.Row="1" Padding="16">
+            <StackPanel>
+
+                <!-- Preset selector -->
+                <Border Background="{StaticResource BackgroundCardBrush}" CornerRadius="12"
+                        Padding="16,12" Margin="0,0,0,0">
+                    <controls:SpacedPanel Spacing="8">
+                        <TextBlock Text="Preset" Style="{StaticResource SubtitleTextStyle}" />
+                        <ComboBox x:Name="PresetCombo" HorizontalAlignment="Stretch"
+                                  Background="{StaticResource BackgroundSurfaceBrush}"
+                                  Foreground="{StaticResource TextPrimaryBrush}"
+                                  SelectionChanged="OnPresetComboChanged" />
+                        <TextBlock Text="Toggle each parameter on to override the API default. Disabled parameters are omitted from the request."
+                                   Style="{StaticResource SubtitleTextStyle}" FontSize="11" TextWrapping="Wrap" />
+                    </controls:SpacedPanel>
+                </Border>
+
+                <!-- Sampling -->
+                <Border Background="{StaticResource BackgroundCardBrush}" CornerRadius="12"
+                        Padding="16,12" Margin="0,8,0,0">
+                    <controls:SpacedPanel Spacing="10">
+                        <TextBlock Text="Sampling" Foreground="{StaticResource TextPrimaryBrush}"
+                                   FontSize="13" FontWeight="SemiBold" />
+
+                        <!-- Temperature -->
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="40" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="Temperature" Style="{StaticResource SubtitleTextStyle}" VerticalAlignment="Center" />
+                            <TextBlock x:Name="TempLabel" Grid.Column="1" Style="{StaticResource SubtitleTextStyle}"
+                                       TextAlignment="Right" VerticalAlignment="Center" />
+                            <CheckBox x:Name="TempEnabledCheck" Grid.Column="2" Foreground="{StaticResource TextPrimaryBrush}" />
+                        </Grid>
+                        <Slider x:Name="TempSlider" Minimum="0" Maximum="2" StepFrequency="0.05"
+                                Foreground="{StaticResource AccentPrimaryBrush}"
+                                ValueChanged="OnTempSliderChanged" />
+
+                        <!-- Top P -->
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="40" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="Top P" Style="{StaticResource SubtitleTextStyle}" VerticalAlignment="Center" />
+                            <TextBlock x:Name="TopPLabel" Grid.Column="1" Style="{StaticResource SubtitleTextStyle}"
+                                       TextAlignment="Right" VerticalAlignment="Center" />
+                            <CheckBox x:Name="TopPEnabledCheck" Grid.Column="2" Foreground="{StaticResource TextPrimaryBrush}" />
+                        </Grid>
+                        <Slider x:Name="TopPSlider" Minimum="0" Maximum="1" StepFrequency="0.01"
+                                Foreground="{StaticResource AccentPrimaryBrush}"
+                                ValueChanged="OnTopPSliderChanged" />
+
+                        <!-- Min P -->
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="40" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="Min P" Style="{StaticResource SubtitleTextStyle}" VerticalAlignment="Center" />
+                            <TextBlock x:Name="MinPLabel" Grid.Column="1" Style="{StaticResource SubtitleTextStyle}"
+                                       TextAlignment="Right" VerticalAlignment="Center" />
+                            <CheckBox x:Name="MinPEnabledCheck" Grid.Column="2" Foreground="{StaticResource TextPrimaryBrush}" />
+                        </Grid>
+                        <Slider x:Name="MinPSlider" Minimum="0" Maximum="1" StepFrequency="0.01"
+                                Foreground="{StaticResource AccentPrimaryBrush}"
+                                ValueChanged="OnMinPSliderChanged" />
+
+                        <!-- Top A -->
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="40" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="Top A" Style="{StaticResource SubtitleTextStyle}" VerticalAlignment="Center" />
+                            <TextBlock x:Name="TopALabel" Grid.Column="1" Style="{StaticResource SubtitleTextStyle}"
+                                       TextAlignment="Right" VerticalAlignment="Center" />
+                            <CheckBox x:Name="TopAEnabledCheck" Grid.Column="2" Foreground="{StaticResource TextPrimaryBrush}" />
+                        </Grid>
+                        <Slider x:Name="TopASlider" Minimum="0" Maximum="1" StepFrequency="0.01"
+                                Foreground="{StaticResource AccentPrimaryBrush}"
+                                ValueChanged="OnTopASliderChanged" />
+
+                        <!-- Top K -->
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="Top K" Style="{StaticResource SubtitleTextStyle}" VerticalAlignment="Center" />
+                            <CheckBox x:Name="TopKEnabledCheck" Grid.Column="1" Foreground="{StaticResource TextPrimaryBrush}" />
+                        </Grid>
+                        <TextBox x:Name="TopKBox" Style="{StaticResource DarkTextBoxStyle}" InputScope="Number"
+                                 PlaceholderText="0" />
+
+                        <!-- Max Response Length -->
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="Max Response Length" Style="{StaticResource SubtitleTextStyle}" VerticalAlignment="Center" />
+                            <CheckBox x:Name="MaxTokensEnabledCheck" Grid.Column="1" Foreground="{StaticResource TextPrimaryBrush}" />
+                        </Grid>
+                        <TextBox x:Name="MaxTokensBox" Style="{StaticResource DarkTextBoxStyle}" InputScope="Number"
+                                 PlaceholderText="500" />
+                    </controls:SpacedPanel>
+                </Border>
+
+                <!-- Penalties -->
+                <Border Background="{StaticResource BackgroundCardBrush}" CornerRadius="12"
+                        Padding="16,12" Margin="0,8,0,0">
+                    <controls:SpacedPanel Spacing="10">
+                        <TextBlock Text="Penalties" Foreground="{StaticResource TextPrimaryBrush}"
+                                   FontSize="13" FontWeight="SemiBold" />
+
+                        <!-- Frequency Penalty -->
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="40" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="Frequency Penalty" Style="{StaticResource SubtitleTextStyle}" VerticalAlignment="Center" />
+                            <TextBlock x:Name="FreqPenLabel" Grid.Column="1" Style="{StaticResource SubtitleTextStyle}"
+                                       TextAlignment="Right" VerticalAlignment="Center" />
+                            <CheckBox x:Name="FreqPenEnabledCheck" Grid.Column="2" Foreground="{StaticResource TextPrimaryBrush}" />
+                        </Grid>
+                        <Slider x:Name="FreqPenSlider" Minimum="0" Maximum="2" StepFrequency="0.01"
+                                Foreground="{StaticResource AccentPrimaryBrush}"
+                                ValueChanged="OnFreqPenSliderChanged" />
+
+                        <!-- Presence Penalty -->
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="40" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="Presence Penalty" Style="{StaticResource SubtitleTextStyle}" VerticalAlignment="Center" />
+                            <TextBlock x:Name="PresPenLabel" Grid.Column="1" Style="{StaticResource SubtitleTextStyle}"
+                                       TextAlignment="Right" VerticalAlignment="Center" />
+                            <CheckBox x:Name="PresPenEnabledCheck" Grid.Column="2" Foreground="{StaticResource TextPrimaryBrush}" />
+                        </Grid>
+                        <Slider x:Name="PresPenSlider" Minimum="0" Maximum="2" StepFrequency="0.01"
+                                Foreground="{StaticResource AccentPrimaryBrush}"
+                                ValueChanged="OnPresPenSliderChanged" />
+
+                        <!-- Repetition Penalty -->
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="40" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="Repetition Penalty" Style="{StaticResource SubtitleTextStyle}" VerticalAlignment="Center" />
+                            <TextBlock x:Name="RepPenLabel" Grid.Column="1" Style="{StaticResource SubtitleTextStyle}"
+                                       TextAlignment="Right" VerticalAlignment="Center" />
+                            <CheckBox x:Name="RepPenEnabledCheck" Grid.Column="2" Foreground="{StaticResource TextPrimaryBrush}" />
+                        </Grid>
+                        <Slider x:Name="RepPenSlider" Minimum="1" Maximum="2" StepFrequency="0.01"
+                                Foreground="{StaticResource AccentPrimaryBrush}"
+                                ValueChanged="OnRepPenSliderChanged" />
+                    </controls:SpacedPanel>
+                </Border>
+
+                <!-- Context & Misc -->
+                <Border Background="{StaticResource BackgroundCardBrush}" CornerRadius="12"
+                        Padding="16,12" Margin="0,8,0,0">
+                    <controls:SpacedPanel Spacing="10">
+                        <TextBlock Text="Context &amp; Misc" Foreground="{StaticResource TextPrimaryBrush}"
+                                   FontSize="13" FontWeight="SemiBold" />
+
+                        <!-- Context Size -->
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="Context Size (tokens)" Style="{StaticResource SubtitleTextStyle}" VerticalAlignment="Center" />
+                            <CheckBox x:Name="ContextSizeEnabledCheck" Grid.Column="1" Foreground="{StaticResource TextPrimaryBrush}" />
+                        </Grid>
+                        <TextBox x:Name="ContextSizeBox" Style="{StaticResource DarkTextBoxStyle}" InputScope="Number"
+                                 PlaceholderText="4096" />
+
+                        <!-- Seed -->
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="Seed (-1 = random)" Style="{StaticResource SubtitleTextStyle}" VerticalAlignment="Center" />
+                            <CheckBox x:Name="SeedEnabledCheck" Grid.Column="1" Foreground="{StaticResource TextPrimaryBrush}" />
+                        </Grid>
+                        <TextBox x:Name="SeedBox" Style="{StaticResource DarkTextBoxStyle}"
+                                 PlaceholderText="-1" />
+                    </controls:SpacedPanel>
+                </Border>
+
+                <!-- Prompt Order -->
+                <Border Background="{StaticResource BackgroundCardBrush}" CornerRadius="12"
+                        Padding="16,12" Margin="0,8,0,0">
+                    <controls:SpacedPanel Spacing="8">
+                        <TextBlock Text="Prompt Order" Foreground="{StaticResource TextPrimaryBrush}"
+                                   FontSize="13" FontWeight="SemiBold" />
+                        <TextBlock Text="Control which blocks are included and their order. Tap the arrow on a content block to edit its text."
+                                   Style="{StaticResource SubtitleTextStyle}" FontSize="11" TextWrapping="Wrap" />
+
+                        <ItemsControl x:Name="PromptOrderList">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Margin="0,2" CornerRadius="8" Padding="10,8"
+                                            Background="{StaticResource BackgroundSurfaceBrush}">
+                                        <StackPanel>
+                                            <!-- Main row -->
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+
+                                                <CheckBox Grid.Column="0"
+                                                          IsChecked="{Binding Enabled, Mode=TwoWay}"
+                                                          VerticalAlignment="Center"
+                                                          Foreground="{StaticResource TextPrimaryBrush}" />
+
+                                                <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="4,0">
+                                                    <TextBlock Text="{Binding Label}"
+                                                               Foreground="{StaticResource TextPrimaryBrush}"
+                                                               FontSize="13" FontWeight="SemiBold" />
+                                                    <TextBlock Text="{Binding Subtitle}"
+                                                               Style="{StaticResource SubtitleTextStyle}"
+                                                               FontSize="11" />
+                                                </StackPanel>
+
+                                                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                                                    <Button Tag="{Binding}" Click="OnMoveUpClick"
+                                                            Background="Transparent" BorderThickness="0" Padding="6,4"
+                                                            Foreground="{StaticResource TextSecondaryBrush}">
+                                                        <TextBlock Text="&#xE74A;" FontFamily="Segoe MDL2 Assets" FontSize="12" />
+                                                    </Button>
+                                                    <Button Tag="{Binding}" Click="OnMoveDownClick"
+                                                            Background="Transparent" BorderThickness="0" Padding="6,4"
+                                                            Foreground="{StaticResource TextSecondaryBrush}">
+                                                        <TextBlock Text="&#xE74B;" FontFamily="Segoe MDL2 Assets" FontSize="12" />
+                                                    </Button>
+                                                    <Button Tag="{Binding}" Click="OnDeleteItemClick"
+                                                            Background="Transparent" BorderThickness="0" Padding="6,4"
+                                                            Foreground="#FFE74C3C"
+                                                            Visibility="{Binding IsCustom, Converter={StaticResource BoolToVisibilityConverter}}">
+                                                        <TextBlock Text="&#xE74D;" FontFamily="Segoe MDL2 Assets" FontSize="12" />
+                                                    </Button>
+                                                    <Button Tag="{Binding}" Click="OnExpandItemClick"
+                                                            Background="Transparent" BorderThickness="0" Padding="6,4"
+                                                            Foreground="{StaticResource AccentPrimaryBrush}"
+                                                            Visibility="{Binding IsEditable, Converter={StaticResource BoolToVisibilityConverter}}">
+                                                        <Grid>
+                                                            <TextBlock Text="&#xE70E;" FontFamily="Segoe MDL2 Assets" FontSize="12"
+                                                                       Visibility="{Binding IsExpanded, Converter={StaticResource BoolToVisibilityConverter}}" />
+                                                            <TextBlock Text="&#xE70D;" FontFamily="Segoe MDL2 Assets" FontSize="12"
+                                                                       Visibility="{Binding IsExpanded, Converter={StaticResource InverseBoolToVisibilityConverter}}" />
+                                                        </Grid>
+                                                    </Button>
+                                                </StackPanel>
+                                            </Grid>
+
+                                            <!-- Expanded editor -->
+                                            <StackPanel Margin="0,8,0,0"
+                                                        Visibility="{Binding IsExpanded, Converter={StaticResource BoolToVisibilityConverter}}">
+                                                <TextBlock Text="Role" Style="{StaticResource SubtitleTextStyle}"
+                                                           FontSize="11" Margin="0,0,0,4" />
+                                                <ComboBox SelectedIndex="{Binding RoleIndex, Mode=TwoWay}"
+                                                          HorizontalAlignment="Stretch" Margin="0,0,0,8"
+                                                          Background="{StaticResource BackgroundDeepBrush}"
+                                                          Foreground="{StaticResource TextPrimaryBrush}">
+                                                    <ComboBoxItem Content="system" />
+                                                    <ComboBoxItem Content="user" />
+                                                    <ComboBoxItem Content="assistant" />
+                                                </ComboBox>
+
+                                                <TextBlock Text="Injection" Style="{StaticResource SubtitleTextStyle}"
+                                                           FontSize="11" Margin="0,0,0,4" />
+                                                <ComboBox SelectedIndex="{Binding InjectionPosition, Mode=TwoWay}"
+                                                          HorizontalAlignment="Stretch" Margin="0,0,0,8"
+                                                          Background="{StaticResource BackgroundDeepBrush}"
+                                                          Foreground="{StaticResource TextPrimaryBrush}">
+                                                    <ComboBoxItem Content="In order" />
+                                                    <ComboBoxItem Content="In-chat depth" />
+                                                </ComboBox>
+
+                                                <StackPanel Visibility="{Binding IsDepthInjected, Converter={StaticResource BoolToVisibilityConverter}}"
+                                                            Margin="0,0,0,8">
+                                                    <TextBlock Text="Depth (messages from bottom)"
+                                                               Style="{StaticResource SubtitleTextStyle}"
+                                                               FontSize="11" Margin="0,0,0,4" />
+                                                    <TextBox Text="{Binding InjectionDepthText, Mode=TwoWay}"
+                                                             InputScope="Number" Style="{StaticResource DarkTextBoxStyle}" />
+                                                </StackPanel>
+
+                                                <TextBlock Text="Content" Style="{StaticResource SubtitleTextStyle}"
+                                                           FontSize="11" Margin="0,0,0,4" />
+                                                <TextBox Text="{Binding Content, Mode=TwoWay}"
+                                                         AcceptsReturn="True" Height="80"
+                                                         Style="{StaticResource DarkTextBoxStyle}"
+                                                         PlaceholderText="Enter prompt text. Use {{user}}, {{char}} macros." />
+                                            </StackPanel>
+                                        </StackPanel>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+
+                        <!-- Add custom prompt -->
+                        <Button HorizontalAlignment="Stretch" Click="OnAddCustomPromptClick"
+                                Background="Transparent"
+                                BorderBrush="{StaticResource AccentPrimaryBrush}" BorderThickness="1"
+                                Foreground="{StaticResource AccentPrimaryBrush}"
+                                Padding="0,10">
+                            <controls:SpacedPanel Orientation="Horizontal" Spacing="6"
+                                                  HorizontalAlignment="Center">
+                                <TextBlock Text="&#xE710;" FontFamily="Segoe MDL2 Assets" FontSize="14"
+                                           VerticalAlignment="Center" />
+                                <TextBlock Text="Add Custom Prompt" FontSize="13" VerticalAlignment="Center" />
+                            </controls:SpacedPanel>
+                        </Button>
+                    </controls:SpacedPanel>
+                </Border>
+
+                <!-- Save / Delete row -->
+                <Grid Margin="0,8,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="8" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Button Grid.Column="0" HorizontalAlignment="Stretch"
+                            Background="Transparent"
+                            BorderBrush="{StaticResource AccentPrimaryBrush}" BorderThickness="1"
+                            Foreground="{StaticResource AccentPrimaryBrush}"
+                            Padding="0,12" Click="OnSaveClick">
+                        <TextBlock Text="Save Preset" FontSize="13" />
+                    </Button>
+                    <Button Grid.Column="2" HorizontalAlignment="Stretch"
+                            Background="Transparent"
+                            BorderBrush="#FFE74C3C" BorderThickness="1"
+                            Foreground="#FFE74C3C"
+                            Padding="0,12" Click="OnDeleteClick">
+                        <TextBlock Text="Delete" FontSize="13" />
+                    </Button>
+                </Grid>
+
+                <Border Height="24" />
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</Page>

@@ -1,0 +1,160 @@
+<Page
+    x:Class="PocketTavern.UWP.Views.ContextSettingsPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:PocketTavern.UWP.Controls"
+    Background="{StaticResource BackgroundDeepBrush}">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Grid Grid.Row="0" Background="{StaticResource BackgroundSurfaceBrush}" Padding="4,8">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="48" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <Button Grid.Column="0" Background="Transparent" BorderThickness="0"
+                    Foreground="{StaticResource TextPrimaryBrush}" Click="OnBackClick"
+                    HorizontalAlignment="Center" VerticalAlignment="Center">
+                <TextBlock Text="&#xE72B;" FontFamily="Segoe MDL2 Assets" FontSize="18" />
+            </Button>
+            <TextBlock Grid.Column="1" Text="Context Settings" Style="{StaticResource TitleTextStyle}"
+                       VerticalAlignment="Center" Margin="4,0" />
+            <Button Grid.Column="2" Style="{StaticResource AccentButtonStyle}"
+                    Margin="0,0,8,0" Click="OnSaveClick">
+                <controls:SpacedPanel Orientation="Horizontal" Spacing="6">
+                    <TextBlock Text="&#xE74E;" FontFamily="Segoe MDL2 Assets" FontSize="14" VerticalAlignment="Center" />
+                    <TextBlock Text="Save" VerticalAlignment="Center" />
+                </controls:SpacedPanel>
+            </Button>
+        </Grid>
+
+        <ScrollViewer Grid.Row="1" Padding="16">
+            <StackPanel>
+
+                <!-- Author's Note section -->
+                <Border Background="{StaticResource BackgroundCardBrush}" CornerRadius="12"
+                        Padding="16,12" Margin="0,8,0,0">
+                    <controls:SpacedPanel Spacing="8">
+
+                        <!-- Section header -->
+                        <controls:SpacedPanel Orientation="Horizontal" Spacing="8">
+                            <TextBlock Text="&#xE8D2;" FontFamily="Segoe MDL2 Assets" FontSize="16"
+                                       Foreground="{StaticResource AccentPrimaryBrush}"
+                                       VerticalAlignment="Center" />
+                            <TextBlock Text="AUTHOR'S NOTE" FontSize="14" FontWeight="Bold"
+                                       Foreground="{StaticResource AccentPrimaryBrush}"
+                                       VerticalAlignment="Center" />
+                        </controls:SpacedPanel>
+
+                        <TextBlock Text="A note injected into the context to guide the AI's response style or focus."
+                                   Style="{StaticResource SubtitleTextStyle}" TextWrapping="Wrap" />
+
+                        <TextBlock Text="Content" Style="{StaticResource SubtitleTextStyle}" Margin="0,4,0,2" />
+                        <TextBox x:Name="AuthorsNoteBox" Style="{StaticResource DarkTextBoxStyle}"
+                                 PlaceholderText="[Style: vivid, detailed]&#10;[Focus: character emotions]"
+                                 AcceptsReturn="True" Height="100" />
+
+                        <TextBlock Text="Position" Style="{StaticResource SubtitleTextStyle}" Margin="0,4,0,2" />
+                        <ComboBox x:Name="NotePositionCombo" HorizontalAlignment="Stretch"
+                                  Background="{StaticResource BackgroundSurfaceBrush}"
+                                  Foreground="{StaticResource TextPrimaryBrush}"
+                                  SelectionChanged="OnNotePositionChanged">
+                            <ComboBoxItem Content="After Scenario" />
+                            <ComboBoxItem Content="In-Chat @ Depth" />
+                            <ComboBoxItem Content="Before Scenario" />
+                        </ComboBox>
+
+                        <!-- Depth — only visible when In-Chat @ Depth -->
+                        <StackPanel x:Name="NoteDepthRow" Visibility="Collapsed">
+                            <TextBlock Text="Depth (messages from bottom)"
+                                       Style="{StaticResource SubtitleTextStyle}" Margin="0,4,0,2" />
+                            <TextBox x:Name="NoteDepthBox" Style="{StaticResource DarkTextBoxStyle}"
+                                     InputScope="Number" PlaceholderText="4" />
+                        </StackPanel>
+
+                        <!-- Interval row -->
+                        <controls:SpacedPanel Orientation="Horizontal" Spacing="12" Margin="0,4,0,0">
+                            <TextBlock Text="Interval:" Style="{StaticResource SubtitleTextStyle}"
+                                       VerticalAlignment="Center" />
+                            <TextBox x:Name="NoteIntervalBox" Style="{StaticResource DarkTextBoxStyle}"
+                                     Width="80" InputScope="Number" PlaceholderText="1" />
+                            <TextBlock x:Name="NoteIntervalHint" Text="every message"
+                                       Style="{StaticResource SubtitleTextStyle}"
+                                       VerticalAlignment="Center" />
+                        </controls:SpacedPanel>
+
+                        <TextBlock Text="Role" Style="{StaticResource SubtitleTextStyle}" Margin="0,4,0,2" />
+                        <ComboBox x:Name="NoteRoleCombo" HorizontalAlignment="Stretch"
+                                  Background="{StaticResource BackgroundSurfaceBrush}"
+                                  Foreground="{StaticResource TextPrimaryBrush}">
+                            <ComboBoxItem Content="System" />
+                            <ComboBoxItem Content="User" />
+                            <ComboBoxItem Content="Assistant" />
+                        </ComboBox>
+
+                    </controls:SpacedPanel>
+                </Border>
+
+                <!-- Divider -->
+                <Rectangle Height="1" Fill="{StaticResource BackgroundCardBrush}" Margin="0,12" />
+
+                <!-- Auto-Continue section -->
+                <Border Background="{StaticResource BackgroundCardBrush}" CornerRadius="12"
+                        Padding="16,12" Margin="0,0,0,0">
+                    <controls:SpacedPanel Spacing="8">
+
+                        <!-- Section header -->
+                        <controls:SpacedPanel Orientation="Horizontal" Spacing="8">
+                            <TextBlock Text="&#xE72C;" FontFamily="Segoe MDL2 Assets" FontSize="16"
+                                       Foreground="{StaticResource AccentPrimaryBrush}"
+                                       VerticalAlignment="Center" />
+                            <TextBlock Text="AUTO-CONTINUE" FontSize="14" FontWeight="Bold"
+                                       Foreground="{StaticResource AccentPrimaryBrush}"
+                                       VerticalAlignment="Center" />
+                        </controls:SpacedPanel>
+
+                        <TextBlock Text="Automatically request more when the AI stops before the minimum response length."
+                                   Style="{StaticResource SubtitleTextStyle}" TextWrapping="Wrap" />
+
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="Enable Auto-Continue"
+                                       Foreground="{StaticResource TextPrimaryBrush}"
+                                       FontSize="14" VerticalAlignment="Center" />
+                            <ToggleSwitch Grid.Column="1" x:Name="AutoContinueToggle"
+                                         Toggled="OnAutoContinueToggled"
+                                         OnContent="" OffContent="" Margin="0" />
+                        </Grid>
+
+                        <StackPanel x:Name="AutoContinueMinLengthRow" Visibility="Collapsed">
+                            <controls:SpacedPanel Orientation="Horizontal" Spacing="12">
+                                <TextBlock Text="Min length:" Style="{StaticResource SubtitleTextStyle}"
+                                           VerticalAlignment="Center" />
+                                <TextBox x:Name="AutoContinueMinLengthBox"
+                                         Style="{StaticResource DarkTextBoxStyle}"
+                                         Width="100" InputScope="Number" PlaceholderText="200" />
+                                <TextBlock Text="tokens" Style="{StaticResource SubtitleTextStyle}"
+                                           VerticalAlignment="Center" />
+                            </controls:SpacedPanel>
+                            <TextBlock Text="Max 3 auto-continues per message."
+                                       Style="{StaticResource SubtitleTextStyle}"
+                                       FontSize="11" Margin="0,4,0,0" />
+                        </StackPanel>
+
+                    </controls:SpacedPanel>
+                </Border>
+
+                <Border Height="24" />
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</Page>

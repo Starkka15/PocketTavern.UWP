@@ -1,0 +1,173 @@
+<Page
+    x:Class="PocketTavern.UWP.Views.CharacterSettingsPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:PocketTavern.UWP.Controls"
+    Background="{StaticResource BackgroundDeepBrush}">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Grid Grid.Row="0" Background="{StaticResource BackgroundSurfaceBrush}" Padding="4,8">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="48" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <Button Grid.Column="0" Background="Transparent" BorderThickness="0"
+                    Foreground="{StaticResource TextPrimaryBrush}" Click="OnBackClick"
+                    HorizontalAlignment="Center" VerticalAlignment="Center">
+                <TextBlock Text="&#xE72B;" FontFamily="Segoe MDL2 Assets" FontSize="18" />
+            </Button>
+            <TextBlock Grid.Column="1" Text="Character Settings" Style="{StaticResource TitleTextStyle}"
+                       VerticalAlignment="Center" Margin="4,0" />
+            <Button Grid.Column="2" Style="{StaticResource AccentButtonStyle}"
+                    Margin="0,0,8,0" Click="OnSaveClick">
+                <controls:SpacedPanel Orientation="Horizontal" Spacing="6">
+                    <TextBlock Text="&#xE74E;" FontFamily="Segoe MDL2 Assets" FontSize="14" VerticalAlignment="Center" />
+                    <TextBlock Text="Save" VerticalAlignment="Center" />
+                </controls:SpacedPanel>
+            </Button>
+        </Grid>
+
+        <ScrollViewer Grid.Row="1" Padding="16">
+            <controls:SpacedPanel Spacing="4">
+
+                <TextBlock Text="Name" Style="{StaticResource SubtitleTextStyle}" Margin="0,8,0,4" />
+                <TextBox x:Name="NameBox" Style="{StaticResource DarkTextBoxStyle}" />
+
+                <TextBlock Text="Description" Style="{StaticResource SubtitleTextStyle}" Margin="0,12,0,4" />
+                <TextBox x:Name="DescBox" Style="{StaticResource DarkTextBoxStyle}"
+                         AcceptsReturn="True" Height="80" />
+
+                <TextBlock Text="Personality" Style="{StaticResource SubtitleTextStyle}" Margin="0,12,0,4" />
+                <TextBox x:Name="PersonalityBox" Style="{StaticResource DarkTextBoxStyle}"
+                         AcceptsReturn="True" Height="60" />
+
+                <TextBlock Text="Scenario" Style="{StaticResource SubtitleTextStyle}" Margin="0,12,0,4" />
+                <TextBox x:Name="ScenarioBox" Style="{StaticResource DarkTextBoxStyle}"
+                         AcceptsReturn="True" Height="60" />
+
+                <TextBlock Text="First Message" Style="{StaticResource SubtitleTextStyle}" Margin="0,12,0,4" />
+                <TextBox x:Name="FirstMsgBox" Style="{StaticResource DarkTextBoxStyle}"
+                         AcceptsReturn="True" Height="80" />
+
+                <TextBlock Text="System Prompt" Style="{StaticResource SubtitleTextStyle}" Margin="0,12,0,4" />
+                <TextBox x:Name="SysPromptBox" Style="{StaticResource DarkTextBoxStyle}"
+                         AcceptsReturn="True" Height="60" />
+
+                <TextBlock Text="Message Example" Style="{StaticResource SubtitleTextStyle}" Margin="0,12,0,4" />
+                <TextBox x:Name="MsgExampleBox" Style="{StaticResource DarkTextBoxStyle}"
+                         AcceptsReturn="True" Height="80"
+                         PlaceholderText="&lt;START&gt;&#x0A;{{user}}: Hello&#x0A;{{char}}: Hi!" />
+
+                <TextBlock Text="Post-History Instructions" Style="{StaticResource SubtitleTextStyle}" Margin="0,12,0,4" />
+                <TextBox x:Name="PostHistoryBox" Style="{StaticResource DarkTextBoxStyle}"
+                         AcceptsReturn="True" Height="60"
+                         PlaceholderText="Instructions injected after chat history" />
+
+                <TextBlock Text="Tags (comma-separated)" Style="{StaticResource SubtitleTextStyle}" Margin="0,12,0,4" />
+                <TextBox x:Name="TagsBox" Style="{StaticResource DarkTextBoxStyle}" />
+
+                <!-- Depth Prompt (Author's Note) -->
+                <Border Margin="0,16,0,0" Background="{StaticResource BackgroundCardBrush}"
+                        CornerRadius="12" Padding="16,12">
+                    <controls:SpacedPanel Spacing="8">
+                        <TextBlock Text="Depth Prompt (Author's Note)"
+                                   Foreground="{StaticResource TextPrimaryBrush}"
+                                   FontSize="14" FontWeight="SemiBold" />
+                        <TextBox x:Name="DepthPromptBox" Style="{StaticResource DarkTextBoxStyle}"
+                                 AcceptsReturn="True" Height="60"
+                                 PlaceholderText="Injected at a fixed depth into context" />
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <controls:SpacedPanel Spacing="4">
+                                <TextBlock Text="Depth" Style="{StaticResource SubtitleTextStyle}" />
+                                <TextBox x:Name="DepthBox" Style="{StaticResource DarkTextBoxStyle}"
+                                         InputScope="Number" PlaceholderText="4" />
+                            </controls:SpacedPanel>
+                            <controls:SpacedPanel Grid.Column="1" Spacing="4" Margin="8,0,0,0">
+                                <TextBlock Text="Role" Style="{StaticResource SubtitleTextStyle}" />
+                                <ComboBox x:Name="DepthRoleCombo" HorizontalAlignment="Stretch"
+                                          Background="{StaticResource BackgroundSurfaceBrush}"
+                                          Foreground="{StaticResource TextPrimaryBrush}">
+                                    <ComboBoxItem Content="system" />
+                                    <ComboBoxItem Content="user" />
+                                    <ComboBoxItem Content="assistant" />
+                                </ComboBox>
+                            </controls:SpacedPanel>
+                        </Grid>
+                    </controls:SpacedPanel>
+                </Border>
+
+                <!-- Talkativeness -->
+                <Border Margin="0,8,0,0" Background="{StaticResource BackgroundCardBrush}"
+                        CornerRadius="12" Padding="16,12">
+                    <controls:SpacedPanel Spacing="8">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel VerticalAlignment="Center">
+                                <TextBlock Text="Talkativeness" Foreground="{StaticResource TextPrimaryBrush}"
+                                           FontSize="14" FontWeight="SemiBold" />
+                                <TextBlock Text="How often this character speaks in group chats"
+                                           Style="{StaticResource SubtitleTextStyle}" Margin="0,2,0,0" />
+                            </StackPanel>
+                            <TextBlock x:Name="TalkLabel" Grid.Column="1"
+                                       Style="{StaticResource SubtitleTextStyle}"
+                                       Foreground="{StaticResource AccentPrimaryBrush}"
+                                       VerticalAlignment="Center" />
+                        </Grid>
+                        <Slider x:Name="TalkSlider" Minimum="0" Maximum="1" StepFrequency="0.05"
+                                Foreground="{StaticResource AccentPrimaryBrush}"
+                                ValueChanged="OnTalkSliderChanged" />
+                    </controls:SpacedPanel>
+                </Border>
+
+                <!-- Favorite toggle -->
+                <Border Margin="0,16,0,0" Background="{StaticResource BackgroundCardBrush}"
+                        CornerRadius="12" Padding="16,12">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock Text="Favorite" Foreground="{StaticResource TextPrimaryBrush}"
+                                       FontSize="15" FontWeight="SemiBold" />
+                            <TextBlock Text="Pin this character to top"
+                                       Style="{StaticResource SubtitleTextStyle}" Margin="0,2,0,0" />
+                        </StackPanel>
+                        <CheckBox x:Name="FavoriteCheck" Grid.Column="1"
+                                  Foreground="{StaticResource TextPrimaryBrush}" />
+                    </Grid>
+                </Border>
+
+                <!-- Delete button -->
+                <Button HorizontalAlignment="Stretch" Margin="0,12,0,0"
+                        Background="Transparent" BorderThickness="0"
+                        Padding="0" Click="OnDeleteClick">
+                    <Border Background="#33E94560" CornerRadius="12" Padding="16,12">
+                        <controls:SpacedPanel Orientation="Horizontal" Spacing="10" HorizontalAlignment="Center">
+                            <TextBlock Text="&#xE74D;" FontFamily="Segoe MDL2 Assets" FontSize="16"
+                                       Foreground="{StaticResource AccentPrimaryBrush}" VerticalAlignment="Center" />
+                            <TextBlock Text="Delete Character" Foreground="{StaticResource AccentPrimaryBrush}"
+                                       FontSize="15" FontWeight="SemiBold" VerticalAlignment="Center" />
+                        </controls:SpacedPanel>
+                    </Border>
+                </Button>
+
+                <Border Height="24" />
+            </controls:SpacedPanel>
+        </ScrollViewer>
+    </Grid>
+</Page>

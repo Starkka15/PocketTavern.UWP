@@ -1,0 +1,87 @@
+<Application
+    x:Class="PocketTavern.UWP.App"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:PocketTavern.UWP.Converters">
+    <Application.Resources>
+
+        <!-- Converters -->
+        <local:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
+        <local:InverseBoolToVisibilityConverter x:Key="InverseBoolToVisibilityConverter" />
+
+        <!--
+            Default color palette — matches Android PocketTavern base theme.
+            ThemeManager.ApplyToResources() mutates the brush Color properties at
+            runtime when the user switches themes; all pages consume these by name
+            so the change propagates automatically.
+        -->
+
+        <!-- Background scale: deep → surface → card (darkest → lightest) -->
+        <SolidColorBrush x:Key="BackgroundDeepBrush"    Color="#0A0A0F" />
+        <SolidColorBrush x:Key="BackgroundSurfaceBrush" Color="#12121A" />
+        <SolidColorBrush x:Key="BackgroundCardBrush"    Color="#1A1A25" />
+
+        <!-- Accent -->
+        <SolidColorBrush x:Key="AccentPrimaryBrush"   Color="#FF6B00" />  <!-- orange — fire -->
+        <SolidColorBrush x:Key="AccentSecondaryBrush" Color="#00BFFF" />  <!-- cyan  — ice  -->
+
+        <!-- Text -->
+        <SolidColorBrush x:Key="TextPrimaryBrush"   Color="#EEEEEE" />
+        <SolidColorBrush x:Key="TextSecondaryBrush" Color="#888888" />
+
+        <!-- Chat bubbles -->
+        <SolidColorBrush x:Key="UserBubbleBrush" Color="#2A1200" />
+        <SolidColorBrush x:Key="AiBubbleBrush"   Color="#0A0F1A" />
+
+        <!-- ═══════════════════════════════════════════════════════════════════
+             Shared control styles
+             ════════════════════════════════════════════════════════════════ -->
+
+        <!-- Invisible list item container (used by message list, character list, etc.) -->
+        <Style x:Key="MessageListItemStyle" TargetType="ListViewItem">
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Padding" Value="0" />
+        </Style>
+
+        <!-- Body text -->
+        <Style x:Key="BodyTextStyle" TargetType="TextBlock">
+            <Setter Property="Foreground"    Value="{StaticResource TextPrimaryBrush}" />
+            <Setter Property="FontSize"      Value="15" />
+            <Setter Property="TextWrapping"  Value="Wrap" />
+        </Style>
+
+        <!-- Caption / subtitle -->
+        <Style x:Key="SubtitleTextStyle" TargetType="TextBlock">
+            <Setter Property="Foreground"   Value="{StaticResource TextSecondaryBrush}" />
+            <Setter Property="FontSize"     Value="12" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+        </Style>
+
+        <!-- Page / section title -->
+        <Style x:Key="TitleTextStyle" TargetType="TextBlock">
+            <Setter Property="Foreground"  Value="{StaticResource TextPrimaryBrush}" />
+            <Setter Property="FontSize"    Value="20" />
+            <Setter Property="FontWeight"  Value="SemiBold" />
+        </Style>
+
+        <!-- Accent action button -->
+        <Style x:Key="AccentButtonStyle" TargetType="Button">
+            <Setter Property="Background"       Value="{StaticResource AccentPrimaryBrush}" />
+            <Setter Property="Foreground"       Value="White" />
+            <Setter Property="BorderThickness"  Value="0" />
+            <Setter Property="Padding"          Value="16,8" />
+            <Setter Property="FontSize"         Value="14" />
+        </Style>
+
+        <!-- Dark input box -->
+        <Style x:Key="DarkTextBoxStyle" TargetType="TextBox">
+            <Setter Property="Background"      Value="{StaticResource BackgroundCardBrush}" />
+            <Setter Property="Foreground"      Value="{StaticResource TextPrimaryBrush}" />
+            <Setter Property="BorderBrush"     Value="{StaticResource AccentPrimaryBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Padding"         Value="10,6" />
+        </Style>
+
+    </Application.Resources>
+</Application>

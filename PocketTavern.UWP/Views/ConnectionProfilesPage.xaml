@@ -1,0 +1,88 @@
+<Page
+    x:Class="PocketTavern.UWP.Views.ConnectionProfilesPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Background="{StaticResource BackgroundDeepBrush}">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Grid Grid.Row="0" Background="{StaticResource BackgroundSurfaceBrush}" Padding="4,8">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="48" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <Button Grid.Column="0" Background="Transparent" BorderThickness="0"
+                    Foreground="{StaticResource TextPrimaryBrush}" Click="OnBackClick"
+                    HorizontalAlignment="Center" VerticalAlignment="Center">
+                <TextBlock Text="&#xE72B;" FontFamily="Segoe MDL2 Assets" FontSize="18" />
+            </Button>
+            <TextBlock Grid.Column="1" Text="Connection Profiles" Style="{StaticResource TitleTextStyle}"
+                       VerticalAlignment="Center" Margin="4,0" />
+            <Button Grid.Column="2" Margin="0,0,8,0" Background="Transparent" BorderThickness="0"
+                    Foreground="{StaticResource AccentPrimaryBrush}" Click="OnAddClick"
+                    ToolTipService.ToolTip="Add profile">
+                <TextBlock Text="&#xE710;" FontFamily="Segoe MDL2 Assets" FontSize="20" />
+            </Button>
+        </Grid>
+
+        <!-- Profiles list -->
+        <ListView Grid.Row="1" x:Name="ProfilesList"
+                  SelectionMode="None" IsItemClickEnabled="True"
+                  ItemClick="OnProfileClicked"
+                  Background="Transparent" Padding="0,4,0,4">
+            <ListView.ItemContainerStyle>
+                <Style TargetType="ListViewItem">
+                    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                    <Setter Property="Padding" Value="0" />
+                </Style>
+            </ListView.ItemContainerStyle>
+            <ListView.ItemTemplate>
+                <DataTemplate>
+                    <Grid Padding="16,12" Background="Transparent">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="48" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <Border Width="40" Height="40" CornerRadius="20"
+                                Background="#33E94560">
+                            <TextBlock Text="&#xE704;" FontFamily="Segoe MDL2 Assets" FontSize="18"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center"
+                                       Foreground="{StaticResource AccentPrimaryBrush}" />
+                        </Border>
+
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="10,0">
+                            <TextBlock Text="{Binding Name}"
+                                       Foreground="{StaticResource TextPrimaryBrush}"
+                                       FontSize="15" FontWeight="SemiBold" />
+                            <TextBlock Text="{Binding ApiLabel}"
+                                       Style="{StaticResource SubtitleTextStyle}"
+                                       Margin="0,2,0,0" />
+                        </StackPanel>
+
+                        <Button Grid.Column="2" VerticalAlignment="Center"
+                                Style="{StaticResource AccentButtonStyle}"
+                                Tag="{Binding}" Click="OnActivateClick"
+                                Padding="12,6" FontSize="13">
+                            Activate
+                        </Button>
+                    </Grid>
+                </DataTemplate>
+            </ListView.ItemTemplate>
+        </ListView>
+
+        <!-- Active connection status -->
+        <Border Grid.Row="2" Background="{StaticResource BackgroundSurfaceBrush}" Padding="16,10">
+            <TextBlock x:Name="ActiveLabel" Style="{StaticResource SubtitleTextStyle}"
+                       HorizontalAlignment="Center" />
+        </Border>
+    </Grid>
+</Page>
