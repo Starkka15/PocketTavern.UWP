@@ -57,7 +57,6 @@ Targets Windows 10 SDK 10.0.16299.0 (Fall Creators Update) with ARM support for 
 
 ### Platform limitations
 
-- Animated GIF backgrounds show only the first frame (UWP `BitmapImage` limitation)
 - `RadialGradientBrush` not available below Windows 10 1903 — icon glows are simulated with stacked ellipses
 
 ---
