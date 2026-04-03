@@ -172,10 +172,12 @@ namespace PocketTavern.UWP.Data
                 foreach (var entry in zip.Entries)
                 {
                     if (entry.Length == 0) continue;
-                    using var ms = new MemoryStream();
-                    using var es = entry.Open();
-                    await es.CopyToAsync(ms);
-                    entries[entry.FullName.Replace('\\', '/')] = ms.ToArray();
+                    using (var ms = new MemoryStream())
+                    using (var es = entry.Open())
+                    {
+                        await es.CopyToAsync(ms);
+                        entries[entry.FullName.Replace('\\', '/')] = ms.ToArray();
+                    }
                 }
             }
 

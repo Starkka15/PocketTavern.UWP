@@ -18,6 +18,14 @@ namespace PocketTavern.UWP.Views
         }
 
         private void OnBackClick(object sender, RoutedEventArgs e) => App.Navigation.GoBack();
+
+        private async void OnRefreshClick(object sender, RoutedEventArgs e)
+        {
+            await _vm.LoadAsync();
+            ChatsList.ItemsSource = null;
+            ChatsList.ItemsSource = _vm.Chats;
+        }
+
         private void OnChatClicked(object sender, ItemClickEventArgs e)
         {
             if (e.ClickedItem is RecentChatItem item) _vm.OpenChat(item);

@@ -16,6 +16,7 @@
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="48" />
                 <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="44" />
             </Grid.ColumnDefinitions>
             <Button Grid.Column="0" Background="Transparent" BorderThickness="0"
                     Foreground="{StaticResource TextPrimaryBrush}" Click="OnBackClick"
@@ -24,6 +25,11 @@
             </Button>
             <TextBlock Grid.Column="1" Text="Recent Chats" Style="{StaticResource TitleTextStyle}"
                        VerticalAlignment="Center" Margin="4,0" />
+            <Button Grid.Column="2" Background="Transparent" BorderThickness="0"
+                    Foreground="{StaticResource TextSecondaryBrush}" Click="OnRefreshClick"
+                    HorizontalAlignment="Center" VerticalAlignment="Center">
+                <TextBlock Text="&#xE72C;" FontFamily="Segoe MDL2 Assets" FontSize="18" />
+            </Button>
         </Grid>
 
         <!-- Empty state -->

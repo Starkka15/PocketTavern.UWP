@@ -2,6 +2,7 @@
     x:Class="PocketTavern.UWP.Views.ExtensionsPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:PocketTavern.UWP.Controls"
     Background="{StaticResource BackgroundDeepBrush}">
 
     <Grid>
@@ -61,11 +62,11 @@
                         <Button HorizontalAlignment="Right" Background="Transparent"
                                 BorderThickness="0" Foreground="{StaticResource AccentPrimaryBrush}"
                                 Click="OnQuickReplySettingsClick" Padding="0">
-                            <StackPanel Orientation="Horizontal" Spacing="4">
+                            <controls:SpacedPanel Orientation="Horizontal" Spacing="4">
                                 <TextBlock Text="Settings" FontSize="13" />
                                 <TextBlock Text="&#xE76C;" FontFamily="Segoe MDL2 Assets" FontSize="13"
                                            VerticalAlignment="Center" />
-                            </StackPanel>
+                            </controls:SpacedPanel>
                         </Button>
                     </StackPanel>
                 </Border>
@@ -97,11 +98,11 @@
                         <Button HorizontalAlignment="Right" Background="Transparent"
                                 BorderThickness="0" Foreground="{StaticResource AccentPrimaryBrush}"
                                 Click="OnRegexSettingsClick" Padding="0">
-                            <StackPanel Orientation="Horizontal" Spacing="4">
+                            <controls:SpacedPanel Orientation="Horizontal" Spacing="4">
                                 <TextBlock Text="Settings" FontSize="13" />
                                 <TextBlock Text="&#xE76C;" FontFamily="Segoe MDL2 Assets" FontSize="13"
                                            VerticalAlignment="Center" />
-                            </StackPanel>
+                            </controls:SpacedPanel>
                         </Button>
                     </StackPanel>
                 </Border>

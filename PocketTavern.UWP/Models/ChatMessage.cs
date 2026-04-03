@@ -32,6 +32,51 @@ namespace PocketTavern.UWP.Models
         public string RawContent { get; set; }
         public List<MessageHeaderEntry> ExtensionHeaders { get; set; } = new List<MessageHeaderEntry>();
         public string ImagePath { get; set; }
+        public List<string> Alternates { get; set; } = new List<string>();
+        public int CurrentSwipeIndex { get; set; } = 0;
+
+        public int SwipeCount => Alternates?.Count ?? 0;
+        public bool HasPrevSwipe => CurrentSwipeIndex > 0;
+        public bool HasNextSwipe => Alternates != null && CurrentSwipeIndex < Alternates.Count - 1;
+
+        public void AddAlternate(string text)
+        {
+            if (Alternates == null) Alternates = new List<string>();
+            if (CurrentSwipeIndex < Alternates.Count)
+                Alternates[CurrentSwipeIndex] = Content;
+            else
+                Alternates.Add(Content);
+            Alternates.Add(text);
+            CurrentSwipeIndex = Alternates.Count - 1;
+            Content = text;
+        }
+
+        public void StoreCurrentAsAlternate()
+        {
+            if (Alternates == null) Alternates = new List<string>();
+            if (Alternates.Count == 0)
+            {
+                Alternates.Add(Content);
+            }
+        }
+
+        public string SwipeLeft()
+        {
+            if (!HasPrevSwipe) return Content;
+            Alternates[CurrentSwipeIndex] = Content;
+            CurrentSwipeIndex--;
+            Content = Alternates[CurrentSwipeIndex];
+            return Content;
+        }
+
+        public string SwipeRight()
+        {
+            if (!HasNextSwipe) return Content;
+            Alternates[CurrentSwipeIndex] = Content;
+            CurrentSwipeIndex++;
+            Content = Alternates[CurrentSwipeIndex];
+            return Content;
+        }
     }
 
     public class GroupChatMessage

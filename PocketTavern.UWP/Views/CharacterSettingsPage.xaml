@@ -16,6 +16,7 @@
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="48" />
                 <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="44" />
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
             <Button Grid.Column="0" Background="Transparent" BorderThickness="0"
@@ -25,7 +26,16 @@
             </Button>
             <TextBlock Grid.Column="1" Text="Character Settings" Style="{StaticResource TitleTextStyle}"
                        VerticalAlignment="Center" Margin="4,0" />
-            <Button Grid.Column="2" Style="{StaticResource AccentButtonStyle}"
+            <!-- Favorite toggle button -->
+            <Button Grid.Column="2" x:Name="FavoriteButton"
+                    Background="Transparent" BorderThickness="0"
+                    HorizontalAlignment="Center" VerticalAlignment="Center"
+                    Click="OnFavoriteClick">
+                <TextBlock x:Name="FavoriteIcon" Text="&#xE734;"
+                           FontFamily="Segoe MDL2 Assets" FontSize="20"
+                           Foreground="{StaticResource TextSecondaryBrush}" />
+            </Button>
+            <Button Grid.Column="3" Style="{StaticResource AccentButtonStyle}"
                     Margin="0,0,8,0" Click="OnSaveClick">
                 <controls:SpacedPanel Orientation="Horizontal" Spacing="6">
                     <TextBlock Text="&#xE74E;" FontFamily="Segoe MDL2 Assets" FontSize="14" VerticalAlignment="Center" />
@@ -37,47 +47,54 @@
         <ScrollViewer Grid.Row="1" Padding="16">
             <controls:SpacedPanel Spacing="4">
 
-                <TextBlock Text="Name" Style="{StaticResource SubtitleTextStyle}" Margin="0,8,0,4" />
-                <TextBox x:Name="NameBox" Style="{StaticResource DarkTextBoxStyle}" />
+                <!-- Edit Character Card button -->
+                <Button HorizontalAlignment="Stretch" Margin="0,4,0,0"
+                        Background="Transparent" BorderThickness="0"
+                        Padding="0" Click="OnEditCharacterClick">
+                    <Border Background="{StaticResource BackgroundCardBrush}" CornerRadius="12" Padding="16,12">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel VerticalAlignment="Center">
+                                <TextBlock x:Name="CharNameLabel" Text="Character"
+                                           Foreground="{StaticResource TextPrimaryBrush}"
+                                           FontSize="14" FontWeight="SemiBold" />
+                                <TextBlock Text="Edit name, description, personality..."
+                                           Style="{StaticResource SubtitleTextStyle}" Margin="0,2,0,0" />
+                            </StackPanel>
+                            <TextBlock Grid.Column="1" Text="&#xE76C;" FontFamily="Segoe MDL2 Assets"
+                                       FontSize="16" Foreground="{StaticResource TextSecondaryBrush}"
+                                       VerticalAlignment="Center" />
+                        </Grid>
+                    </Border>
+                </Button>
 
-                <TextBlock Text="Description" Style="{StaticResource SubtitleTextStyle}" Margin="0,12,0,4" />
-                <TextBox x:Name="DescBox" Style="{StaticResource DarkTextBoxStyle}"
-                         AcceptsReturn="True" Height="80" />
+                <!-- World Info / Lorebook -->
+                <Border Margin="0,8,0,0" Background="{StaticResource BackgroundCardBrush}"
+                        CornerRadius="12" Padding="16,12">
+                    <controls:SpacedPanel Spacing="8">
+                        <TextBlock Text="World Info / Lorebook"
+                                   Foreground="{StaticResource TextPrimaryBrush}"
+                                   FontSize="14" FontWeight="SemiBold" />
+                        <ComboBox x:Name="LorebookCombo" HorizontalAlignment="Stretch"
+                                  Background="{StaticResource BackgroundSurfaceBrush}"
+                                  Foreground="{StaticResource TextPrimaryBrush}"
+                                  PlaceholderText="(None)" />
+                    </controls:SpacedPanel>
+                </Border>
 
-                <TextBlock Text="Personality" Style="{StaticResource SubtitleTextStyle}" Margin="0,12,0,4" />
-                <TextBox x:Name="PersonalityBox" Style="{StaticResource DarkTextBoxStyle}"
-                         AcceptsReturn="True" Height="60" />
-
-                <TextBlock Text="Scenario" Style="{StaticResource SubtitleTextStyle}" Margin="0,12,0,4" />
-                <TextBox x:Name="ScenarioBox" Style="{StaticResource DarkTextBoxStyle}"
-                         AcceptsReturn="True" Height="60" />
-
-                <TextBlock Text="First Message" Style="{StaticResource SubtitleTextStyle}" Margin="0,12,0,4" />
-                <TextBox x:Name="FirstMsgBox" Style="{StaticResource DarkTextBoxStyle}"
-                         AcceptsReturn="True" Height="80" />
-
+                <!-- System Prompt -->
                 <TextBlock Text="System Prompt" Style="{StaticResource SubtitleTextStyle}" Margin="0,12,0,4" />
                 <TextBox x:Name="SysPromptBox" Style="{StaticResource DarkTextBoxStyle}"
                          AcceptsReturn="True" Height="60" />
 
-                <TextBlock Text="Message Example" Style="{StaticResource SubtitleTextStyle}" Margin="0,12,0,4" />
-                <TextBox x:Name="MsgExampleBox" Style="{StaticResource DarkTextBoxStyle}"
-                         AcceptsReturn="True" Height="80"
-                         PlaceholderText="&lt;START&gt;&#x0A;{{user}}: Hello&#x0A;{{char}}: Hi!" />
-
-                <TextBlock Text="Post-History Instructions" Style="{StaticResource SubtitleTextStyle}" Margin="0,12,0,4" />
-                <TextBox x:Name="PostHistoryBox" Style="{StaticResource DarkTextBoxStyle}"
-                         AcceptsReturn="True" Height="60"
-                         PlaceholderText="Instructions injected after chat history" />
-
-                <TextBlock Text="Tags (comma-separated)" Style="{StaticResource SubtitleTextStyle}" Margin="0,12,0,4" />
-                <TextBox x:Name="TagsBox" Style="{StaticResource DarkTextBoxStyle}" />
-
                 <!-- Depth Prompt (Author's Note) -->
-                <Border Margin="0,16,0,0" Background="{StaticResource BackgroundCardBrush}"
+                <Border Margin="0,8,0,0" Background="{StaticResource BackgroundCardBrush}"
                         CornerRadius="12" Padding="16,12">
                     <controls:SpacedPanel Spacing="8">
-                        <TextBlock Text="Depth Prompt (Author's Note)"
+                        <TextBlock Text="Author's Note"
                                    Foreground="{StaticResource TextPrimaryBrush}"
                                    FontSize="14" FontWeight="SemiBold" />
                         <TextBox x:Name="DepthPromptBox" Style="{StaticResource DarkTextBoxStyle}"
@@ -104,6 +121,10 @@
                                 </ComboBox>
                             </controls:SpacedPanel>
                         </Grid>
+                        <TextBlock Text="Post-History Instructions" Style="{StaticResource SubtitleTextStyle}" />
+                        <TextBox x:Name="PostHistoryBox" Style="{StaticResource DarkTextBoxStyle}"
+                                 AcceptsReturn="True" Height="60"
+                                 PlaceholderText="Instructions injected after chat history" />
                     </controls:SpacedPanel>
                 </Border>
 
@@ -127,29 +148,52 @@
                                        Foreground="{StaticResource AccentPrimaryBrush}"
                                        VerticalAlignment="Center" />
                         </Grid>
-                        <Slider x:Name="TalkSlider" Minimum="0" Maximum="1" StepFrequency="0.05"
-                                Foreground="{StaticResource AccentPrimaryBrush}"
-                                ValueChanged="OnTalkSliderChanged" />
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="Quiet" Style="{StaticResource SubtitleTextStyle}"
+                                       VerticalAlignment="Center" Margin="0,0,8,0" />
+                            <Slider x:Name="TalkSlider" Grid.Column="1" Minimum="0" Maximum="1" StepFrequency="0.05"
+                                    Foreground="{StaticResource AccentPrimaryBrush}"
+                                    ValueChanged="OnTalkSliderChanged" />
+                            <TextBlock Grid.Column="2" Text="Talkative" Style="{StaticResource SubtitleTextStyle}"
+                                       VerticalAlignment="Center" Margin="8,0,0,0" />
+                        </Grid>
                     </controls:SpacedPanel>
                 </Border>
 
-                <!-- Favorite toggle -->
-                <Border Margin="0,16,0,0" Background="{StaticResource BackgroundCardBrush}"
+                <!-- TTS Voice -->
+                <Border Margin="0,8,0,0" Background="{StaticResource BackgroundCardBrush}"
                         CornerRadius="12" Padding="16,12">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
-                        <StackPanel VerticalAlignment="Center">
-                            <TextBlock Text="Favorite" Foreground="{StaticResource TextPrimaryBrush}"
-                                       FontSize="15" FontWeight="SemiBold" />
-                            <TextBlock Text="Pin this character to top"
-                                       Style="{StaticResource SubtitleTextStyle}" Margin="0,2,0,0" />
-                        </StackPanel>
-                        <CheckBox x:Name="FavoriteCheck" Grid.Column="1"
+                    <controls:SpacedPanel Spacing="8">
+                        <TextBlock Text="TTS Voice"
+                                   Foreground="{StaticResource TextPrimaryBrush}"
+                                   FontSize="14" FontWeight="SemiBold" />
+                        <ComboBox x:Name="TtsVoiceCombo" HorizontalAlignment="Stretch"
+                                  Background="{StaticResource BackgroundSurfaceBrush}"
                                   Foreground="{StaticResource TextPrimaryBrush}" />
-                    </Grid>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Button x:Name="TestVoiceBtn" Grid.Column="0" HorizontalAlignment="Stretch"
+                                    Style="{StaticResource AccentButtonStyle}" Margin="0,0,4,0"
+                                    Click="OnTestVoiceClick">
+                                <TextBlock Text="Test Voice" />
+                            </Button>
+                            <Button x:Name="StopVoiceBtn" Grid.Column="1" HorizontalAlignment="Stretch"
+                                    Background="Transparent" BorderThickness="1"
+                                    BorderBrush="{StaticResource TextSecondaryBrush}"
+                                    Foreground="{StaticResource TextPrimaryBrush}"
+                                    Margin="4,0,0,0" Click="OnStopVoiceClick">
+                                <TextBlock Text="Stop" />
+                            </Button>
+                        </Grid>
+                    </controls:SpacedPanel>
                 </Border>
 
                 <!-- Delete button -->

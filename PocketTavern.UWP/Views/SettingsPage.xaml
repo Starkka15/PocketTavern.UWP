@@ -29,7 +29,13 @@
         <!-- Settings rows -->
         <ScrollViewer Grid.Row="1">
             <StackPanel>
-                <!-- API Configuration -->
+
+                <!-- ─── Connection ──────────────────────────────────── -->
+                <TextBlock Text="Connection"
+                           Foreground="{StaticResource AccentPrimaryBrush}"
+                           FontSize="13" FontWeight="SemiBold"
+                           Margin="16,12,16,8" />
+
                 <Button HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
                         Background="Transparent" BorderThickness="0" Padding="0"
                         Click="OnApiConfigClick">
@@ -55,9 +61,67 @@
                                    VerticalAlignment="Center" />
                     </Grid>
                 </Button>
-                <Rectangle Height="1" Fill="{StaticResource BackgroundCardBrush}" Margin="16,0" />
+                <Rectangle Height="1" Fill="{StaticResource BackgroundCardBrush}" Margin="68,0,0,0" />
 
-                <!-- Text Generation -->
+                <Button HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
+                        Background="Transparent" BorderThickness="0" Padding="0"
+                        Click="OnConnectionProfilesClick">
+                    <Grid Padding="16,14">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="44" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="24" />
+                        </Grid.ColumnDefinitions>
+                        <Border Width="36" Height="36" CornerRadius="18" Background="#33E94560">
+                            <TextBlock Text="&#xE8F2;" FontFamily="Segoe MDL2 Assets" FontSize="18"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center"
+                                       Foreground="{StaticResource AccentPrimaryBrush}" />
+                        </Border>
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="12,0">
+                            <TextBlock Text="Connection Profiles" Foreground="{StaticResource TextPrimaryBrush}"
+                                       FontSize="16" FontWeight="SemiBold" />
+                            <TextBlock Text="Save and switch between API configurations"
+                                       Style="{StaticResource SubtitleTextStyle}" Margin="0,1,0,0" />
+                        </StackPanel>
+                        <TextBlock Grid.Column="2" Text="&#xE76C;" FontFamily="Segoe MDL2 Assets"
+                                   FontSize="14" Foreground="{StaticResource TextSecondaryBrush}"
+                                   VerticalAlignment="Center" />
+                    </Grid>
+                </Button>
+                <Rectangle Height="1" Fill="{StaticResource BackgroundCardBrush}" Margin="68,0,0,0" />
+
+                <Button HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
+                        Background="Transparent" BorderThickness="0" Padding="0"
+                        Click="OnImageGenClick">
+                    <Grid Padding="16,14">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="44" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="24" />
+                        </Grid.ColumnDefinitions>
+                        <Border Width="36" Height="36" CornerRadius="18" Background="#33E9A456">
+                            <TextBlock Text="&#xE8B9;" FontFamily="Segoe MDL2 Assets" FontSize="18"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center"
+                                       Foreground="#E9A456" />
+                        </Border>
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="12,0">
+                            <TextBlock Text="Image Generation" Foreground="{StaticResource TextPrimaryBrush}"
+                                       FontSize="16" FontWeight="SemiBold" />
+                            <TextBlock Text="Configure image generation backends"
+                                       Style="{StaticResource SubtitleTextStyle}" Margin="0,1,0,0" />
+                        </StackPanel>
+                        <TextBlock Grid.Column="2" Text="&#xE76C;" FontFamily="Segoe MDL2 Assets"
+                                   FontSize="14" Foreground="{StaticResource TextSecondaryBrush}"
+                                   VerticalAlignment="Center" />
+                    </Grid>
+                </Button>
+
+                <!-- ─── Generation ─────────────────────────────────── -->
+                <TextBlock Text="Generation"
+                           Foreground="{StaticResource AccentPrimaryBrush}"
+                           FontSize="13" FontWeight="SemiBold"
+                           Margin="16,24,16,8" />
+
                 <Button HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
                         Background="Transparent" BorderThickness="0" Padding="0"
                         Click="OnTextGenClick">
@@ -83,9 +147,8 @@
                                    VerticalAlignment="Center" />
                     </Grid>
                 </Button>
-                <Rectangle Height="1" Fill="{StaticResource BackgroundCardBrush}" Margin="16,0" />
+                <Rectangle Height="1" Fill="{StaticResource BackgroundCardBrush}" Margin="68,0,0,0" />
 
-                <!-- Chat Completion Presets -->
                 <Button HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
                         Background="Transparent" BorderThickness="0" Padding="0"
                         Click="OnOaiPresetClick">
@@ -111,9 +174,8 @@
                                    VerticalAlignment="Center" />
                     </Grid>
                 </Button>
-                <Rectangle Height="1" Fill="{StaticResource BackgroundCardBrush}" Margin="16,0" />
+                <Rectangle Height="1" Fill="{StaticResource BackgroundCardBrush}" Margin="68,0,0,0" />
 
-                <!-- Formatting -->
                 <Button HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
                         Background="Transparent" BorderThickness="0" Padding="0"
                         Click="OnFormattingClick">
@@ -139,37 +201,13 @@
                                    VerticalAlignment="Center" />
                     </Grid>
                 </Button>
-                <Rectangle Height="1" Fill="{StaticResource BackgroundCardBrush}" Margin="16,0" />
 
-                <!-- Context Settings -->
-                <Button HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
-                        Background="Transparent" BorderThickness="0" Padding="0"
-                        Click="OnContextSettingsClick">
-                    <Grid Padding="16,14">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="44" />
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="24" />
-                        </Grid.ColumnDefinitions>
-                        <Border Width="36" Height="36" CornerRadius="18" Background="#3356BAE9">
-                            <TextBlock Text="&#xE8D2;" FontFamily="Segoe MDL2 Assets" FontSize="18"
-                                       HorizontalAlignment="Center" VerticalAlignment="Center"
-                                       Foreground="#56BAE9" />
-                        </Border>
-                        <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="12,0">
-                            <TextBlock Text="Context Settings" Foreground="{StaticResource TextPrimaryBrush}"
-                                       FontSize="16" FontWeight="SemiBold" />
-                            <TextBlock Text="Author's Note, auto-continue"
-                                       Style="{StaticResource SubtitleTextStyle}" Margin="0,1,0,0" />
-                        </StackPanel>
-                        <TextBlock Grid.Column="2" Text="&#xE76C;" FontFamily="Segoe MDL2 Assets"
-                                   FontSize="14" Foreground="{StaticResource TextSecondaryBrush}"
-                                   VerticalAlignment="Center" />
-                    </Grid>
-                </Button>
-                <Rectangle Height="1" Fill="{StaticResource BackgroundCardBrush}" Margin="16,0" />
+                <!-- ─── World & Characters ─────────────────────────── -->
+                <TextBlock Text="World &amp; Characters"
+                           Foreground="{StaticResource AccentPrimaryBrush}"
+                           FontSize="13" FontWeight="SemiBold"
+                           Margin="16,24,16,8" />
 
-                <!-- World Info -->
                 <Button HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
                         Background="Transparent" BorderThickness="0" Padding="0"
                         Click="OnWorldInfoClick">
@@ -195,9 +233,35 @@
                                    VerticalAlignment="Center" />
                     </Grid>
                 </Button>
-                <Rectangle Height="1" Fill="{StaticResource BackgroundCardBrush}" Margin="16,0" />
+                <Rectangle Height="1" Fill="{StaticResource BackgroundCardBrush}" Margin="68,0,0,0" />
 
-                <!-- Persona -->
+                <Button HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
+                        Background="Transparent" BorderThickness="0" Padding="0"
+                        Click="OnContextSettingsClick">
+                    <Grid Padding="16,14">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="44" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="24" />
+                        </Grid.ColumnDefinitions>
+                        <Border Width="36" Height="36" CornerRadius="18" Background="#3356BAE9">
+                            <TextBlock Text="&#xE8D2;" FontFamily="Segoe MDL2 Assets" FontSize="18"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center"
+                                       Foreground="#56BAE9" />
+                        </Border>
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="12,0">
+                            <TextBlock Text="Context Settings" Foreground="{StaticResource TextPrimaryBrush}"
+                                       FontSize="16" FontWeight="SemiBold" />
+                            <TextBlock Text="Author's Note, auto-continue"
+                                       Style="{StaticResource SubtitleTextStyle}" Margin="0,1,0,0" />
+                        </StackPanel>
+                        <TextBlock Grid.Column="2" Text="&#xE76C;" FontFamily="Segoe MDL2 Assets"
+                                   FontSize="14" Foreground="{StaticResource TextSecondaryBrush}"
+                                   VerticalAlignment="Center" />
+                    </Grid>
+                </Button>
+                <Rectangle Height="1" Fill="{StaticResource BackgroundCardBrush}" Margin="68,0,0,0" />
+
                 <Button HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
                         Background="Transparent" BorderThickness="0" Padding="0"
                         Click="OnPersonaClick">
@@ -223,9 +287,13 @@
                                    VerticalAlignment="Center" />
                     </Grid>
                 </Button>
-                <Rectangle Height="1" Fill="{StaticResource BackgroundCardBrush}" Margin="16,0" />
 
-                <!-- Appearance / Theme -->
+                <!-- ─── Appearance & Audio ─────────────────────────── -->
+                <TextBlock Text="Appearance &amp; Audio"
+                           Foreground="{StaticResource AccentPrimaryBrush}"
+                           FontSize="13" FontWeight="SemiBold"
+                           Margin="16,24,16,8" />
+
                 <Button HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
                         Background="Transparent" BorderThickness="0" Padding="0"
                         Click="OnAppearanceClick">
@@ -251,9 +319,40 @@
                                    VerticalAlignment="Center" />
                     </Grid>
                 </Button>
-                <Rectangle Height="1" Fill="{StaticResource BackgroundCardBrush}" Margin="16,0" />
+                <Rectangle Height="1" Fill="{StaticResource BackgroundCardBrush}" Margin="68,0,0,0" />
 
-                <!-- Extensions -->
+                <Button HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
+                        Background="Transparent" BorderThickness="0" Padding="0"
+                        Click="OnTtsClick">
+                    <Grid Padding="16,14">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="44" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="24" />
+                        </Grid.ColumnDefinitions>
+                        <Border Width="36" Height="36" CornerRadius="18" Background="#3356BAE9">
+                            <TextBlock Text="&#xE767;" FontFamily="Segoe MDL2 Assets" FontSize="18"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center"
+                                       Foreground="#56BAE9" />
+                        </Border>
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="12,0">
+                            <TextBlock Text="Text-to-Speech" Foreground="{StaticResource TextPrimaryBrush}"
+                                       FontSize="16" FontWeight="SemiBold" />
+                            <TextBlock Text="Voice provider, speed and filter mode"
+                                       Style="{StaticResource SubtitleTextStyle}" Margin="0,1,0,0" />
+                        </StackPanel>
+                        <TextBlock Grid.Column="2" Text="&#xE76C;" FontFamily="Segoe MDL2 Assets"
+                                   FontSize="14" Foreground="{StaticResource TextSecondaryBrush}"
+                                   VerticalAlignment="Center" />
+                    </Grid>
+                </Button>
+
+                <!-- ─── Utilities ──────────────────────────────────── -->
+                <TextBlock Text="Utilities"
+                           Foreground="{StaticResource AccentPrimaryBrush}"
+                           FontSize="13" FontWeight="SemiBold"
+                           Margin="16,24,16,8" />
+
                 <Button HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
                         Background="Transparent" BorderThickness="0" Padding="0"
                         Click="OnExtensionsClick">
@@ -271,7 +370,7 @@
                         <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="12,0">
                             <TextBlock Text="Extensions" Foreground="{StaticResource TextPrimaryBrush}"
                                        FontSize="16" FontWeight="SemiBold" />
-                            <TextBlock Text="Manage installed extensions"
+                            <TextBlock Text="Quick reply, regex rules, token counter and more"
                                        Style="{StaticResource SubtitleTextStyle}" Margin="0,1,0,0" />
                         </StackPanel>
                         <TextBlock Grid.Column="2" Text="&#xE76C;" FontFamily="Segoe MDL2 Assets"
@@ -279,9 +378,8 @@
                                    VerticalAlignment="Center" />
                     </Grid>
                 </Button>
-                <Rectangle Height="1" Fill="{StaticResource BackgroundCardBrush}" Margin="16,0" />
+                <Rectangle Height="1" Fill="{StaticResource BackgroundCardBrush}" Margin="68,0,0,0" />
 
-                <!-- Card Search -->
                 <Button HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
                         Background="Transparent" BorderThickness="0" Padding="0"
                         Click="OnCardSearchClick">
@@ -307,27 +405,26 @@
                                    VerticalAlignment="Center" />
                     </Grid>
                 </Button>
-                <Rectangle Height="1" Fill="{StaticResource BackgroundCardBrush}" Margin="16,0" />
+                <Rectangle Height="1" Fill="{StaticResource BackgroundCardBrush}" Margin="68,0,0,0" />
 
-                <!-- Connection Profiles -->
                 <Button HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
                         Background="Transparent" BorderThickness="0" Padding="0"
-                        Click="OnConnectionProfilesClick">
+                        Click="OnStImportClick">
                     <Grid Padding="16,14">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="44" />
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="24" />
                         </Grid.ColumnDefinitions>
-                        <Border Width="36" Height="36" CornerRadius="18" Background="#33E94560">
-                            <TextBlock Text="&#xE8F2;" FontFamily="Segoe MDL2 Assets" FontSize="18"
+                        <Border Width="36" Height="36" CornerRadius="18" Background="#3345A6E9">
+                            <TextBlock Text="&#xE8B5;" FontFamily="Segoe MDL2 Assets" FontSize="18"
                                        HorizontalAlignment="Center" VerticalAlignment="Center"
-                                       Foreground="{StaticResource AccentPrimaryBrush}" />
+                                       Foreground="#45A6E9" />
                         </Border>
                         <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="12,0">
-                            <TextBlock Text="Connection Profiles" Foreground="{StaticResource TextPrimaryBrush}"
+                            <TextBlock Text="Import from SillyTavern" Foreground="{StaticResource TextPrimaryBrush}"
                                        FontSize="16" FontWeight="SemiBold" />
-                            <TextBlock Text="Saved server configurations"
+                            <TextBlock Text="Import characters, lorebooks and chats from ST"
                                        Style="{StaticResource SubtitleTextStyle}" Margin="0,1,0,0" />
                         </StackPanel>
                         <TextBlock Grid.Column="2" Text="&#xE76C;" FontFamily="Segoe MDL2 Assets"
@@ -335,6 +432,62 @@
                                    VerticalAlignment="Center" />
                     </Grid>
                 </Button>
+                <Rectangle Height="1" Fill="{StaticResource BackgroundCardBrush}" Margin="68,0,0,0" />
+
+                <Button HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
+                        Background="Transparent" BorderThickness="0" Padding="0"
+                        Click="OnDebugLogClick">
+                    <Grid Padding="16,14">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="44" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="24" />
+                        </Grid.ColumnDefinitions>
+                        <Border Width="36" Height="36" CornerRadius="18" Background="#33A456E9">
+                            <TextBlock Text="&#xEBE8;" FontFamily="Segoe MDL2 Assets" FontSize="18"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center"
+                                       Foreground="#A456E9" />
+                        </Border>
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="12,0">
+                            <TextBlock Text="Debug Log" Foreground="{StaticResource TextPrimaryBrush}"
+                                       FontSize="16" FontWeight="SemiBold" />
+                            <TextBlock Text="API request/response log and errors"
+                                       Style="{StaticResource SubtitleTextStyle}" Margin="0,1,0,0" />
+                        </StackPanel>
+                        <TextBlock Grid.Column="2" Text="&#xE76C;" FontFamily="Segoe MDL2 Assets"
+                                   FontSize="14" Foreground="{StaticResource TextSecondaryBrush}"
+                                   VerticalAlignment="Center" />
+                    </Grid>
+                </Button>
+                <Rectangle Height="1" Fill="{StaticResource BackgroundCardBrush}" Margin="68,0,0,0" />
+
+                <Button HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
+                        Background="Transparent" BorderThickness="0" Padding="0"
+                        Click="OnHelpClick">
+                    <Grid Padding="16,14">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="44" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="24" />
+                        </Grid.ColumnDefinitions>
+                        <Border Width="36" Height="36" CornerRadius="18" Background="#3345E9A6">
+                            <TextBlock Text="&#xE897;" FontFamily="Segoe MDL2 Assets" FontSize="18"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center"
+                                       Foreground="#45E9A6" />
+                        </Border>
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="12,0">
+                            <TextBlock Text="Help &amp; Setup Guide" Foreground="{StaticResource TextPrimaryBrush}"
+                                       FontSize="16" FontWeight="SemiBold" />
+                            <TextBlock Text="Getting started and usage tips"
+                                       Style="{StaticResource SubtitleTextStyle}" Margin="0,1,0,0" />
+                        </StackPanel>
+                        <TextBlock Grid.Column="2" Text="&#xE76C;" FontFamily="Segoe MDL2 Assets"
+                                   FontSize="14" Foreground="{StaticResource TextSecondaryBrush}"
+                                   VerticalAlignment="Center" />
+                    </Grid>
+                </Button>
+
+                <Border Height="16" />
             </StackPanel>
         </ScrollViewer>
 

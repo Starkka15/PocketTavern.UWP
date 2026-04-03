@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using Windows.Foundation;
 using Windows.UI.Xaml.Controls;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -59,17 +60,22 @@ namespace PocketTavern.UWP.Services
         /// Fired when an extension calls PT.generateImage(...)
         public event EventHandler<ImageGenerateRequest> ImageGenerateRequested;
 
+        /// Fired when an extension calls PT.insertMessage(...)
+        public event EventHandler<InsertMessageRequest> InsertMessageRequested;
+
         // ── Init ──────────────────────────────────────────────────────────────
 
         public void Initialize(WebView webView)
         {
+            if (_webView == webView) return; // already initialized with this instance
+            if (_webView != null) _webView.ScriptNotify -= OnScriptNotify;
             _webView = webView;
             _webView.ScriptNotify += OnScriptNotify;
         }
 
         public async Task LoadAsync()
         {
-            if (_webView == null) return;
+            if (_loaded || _webView == null) return;
 
             var html = BuildSandboxHtml();
             _webView.NavigateToString(html);
@@ -148,6 +154,7 @@ namespace PocketTavern.UWP.Services
         }
 
         public IReadOnlyDictionary<string, List<object>> GetButtonSets() => _buttonSets;
+        public IReadOnlyDictionary<string, List<object>> GetMessageActionSets() => _messageActionSets;
         public IReadOnlyDictionary<int, List<object>> GetMessageHeaders() => _messageHeaders;
 
         // ── Callback completions (C# → JS resolve) ───────────────────────────
@@ -332,8 +339,11 @@ namespace PocketTavern.UWP.Services
                     break;
 
                 case "insertMessage":
-                    // Raise as a send-message event (simplified: treat as user message insertion)
-                    MessageSendRequested?.Invoke(this, msg.Value<string>("content") ?? "");
+                    InsertMessageRequested?.Invoke(this, new InsertMessageRequest
+                    {
+                        Content    = msg.Value<string>("content") ?? "",
+                        OptionsJson = msg.Value<string>("options") ?? "{}"
+                    });
                     break;
             }
         }
@@ -389,7 +399,7 @@ namespace PocketTavern.UWP.Services
         private Task WaitForNavigationAsync()
         {
             var tcs = new TaskCompletionSource<bool>();
-            WebViewNavigationCompletedEventHandler handler = null;
+            TypedEventHandler<WebView, WebViewNavigationCompletedEventArgs> handler = null;
             handler = (s, e) =>
             {
                 _webView.NavigationCompleted -= handler;
@@ -453,5 +463,11 @@ namespace PocketTavern.UWP.Services
         public string Prompt      { get; set; }
         public string OptionsJson { get; set; }
         public string CbId        { get; set; }
+    }
+
+    public class InsertMessageRequest
+    {
+        public string Content     { get; set; }
+        public string OptionsJson { get; set; }
     }
 }

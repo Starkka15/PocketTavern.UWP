@@ -76,7 +76,8 @@ namespace PocketTavern.UWP.Services
             TextGenPreset preset,
             string prompt,
             IProgress<StreamEvent> progress,
-            CancellationToken ct = default)
+            CancellationToken ct = default,
+            IList<string> stopSequences = null)
         {
             string url;
             JObject body;
@@ -85,19 +86,41 @@ namespace PocketTavern.UWP.Services
             {
                 case "koboldcpp":
                     url = config.ApiServer.TrimEnd('/') + "/api/extra/generate/stream";
-                    body = BuildKoboldBody(preset, prompt);
+                    body = BuildKoboldBody(preset, prompt, stopSequences);
                     break;
                 case "llamacpp":
                     url = config.ApiServer.TrimEnd('/') + "/completion";
-                    body = BuildLlamaCppBody(preset, prompt);
+                    body = BuildLlamaCppBody(preset, prompt, stopSequences);
+                    break;
+                case "ollama":
+                    url = config.ApiServer.TrimEnd('/') + "/api/generate";
+                    body = BuildOllamaBody(preset, prompt, config.CurrentModel, stopSequences);
                     break;
                 default: // ooba, vllm, etc. — use OpenAI-compatible text endpoint
                     url = config.ApiServer.TrimEnd('/') + "/v1/completions";
-                    body = BuildTextCompletionBody(preset, prompt);
+                    body = BuildTextCompletionBody(preset, prompt, stopSequences);
                     break;
             }
 
             await StreamRequestAsync(url, config.ApiKey, body, progress, ct);
+        }
+
+        /// <summary>Blocking text generation for hidden generate (no streaming progress).</summary>
+        public async Task<string> GenerateTextGenSingleAsync(
+            ApiConfiguration config,
+            TextGenPreset preset,
+            string prompt,
+            CancellationToken ct = default)
+        {
+            string result = "";
+            var tcs = new TaskCompletionSource<string>();
+            var progress = new Progress<StreamEvent>(evt =>
+            {
+                if (evt is StreamEvent.Complete c) tcs.TrySetResult(c.FullText);
+                else if (evt is StreamEvent.Error e) tcs.TrySetResult("");
+            });
+            var _ = GenerateTextGenAsync(config, preset, prompt, progress, ct);
+            return await tcs.Task;
         }
 
         // ── Model listing ────────────────────────────────────────────────────────
@@ -242,6 +265,8 @@ namespace PocketTavern.UWP.Services
             body["stream"] = true;
             var content = new StringContent(body.ToString(), Encoding.UTF8, "application/json");
 
+            DebugLogger.LogRequest("POST", url, body.ToString(Formatting.None));
+
             var req = new HttpRequestMessage(HttpMethod.Post, url) { Content = content };
             if (!string.IsNullOrEmpty(apiKey))
             {
@@ -278,6 +303,7 @@ namespace PocketTavern.UWP.Services
                     var statusMsg = $"HTTP {(int)resp.StatusCode} {resp.ReasonPhrase}";
                     if (!string.IsNullOrWhiteSpace(errBody))
                         statusMsg += ": " + errBody;
+                    DebugLogger.LogResponse((int)resp.StatusCode, errBody);
                     try { progress?.Report(new StreamEvent.Error { Message = statusMsg }); } catch { }
                     return;
                 }
@@ -307,6 +333,7 @@ namespace PocketTavern.UWP.Services
                                     Accumulated = accumulated.ToString()
                                 });
                             }
+                            if (IsStreamDone(chunk)) break;
                         }
                         catch { }
                     }
@@ -346,7 +373,24 @@ namespace PocketTavern.UWP.Services
             var anthropic = chunk["delta"]?["text"];
             if (anthropic != null) return (string)anthropic;
 
+            // Ollama generate (/api/generate) — raw JSON lines, not SSE
+            var ollamaResponse = chunk["response"];
+            if (ollamaResponse != null) return (string)ollamaResponse;
+
+            // Ollama chat (/api/chat)
+            var ollamaChat = chunk["message"]?["content"];
+            if (ollamaChat != null) return (string)ollamaChat;
+
             return null;
+        }
+
+        private static bool IsStreamDone(JObject chunk)
+        {
+            // Ollama signals end with {"done": true}
+            var done = chunk["done"];
+            if (done != null && done.Type == JTokenType.Boolean && (bool)done)
+                return true;
+            return false;
         }
 
         // ── Request builders ─────────────────────────────────────────────────────
@@ -373,16 +417,43 @@ namespace PocketTavern.UWP.Services
         {
             var body = new JObject { ["messages"] = JArray.FromObject(messages) };
             if (!string.IsNullOrWhiteSpace(model)) body["model"] = model;
-            if (preset.TemperatureEnabled) body["temperature"] = preset.Temperature;
-            if (preset.MaxTokensEnabled)   body["max_tokens"]   = preset.MaxTokens;
-            if (preset.TopPEnabled)        body["top_p"]        = preset.TopP;
-            if (preset.FrequencyPenaltyEnabled) body["frequency_penalty"] = preset.FrequencyPenalty;
-            if (preset.PresencePenaltyEnabled)  body["presence_penalty"]  = preset.PresencePenalty;
-            if (preset.SeedEnabled && preset.Seed >= 0) body["seed"] = preset.Seed;
+            if (preset.TemperatureEnabled)          body["temperature"]          = preset.Temperature;
+            if (preset.MaxTokensEnabled)            body["max_tokens"]           = preset.MaxTokens;
+            if (preset.TopPEnabled)                 body["top_p"]                = preset.TopP;
+            if (preset.TopKEnabled)                 body["top_k"]                = preset.TopK;
+            if (preset.FrequencyPenaltyEnabled)     body["frequency_penalty"]    = preset.FrequencyPenalty;
+            if (preset.PresencePenaltyEnabled)      body["presence_penalty"]     = preset.PresencePenalty;
+            if (preset.RepetitionPenaltyEnabled)    body["repetition_penalty"]   = preset.RepetitionPenalty;
+            if (preset.MinPEnabled)                 body["min_p"]                = preset.MinP;
+            if (preset.TopAEnabled)                 body["top_a"]                = preset.TopA;
+            if (preset.SeedEnabled && preset.Seed >= 0) body["seed"]             = preset.Seed;
             return body;
         }
 
-        private static JObject BuildKoboldBody(TextGenPreset preset, string prompt)
+        private static JObject BuildOllamaBody(TextGenPreset preset, string prompt, string model,
+            IList<string> stopSequences = null)
+        {
+            var options = new JObject();
+            options["temperature"]     = preset.Temperature;
+            options["top_p"]           = preset.TopP;
+            options["top_k"]           = preset.TopK;
+            options["repeat_penalty"]  = preset.RepPen;
+            if (preset.MaxNewTokens.HasValue) options["num_predict"] = preset.MaxNewTokens.Value;
+            if (stopSequences != null && stopSequences.Count > 0)
+                options["stop"] = JArray.FromObject(stopSequences);
+
+            return new JObject
+            {
+                ["model"]   = model ?? "",
+                ["prompt"]  = prompt,
+                ["stream"]  = true,
+                ["options"] = options,
+                ["raw"]     = true
+            };
+        }
+
+        private static JObject BuildKoboldBody(TextGenPreset preset, string prompt,
+            IList<string> stopSequences = null)
         {
             var body = new JObject { ["prompt"] = prompt };
             if (preset.MaxNewTokens.HasValue) body["max_length"] = preset.MaxNewTokens.Value;
@@ -392,10 +463,13 @@ namespace PocketTavern.UWP.Services
             body["rep_pen"] = preset.RepPen;
             body["rep_pen_range"] = preset.RepPenRange;
             body["min_p"] = preset.MinP;
+            if (stopSequences != null && stopSequences.Count > 0)
+                body["stop_sequence"] = JArray.FromObject(stopSequences);
             return body;
         }
 
-        private static JObject BuildLlamaCppBody(TextGenPreset preset, string prompt)
+        private static JObject BuildLlamaCppBody(TextGenPreset preset, string prompt,
+            IList<string> stopSequences = null)
         {
             var body = new JObject { ["prompt"] = prompt };
             if (preset.MaxNewTokens.HasValue) body["n_predict"] = preset.MaxNewTokens.Value;
@@ -404,10 +478,13 @@ namespace PocketTavern.UWP.Services
             body["top_k"] = preset.TopK;
             body["repeat_penalty"] = preset.RepPen;
             body["min_p"] = preset.MinP;
+            if (stopSequences != null && stopSequences.Count > 0)
+                body["stop"] = JArray.FromObject(stopSequences);
             return body;
         }
 
-        private static JObject BuildTextCompletionBody(TextGenPreset preset, string prompt)
+        private static JObject BuildTextCompletionBody(TextGenPreset preset, string prompt,
+            IList<string> stopSequences = null)
         {
             var body = new JObject { ["prompt"] = prompt };
             if (preset.MaxNewTokens.HasValue) body["max_tokens"] = preset.MaxNewTokens.Value;
@@ -415,6 +492,8 @@ namespace PocketTavern.UWP.Services
             body["top_p"] = preset.TopP;
             body["frequency_penalty"] = preset.FrequencyPenalty;
             body["presence_penalty"] = preset.PresencePenalty;
+            if (stopSequences != null && stopSequences.Count > 0)
+                body["stop"] = JArray.FromObject(stopSequences);
             return body;
         }
     }

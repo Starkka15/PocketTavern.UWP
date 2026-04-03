@@ -6,7 +6,9 @@ using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Navigation;
+using Windows.UI.Xaml.Shapes;
 using Windows.Storage.Pickers;
+using PocketTavern.UWP.Controls;
 using PocketTavern.UWP.Models;
 using PocketTavern.UWP.ViewModels;
 
@@ -56,14 +58,12 @@ namespace PocketTavern.UWP.Views
 
         private void OnQuickReplySettingsClick(object sender, RoutedEventArgs e)
         {
-            // Quick Reply settings screen — not yet implemented
-            ShowComingSoon("Quick Reply settings");
+            App.Navigation.NavigateToQuickReplySettings();
         }
 
         private void OnRegexSettingsClick(object sender, RoutedEventArgs e)
         {
-            // Regex settings screen — not yet implemented
-            ShowComingSoon("Regex settings");
+            App.Navigation.NavigateToRegexSettings();
         }
 
         private async void ShowComingSoon(string feature)
@@ -90,7 +90,7 @@ namespace PocketTavern.UWP.Views
             var dialog = new ContentDialog
             {
                 Title = "Install Extension",
-                Content = new StackPanel
+                Content = new SpacedPanel
                 {
                     Spacing = 10,
                     Children =
@@ -215,7 +215,7 @@ namespace PocketTavern.UWP.Views
             });
 
             var infoStack = new StackPanel { VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(10, 0, 0, 0) };
-            var nameRow = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 6 };
+            var nameRow = new SpacedPanel { Orientation = Orientation.Horizontal, Spacing = 6 };
             nameRow.Children.Add(new TextBlock { Text = ext.Name, FontSize = 15, FontWeight = FontWeights.SemiBold, Foreground = textPri });
             if (!string.IsNullOrEmpty(ext.Version))
                 nameRow.Children.Add(new TextBlock { Text = $"v{ext.Version}", FontSize = 11, Foreground = textSec, VerticalAlignment = VerticalAlignment.Center });
@@ -242,7 +242,7 @@ namespace PocketTavern.UWP.Views
             if (settings.Count > 0)
             {
                 stack.Children.Add(new Rectangle { Height = 1, Fill = surfaceBg, Margin = new Thickness(0, 10, 0, 6) });
-                var settingsPanel = new StackPanel { Spacing = 8 };
+                var settingsPanel = new SpacedPanel { Spacing = 8 };
                 foreach (var kv in settings)
                 {
                     var label = CamelCaseToLabel(kv.Key);
@@ -303,7 +303,7 @@ namespace PocketTavern.UWP.Views
                     Padding = new Thickness(0),
                     Tag = ext
                 };
-                var btnContent = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 4 };
+                var btnContent = new SpacedPanel { Orientation = Orientation.Horizontal, Spacing = 4 };
                 btnContent.Children.Add(new TextBlock { Text = "\uE74D", FontFamily = new FontFamily("Segoe MDL2 Assets"), FontSize = 14, Foreground = errorBrush });
                 btnContent.Children.Add(new TextBlock { Text = "Uninstall", FontSize = 13, Foreground = errorBrush });
                 uninstallBtn.Content = btnContent;

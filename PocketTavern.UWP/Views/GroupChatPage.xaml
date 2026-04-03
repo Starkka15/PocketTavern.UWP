@@ -1,0 +1,34 @@
+<Page
+    x:Class="PocketTavern.UWP.Views.GroupChatPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Background="{StaticResource BackgroundDeepBrush}">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <Grid Grid.Row="0" Background="{StaticResource BackgroundSurfaceBrush}" Padding="4,8">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="48" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <Button Grid.Column="0" Background="Transparent" BorderThickness="0"
+                    Click="BackButton_Click">
+                <TextBlock Text="&#xE830;" FontFamily="Segoe MDL2 Assets" FontSize="18"
+                           Foreground="{StaticResource TextPrimaryBrush}" />
+            </Button>
+            <TextBlock Grid.Column="1" Text="Group Chat" VerticalAlignment="Center"
+                       Style="{StaticResource TitleTextStyle}" />
+        </Grid>
+
+        <StackPanel Grid.Row="1" VerticalAlignment="Center" HorizontalAlignment="Center"
+                    Padding="24">
+            <TextBlock Text="Group chats are not yet supported in standalone mode."
+                       TextWrapping="Wrap" TextAlignment="Center"
+                       Foreground="{StaticResource TextSecondaryBrush}" />
+        </StackPanel>
+    </Grid>
+</Page>

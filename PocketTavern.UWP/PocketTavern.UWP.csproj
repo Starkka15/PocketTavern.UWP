@@ -20,6 +20,7 @@
     <RestoreProjectStyle>PackageReference</RestoreProjectStyle>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Nullable>disable</Nullable>
+    <LangVersion>8.0</LangVersion>
 
     <PackageCertificateKeyFile>PocketTavern_TemporaryKey.pfx</PackageCertificateKeyFile>
     <PackageCertificatePassword>DevOnly</PackageCertificatePassword>

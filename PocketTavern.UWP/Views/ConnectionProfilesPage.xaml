@@ -2,6 +2,7 @@
     x:Class="PocketTavern.UWP.Views.ConnectionProfilesPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:PocketTavern.UWP.Controls"
     Background="{StaticResource BackgroundDeepBrush}">
 
     <Grid>
@@ -34,7 +35,7 @@
         <!-- Content -->
         <Grid Grid.Row="1">
             <!-- Empty state -->
-            <StackPanel x:Name="EmptyState" VerticalAlignment="Center" HorizontalAlignment="Center"
+            <controls:SpacedPanel x:Name="EmptyState" VerticalAlignment="Center" HorizontalAlignment="Center"
                         Spacing="8" Visibility="Collapsed">
                 <TextBlock Text="&#xE703;" FontFamily="Segoe MDL2 Assets" FontSize="48"
                            HorizontalAlignment="Center"
@@ -46,7 +47,7 @@
                            FontSize="13" Foreground="{StaticResource TextSecondaryBrush}"
                            HorizontalAlignment="Center" TextWrapping="Wrap"
                            TextAlignment="Center" MaxWidth="280" />
-            </StackPanel>
+            </controls:SpacedPanel>
 
             <!-- Profiles list -->
             <ListView x:Name="ProfilesList" SelectionMode="None"

@@ -5,6 +5,7 @@ using Windows.Storage.Pickers;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Media.Imaging;
+using Windows.UI.Xaml.Navigation;
 using PocketTavern.UWP.ViewModels;
 
 namespace PocketTavern.UWP.Views
@@ -14,6 +15,28 @@ namespace PocketTavern.UWP.Views
         private readonly CreateCharacterViewModel _vm = new CreateCharacterViewModel();
 
         public CreateCharacterPage() { this.InitializeComponent(); }
+
+        protected override async void OnNavigatedTo(NavigationEventArgs e)
+        {
+            base.OnNavigatedTo(e);
+            if (e.Parameter is string fileName && !string.IsNullOrEmpty(fileName))
+            {
+                await _vm.LoadForEditAsync(fileName);
+                PageTitle.Text             = "Edit Character";
+                NameBox.Text               = _vm.Name;
+                DescBox.Text               = _vm.Description;
+                PersonalityBox.Text        = _vm.Personality;
+                ScenarioBox.Text           = _vm.Scenario;
+                FirstMsgBox.Text           = _vm.FirstMessage;
+                MsgExampleBox.Text         = _vm.MessageExample;
+                SysPromptBox.Text          = _vm.SystemPrompt;
+                PostHistoryBox.Text        = _vm.PostHistoryInstructions;
+                TagsBox.Text               = _vm.TagsText;
+                CreatorNotesBox.Text       = _vm.CreatorNotes;
+                AvatarInitial.Text         = _vm.Name?.Length > 0 ? _vm.Name[0].ToString().ToUpper() : "?";
+                AltGreetingsList.ItemsSource = _vm.AlternateGreetings;
+            }
+        }
 
         private void OnBackClick(object sender, RoutedEventArgs e) => App.Navigation.GoBack();
 
@@ -43,7 +66,7 @@ namespace PocketTavern.UWP.Views
                 var bmp = new BitmapImage();
                 using (var stream = await file.OpenReadAsync())
                     await bmp.SetSourceAsync(stream);
-                AvatarImage.Source  = bmp;
+                AvatarImage.Source   = bmp;
                 AvatarImage.Visibility   = Visibility.Visible;
                 AvatarInitial.Visibility = Visibility.Collapsed;
             }
@@ -68,7 +91,6 @@ namespace PocketTavern.UWP.Views
                 await App.Characters.ImportCharacterFromBytesAsync(
                     System.IO.Path.GetFileNameWithoutExtension(file.Name), bytes);
 
-                // Navigate back after successful import
                 App.Navigation.GoBack();
             }
             catch (Exception ex)
@@ -81,14 +103,49 @@ namespace PocketTavern.UWP.Views
 
         private async void OnSaveClick(object sender, RoutedEventArgs e)
         {
-            _vm.Name        = NameBox.Text;
-            _vm.Description = DescBox.Text;
-            _vm.Personality = PersonalityBox.Text;
-            _vm.Scenario    = ScenarioBox.Text;
-            _vm.FirstMessage= FirstMsgBox.Text;
-            _vm.SystemPrompt= SysPromptBox.Text;
-            _vm.TagsText    = TagsBox.Text;
+            _vm.Name                    = NameBox.Text;
+            _vm.Description             = DescBox.Text;
+            _vm.Personality             = PersonalityBox.Text;
+            _vm.Scenario                = ScenarioBox.Text;
+            _vm.FirstMessage            = FirstMsgBox.Text;
+            _vm.MessageExample          = MsgExampleBox.Text;
+            _vm.SystemPrompt            = SysPromptBox.Text;
+            _vm.PostHistoryInstructions = PostHistoryBox.Text;
+            _vm.TagsText                = TagsBox.Text;
+            _vm.CreatorNotes            = CreatorNotesBox.Text;
             await _vm.SaveAsync();
+        }
+
+        // Alternate Greetings management
+        private void OnAddAltGreetingClick(object sender, RoutedEventArgs e)
+        {
+            _vm.AlternateGreetings.Add("");
+            AltGreetingsList.ItemsSource = null;
+            AltGreetingsList.ItemsSource = _vm.AlternateGreetings;
+        }
+
+        private void OnRemoveAltGreetingClick(object sender, RoutedEventArgs e)
+        {
+            if ((sender as FrameworkElement)?.Tag is string greeting)
+            {
+                _vm.AlternateGreetings.Remove(greeting);
+                AltGreetingsList.ItemsSource = null;
+                AltGreetingsList.ItemsSource = _vm.AlternateGreetings;
+            }
+        }
+
+        private void OnAltGreetingChanged(object sender, TextChangedEventArgs e)
+        {
+            // Update value in collection when text changes
+            if (sender is TextBox tb && tb.Tag is string oldValue)
+            {
+                var idx = _vm.AlternateGreetings.IndexOf(oldValue);
+                if (idx >= 0)
+                {
+                    _vm.AlternateGreetings[idx] = tb.Text;
+                    tb.Tag = tb.Text;
+                }
+            }
         }
     }
 }

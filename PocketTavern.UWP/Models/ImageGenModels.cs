@@ -1,5 +1,44 @@
+using System.Collections.Generic;
+
 namespace PocketTavern.UWP.Models
 {
+    public class ForgeGenerationParams
+    {
+        public string Prompt { get; set; } = "";
+        public string NegativePrompt { get; set; } = "blurry, low quality, distorted, deformed, bad anatomy";
+        public int Width { get; set; } = 512;
+        public int Height { get; set; } = 768;
+        public int Steps { get; set; } = 20;
+        public float CfgScale { get; set; } = 7f;
+        public string Sampler { get; set; } = "Euler";
+        public int Seed { get; set; } = -1;
+        /// <summary>Base64-encoded source image for img2img. Null = txt2img.</summary>
+        public string SourceImageBase64 { get; set; }
+        /// <summary>How much to change the source image (0.0 = identical, 1.0 = ignore source).</summary>
+        public float DenoisingStrength { get; set; } = 0.5f;
+    }
+
+    public abstract class GenerationState
+    {
+        public sealed class Idle : GenerationState { }
+        public sealed class Starting : GenerationState { }
+        public sealed class InProgress : GenerationState
+        {
+            public float Progress { get; set; }
+            public float Eta { get; set; }
+            public string PreviewImage { get; set; }
+        }
+        public sealed class Complete : GenerationState
+        {
+            public string ImageBase64 { get; set; }
+        }
+        public sealed class Error : GenerationState
+        {
+            public string Message { get; set; }
+        }
+    }
+
+
     public enum ImageGenBackendType
     {
         SdWebui,
@@ -30,7 +69,8 @@ namespace PocketTavern.UWP.Models
 
     public class ImageGenConfig
     {
-        public string ActiveBackend { get; set; } = "SdWebui";
+        public bool   Enabled       { get; set; } = false;
+        public string ActiveBackend { get; set; } = "SD_WEBUI";
         public string SdWebuiUrl { get; set; } = "";
         public string ComfyuiUrl { get; set; } = "";
         public string DalleApiKey { get; set; } = "";
@@ -40,6 +80,7 @@ namespace PocketTavern.UWP.Models
         public string PollinationsModel { get; set; } = "flux";
         public string HuggingfaceApiKey { get; set; } = "";
         public string HuggingfaceModel { get; set; } = "stabilityai/stable-diffusion-xl-base-1.0";
+        public string SdModel { get; set; } = "";
         public string Sampler { get; set; } = "Euler";
         public string Scheduler { get; set; } = "";
         public int Steps { get; set; } = 20;

@@ -22,6 +22,7 @@ namespace PocketTavern.UWP.Services
         public void NavigateToSettings()     => NavigateTo(typeof(SettingsPage));
         public void NavigateToChat(string characterAvatar) => NavigateTo(typeof(ChatPage), characterAvatar);
         public void NavigateToCreateCharacter() => NavigateTo(typeof(CreateCharacterPage));
+        public void NavigateToEditCharacter(string avatarFileName) => NavigateTo(typeof(CreateCharacterPage), avatarFileName);
         public void NavigateToCharacterSettings(string avatarUrl) => NavigateTo(typeof(CharacterSettingsPage), avatarUrl);
         public void NavigateToApiConfig()           => NavigateTo(typeof(ApiConfigPage));
         public void NavigateToConnectionProfiles() => NavigateTo(typeof(ConnectionProfilesPage));
@@ -31,8 +32,17 @@ namespace PocketTavern.UWP.Services
         public void NavigateToFormatting()        => NavigateTo(typeof(FormattingPage));
         public void NavigateToContextSettings()   => NavigateTo(typeof(ContextSettingsPage));
         public void NavigateToWorldInfo()    => NavigateTo(typeof(WorldInfoPage));
-        public void NavigateToExtensions()   => NavigateTo(typeof(ExtensionsPage));
-        public void NavigateToCharaVault()   => NavigateTo(typeof(CharaVaultPage));
-        public void NavigateToTheme()        => NavigateTo(typeof(ThemePage));
+        public void NavigateToExtensions()            => NavigateTo(typeof(ExtensionsPage));
+        public void NavigateToQuickReplySettings()    => NavigateTo(typeof(QuickReplySettingsPage));
+        public void NavigateToRegexSettings()         => NavigateTo(typeof(RegexSettingsPage));
+        public void NavigateToCharaVault()            => NavigateTo(typeof(CharaVaultPage));
+        public void NavigateToTheme()                 => NavigateTo(typeof(ThemePage));
+        public void NavigateToImageGenSettings()      => NavigateTo(typeof(ImageGenSettingsPage));
+        public void NavigateToTtsSettings()           => NavigateTo(typeof(TtsSettingsPage));
+        public void NavigateToDebugLog()              => NavigateTo(typeof(DebugLogPage));
+        public void NavigateToGroups()                => NavigateTo(typeof(GroupsPage));
+        public void NavigateToGroupChat(string groupId) => NavigateTo(typeof(GroupChatPage), groupId);
+        public void NavigateToStImport()              => NavigateTo(typeof(StImportPage));
+        public void NavigateToSetupGuide()            => NavigateTo(typeof(SetupGuidePage));
     }
 }

@@ -44,7 +44,8 @@
 
         <!-- Lorebook list -->
         <ListView Grid.Row="1" x:Name="WorldsList"
-                  SelectionMode="None" Background="Transparent" Padding="0,4,0,4">
+                  SelectionMode="None" Background="Transparent" Padding="0,8,0,8"
+                  IsItemClickEnabled="True" ItemClick="OnLorebookClicked">
             <ListView.ItemContainerStyle>
                 <Style TargetType="ListViewItem">
                     <Setter Property="HorizontalContentAlignment" Value="Stretch" />
@@ -59,14 +60,12 @@
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="44" />
                                 <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="24" />
                             </Grid.ColumnDefinitions>
 
-                            <Border Width="36" Height="36" CornerRadius="18"
-                                    Background="#3356BAE9">
-                                <TextBlock Text="&#xE736;" FontFamily="Segoe MDL2 Assets" FontSize="16"
-                                           HorizontalAlignment="Center" VerticalAlignment="Center"
-                                           Foreground="#56BAE9" />
-                            </Border>
+                            <TextBlock Text="&#xE736;" FontFamily="Segoe MDL2 Assets" FontSize="28"
+                                       Foreground="{StaticResource AccentPrimaryBrush}"
+                                       VerticalAlignment="Center" HorizontalAlignment="Center" />
 
                             <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="10,0">
                                 <TextBlock Text="{Binding Name}"
@@ -76,6 +75,10 @@
                                            Style="{StaticResource SubtitleTextStyle}"
                                            Margin="0,2,0,0" />
                             </StackPanel>
+
+                            <TextBlock Grid.Column="2" Text="&#xE76C;" FontFamily="Segoe MDL2 Assets"
+                                       FontSize="14" Foreground="{StaticResource TextSecondaryBrush}"
+                                       VerticalAlignment="Center" />
                         </Grid>
                     </Border>
                 </DataTemplate>

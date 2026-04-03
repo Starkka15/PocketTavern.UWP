@@ -33,5 +33,10 @@ namespace PocketTavern.UWP.Views
         private void OnExtensionsClick(object sender, RoutedEventArgs e)         => App.Navigation.NavigateToExtensions();
         private void OnConnectionProfilesClick(object sender, RoutedEventArgs e) => App.Navigation.NavigateToConnectionProfiles();
         private void OnCardSearchClick(object sender, RoutedEventArgs e)         => App.Navigation.NavigateToCharaVault();
+        private void OnImageGenClick(object sender, RoutedEventArgs e)           => App.Navigation.NavigateToImageGenSettings();
+        private void OnTtsClick(object sender, RoutedEventArgs e)                => App.Navigation.NavigateToTtsSettings();
+        private void OnDebugLogClick(object sender, RoutedEventArgs e)           => App.Navigation.NavigateToDebugLog();
+        private void OnStImportClick(object sender, RoutedEventArgs e)           => App.Navigation.NavigateToStImport();
+        private void OnHelpClick(object sender, RoutedEventArgs e)               => App.Navigation.NavigateToSetupGuide();
     }
 }

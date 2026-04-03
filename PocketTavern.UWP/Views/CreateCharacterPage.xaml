@@ -24,7 +24,8 @@
                     HorizontalAlignment="Center" VerticalAlignment="Center">
                 <TextBlock Text="&#xE72B;" FontFamily="Segoe MDL2 Assets" FontSize="18" />
             </Button>
-            <TextBlock Grid.Column="1" Text="Create Character" Style="{StaticResource TitleTextStyle}"
+            <TextBlock Grid.Column="1" x:Name="PageTitle" Text="Create Character"
+                       Style="{StaticResource TitleTextStyle}"
                        VerticalAlignment="Center" Margin="4,0" />
             <!-- Import PNG card button -->
             <Button Grid.Column="2" Background="Transparent" BorderThickness="0"
@@ -42,114 +43,314 @@
             </Button>
         </Grid>
 
-        <ScrollViewer Grid.Row="1" Padding="16">
-            <StackPanel>
+        <!-- Tab content -->
+        <Pivot Grid.Row="1" x:Name="TabPivot"
+               Background="{StaticResource BackgroundDeepBrush}"
+               Foreground="{StaticResource TextPrimaryBrush}">
 
-                <!-- Avatar picker -->
-                <Button Background="Transparent" BorderThickness="0"
-                        HorizontalAlignment="Center" Margin="0,16,0,0"
-                        Click="OnAvatarClick">
-                    <Grid>
-                        <Border Width="96" Height="96" CornerRadius="48"
-                                Background="{StaticResource BackgroundCardBrush}">
+            <!-- Basic tab -->
+            <PivotItem x:Name="BasicTab">
+                <PivotItem.Header>
+                    <controls:SpacedPanel Orientation="Horizontal" Spacing="6">
+                        <TextBlock Text="&#xE77B;" FontFamily="Segoe MDL2 Assets" FontSize="14"
+                                   VerticalAlignment="Center" />
+                        <TextBlock Text="Basic" VerticalAlignment="Center" />
+                    </controls:SpacedPanel>
+                </PivotItem.Header>
+                <ScrollViewer Padding="0,8,0,0">
+                    <StackPanel Padding="16,0,16,32">
+
+                        <!-- Avatar picker -->
+                        <Button Background="Transparent" BorderThickness="0"
+                                HorizontalAlignment="Center" Margin="0,16,0,0"
+                                Click="OnAvatarClick">
                             <Grid>
-                                <Image x:Name="AvatarImage" Stretch="UniformToFill"
-                                       Visibility="Collapsed" />
-                                <TextBlock x:Name="AvatarInitial" Text="?"
-                                           HorizontalAlignment="Center" VerticalAlignment="Center"
-                                           FontSize="42" FontWeight="Bold"
-                                           Foreground="{StaticResource AccentPrimaryBrush}" />
+                                <Border Width="96" Height="96" CornerRadius="48"
+                                        Background="{StaticResource BackgroundCardBrush}">
+                                    <Grid>
+                                        <Image x:Name="AvatarImage" Stretch="UniformToFill"
+                                               Visibility="Collapsed" />
+                                        <TextBlock x:Name="AvatarInitial" Text="?"
+                                                   HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                   FontSize="42" FontWeight="Bold"
+                                                   Foreground="{StaticResource AccentPrimaryBrush}" />
+                                    </Grid>
+                                </Border>
+                                <!-- Camera overlay -->
+                                <Border Width="32" Height="32" CornerRadius="16"
+                                        Background="{StaticResource AccentPrimaryBrush}"
+                                        HorizontalAlignment="Right" VerticalAlignment="Bottom">
+                                    <TextBlock Text="&#xE722;" FontFamily="Segoe MDL2 Assets" FontSize="14"
+                                               HorizontalAlignment="Center" VerticalAlignment="Center"
+                                               Foreground="White" />
+                                </Border>
                             </Grid>
+                        </Button>
+
+                        <!-- Name field -->
+                        <Border Background="{StaticResource BackgroundCardBrush}" CornerRadius="12"
+                                Padding="16,12" Margin="0,16,0,0">
+                            <controls:SpacedPanel Spacing="6">
+                                <TextBlock Text="Name *" Style="{StaticResource SubtitleTextStyle}" />
+                                <TextBox x:Name="NameBox" Style="{StaticResource DarkTextBoxStyle}"
+                                         PlaceholderText="Character name"
+                                         TextChanged="OnNameChanged" />
+                            </controls:SpacedPanel>
                         </Border>
-                        <!-- Camera overlay -->
-                        <Border Width="32" Height="32" CornerRadius="16"
-                                Background="{StaticResource AccentPrimaryBrush}"
-                                HorizontalAlignment="Right" VerticalAlignment="Bottom">
-                            <TextBlock Text="&#xE722;" FontFamily="Segoe MDL2 Assets" FontSize="14"
-                                       HorizontalAlignment="Center" VerticalAlignment="Center"
-                                       Foreground="White" />
+
+                    </StackPanel>
+                </ScrollViewer>
+            </PivotItem>
+
+            <!-- Personality tab -->
+            <PivotItem>
+                <PivotItem.Header>
+                    <controls:SpacedPanel Orientation="Horizontal" Spacing="6">
+                        <TextBlock Text="&#xE70A;" FontFamily="Segoe MDL2 Assets" FontSize="14"
+                                   VerticalAlignment="Center" />
+                        <TextBlock Text="Personality" VerticalAlignment="Center" />
+                    </controls:SpacedPanel>
+                </PivotItem.Header>
+                <ScrollViewer Padding="0,8,0,0">
+                    <StackPanel Padding="16,0,16,32">
+                        <controls:SpacedPanel Spacing="8">
+
+                        <Border Background="{StaticResource BackgroundCardBrush}" CornerRadius="12"
+                                Padding="16,12">
+                            <controls:SpacedPanel Spacing="6">
+                                <TextBlock Text="Description" Style="{StaticResource SubtitleTextStyle}" />
+                                <TextBlock Text="Physical appearance, background, and general information about the character."
+                                           Foreground="{StaticResource TextSecondaryBrush}" FontSize="12"
+                                           TextWrapping="Wrap" />
+                                <TextBox x:Name="DescBox" Style="{StaticResource DarkTextBoxStyle}"
+                                         PlaceholderText="{}{{char}} is a tall woman with long black hair..."
+                                         AcceptsReturn="True" Height="100" />
+                            </controls:SpacedPanel>
                         </Border>
-                    </Grid>
-                </Button>
 
-                <!-- Name field -->
-                <Border Background="{StaticResource BackgroundCardBrush}" CornerRadius="12"
-                        Padding="16,12" Margin="0,16,0,0">
-                    <controls:SpacedPanel Spacing="6">
-                        <TextBlock Text="Name *" Style="{StaticResource SubtitleTextStyle}" />
-                        <TextBox x:Name="NameBox" Style="{StaticResource DarkTextBoxStyle}"
-                                 PlaceholderText="Character name"
-                                 TextChanged="OnNameChanged" />
+                        <Border Background="{StaticResource BackgroundCardBrush}" CornerRadius="12"
+                                Padding="16,12">
+                            <controls:SpacedPanel Spacing="6">
+                                <TextBlock Text="Personality" Style="{StaticResource SubtitleTextStyle}" />
+                                <TextBlock Text="Character traits, demeanor, and how they behave."
+                                           Foreground="{StaticResource TextSecondaryBrush}" FontSize="12"
+                                           TextWrapping="Wrap" />
+                                <TextBox x:Name="PersonalityBox" Style="{StaticResource DarkTextBoxStyle}"
+                                         PlaceholderText="Witty, sarcastic, secretly kind-hearted..."
+                                         AcceptsReturn="True" Height="80" />
+                            </controls:SpacedPanel>
+                        </Border>
+
+                        <Border Background="{StaticResource BackgroundCardBrush}" CornerRadius="12"
+                                Padding="16,12">
+                            <controls:SpacedPanel Spacing="6">
+                                <TextBlock Text="Scenario" Style="{StaticResource SubtitleTextStyle}" />
+                                <TextBlock Text="The setting or situation for the conversation."
+                                           Foreground="{StaticResource TextSecondaryBrush}" FontSize="12"
+                                           TextWrapping="Wrap" />
+                                <TextBox x:Name="ScenarioBox" Style="{StaticResource DarkTextBoxStyle}"
+                                         PlaceholderText="{}{{user}} meets {{char}} at a coffee shop..."
+                                         AcceptsReturn="True" Height="80" />
+                            </controls:SpacedPanel>
+                        </Border>
+
+                        </controls:SpacedPanel>
+                    </StackPanel>
+                </ScrollViewer>
+            </PivotItem>
+
+            <!-- Messages tab -->
+            <PivotItem>
+                <PivotItem.Header>
+                    <controls:SpacedPanel Orientation="Horizontal" Spacing="6">
+                        <TextBlock Text="&#xE8BD;" FontFamily="Segoe MDL2 Assets" FontSize="14"
+                                   VerticalAlignment="Center" />
+                        <TextBlock Text="Messages" VerticalAlignment="Center" />
                     </controls:SpacedPanel>
-                </Border>
+                </PivotItem.Header>
+                <ScrollViewer Padding="0,8,0,0">
+                    <StackPanel Padding="16,0,16,32">
+                        <controls:SpacedPanel Spacing="8">
 
-                <!-- Description -->
-                <Border Background="{StaticResource BackgroundCardBrush}" CornerRadius="12"
-                        Padding="16,12" Margin="0,8,0,0">
-                    <controls:SpacedPanel Spacing="6">
-                        <TextBlock Text="Description" Style="{StaticResource SubtitleTextStyle}" />
-                        <TextBox x:Name="DescBox" Style="{StaticResource DarkTextBoxStyle}"
-                                 PlaceholderText="Character description, background, appearance…"
-                                 AcceptsReturn="True" Height="80" />
+                        <Border Background="{StaticResource BackgroundCardBrush}" CornerRadius="12"
+                                Padding="16,12">
+                            <controls:SpacedPanel Spacing="6">
+                                <TextBlock Text="First Message" Style="{StaticResource SubtitleTextStyle}" />
+                                <TextBlock Text="The opening message when starting a new chat."
+                                           Foreground="{StaticResource TextSecondaryBrush}" FontSize="12"
+                                           TextWrapping="Wrap" />
+                                <TextBox x:Name="FirstMsgBox" Style="{StaticResource DarkTextBoxStyle}"
+                                         PlaceholderText="*{{char}} looks up as you approach* &quot;Oh, hello there!&quot;"
+                                         AcceptsReturn="True" Height="100" />
+                            </controls:SpacedPanel>
+                        </Border>
+
+                        <!-- Alternate Greetings -->
+                        <Border Background="{StaticResource BackgroundCardBrush}" CornerRadius="12"
+                                Padding="16,12">
+                            <controls:SpacedPanel Spacing="8">
+                                <TextBlock Text="Alternate Greetings" Style="{StaticResource SubtitleTextStyle}" />
+                                <TextBlock Text="Additional first messages that can be swiped through."
+                                           Foreground="{StaticResource TextSecondaryBrush}" FontSize="12"
+                                           TextWrapping="Wrap" />
+                                <ListView x:Name="AltGreetingsList" SelectionMode="None"
+                                          Background="Transparent"
+                                          ItemContainerStyle="{StaticResource MessageListItemStyle}">
+                                    <ListView.ItemTemplate>
+                                        <DataTemplate>
+                                            <Grid Padding="0,4">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="36" />
+                                                </Grid.ColumnDefinitions>
+                                                <TextBox Text="{Binding}" Style="{StaticResource DarkTextBoxStyle}"
+                                                         AcceptsReturn="True" MinHeight="48"
+                                                         TextChanged="OnAltGreetingChanged"
+                                                         Tag="{Binding}" />
+                                                <Button Grid.Column="1" Background="Transparent"
+                                                        BorderThickness="0" VerticalAlignment="Top"
+                                                        Foreground="#E05555" Tag="{Binding}"
+                                                        Click="OnRemoveAltGreetingClick">
+                                                    <TextBlock Text="&#xE74D;" FontFamily="Segoe MDL2 Assets"
+                                                               FontSize="14" />
+                                                </Button>
+                                            </Grid>
+                                        </DataTemplate>
+                                    </ListView.ItemTemplate>
+                                </ListView>
+                                <Button Content="+ Add Alternate Greeting"
+                                        HorizontalAlignment="Stretch"
+                                        Click="OnAddAltGreetingClick"
+                                        BorderThickness="1"
+                                        BorderBrush="{StaticResource AccentPrimaryBrush}"
+                                        Background="Transparent"
+                                        Foreground="{StaticResource AccentPrimaryBrush}" />
+                            </controls:SpacedPanel>
+                        </Border>
+
+                        <Border Background="{StaticResource BackgroundCardBrush}" CornerRadius="12"
+                                Padding="16,12">
+                            <controls:SpacedPanel Spacing="6">
+                                <TextBlock Text="Example Dialogue" Style="{StaticResource SubtitleTextStyle}" />
+                                <TextBlock Text="Example conversations to guide the AI's writing style."
+                                           Foreground="{StaticResource TextSecondaryBrush}" FontSize="12"
+                                           TextWrapping="Wrap" />
+                                <TextBox x:Name="MsgExampleBox" Style="{StaticResource DarkTextBoxStyle}"
+                                         PlaceholderText="&lt;START&gt;&#x0a;{{user}}: Hi!&#x0a;{{char}}: *waves* Hey there!"
+                                         AcceptsReturn="True" Height="120" />
+                            </controls:SpacedPanel>
+                        </Border>
+
+                        </controls:SpacedPanel>
+                    </StackPanel>
+                </ScrollViewer>
+            </PivotItem>
+
+            <!-- Advanced tab -->
+            <PivotItem>
+                <PivotItem.Header>
+                    <controls:SpacedPanel Orientation="Horizontal" Spacing="6">
+                        <TextBlock Text="&#xE713;" FontFamily="Segoe MDL2 Assets" FontSize="14"
+                                   VerticalAlignment="Center" />
+                        <TextBlock Text="Advanced" VerticalAlignment="Center" />
                     </controls:SpacedPanel>
-                </Border>
+                </PivotItem.Header>
+                <ScrollViewer Padding="0,8,0,0">
+                    <StackPanel Padding="16,0,16,32">
+                        <controls:SpacedPanel Spacing="8">
 
-                <!-- Personality -->
-                <Border Background="{StaticResource BackgroundCardBrush}" CornerRadius="12"
-                        Padding="16,12" Margin="0,8,0,0">
-                    <controls:SpacedPanel Spacing="6">
-                        <TextBlock Text="Personality" Style="{StaticResource SubtitleTextStyle}" />
-                        <TextBox x:Name="PersonalityBox" Style="{StaticResource DarkTextBoxStyle}"
-                                 PlaceholderText="Personality traits, speech style…"
-                                 AcceptsReturn="True" Height="60" />
+                        <Border Background="{StaticResource BackgroundCardBrush}" CornerRadius="12"
+                                Padding="16,12">
+                            <controls:SpacedPanel Spacing="6">
+                                <TextBlock Text="System Prompt" Style="{StaticResource SubtitleTextStyle}" />
+                                <TextBlock Text="Overrides the default system prompt. Use {{original}} to include the user's default."
+                                           Foreground="{StaticResource TextSecondaryBrush}" FontSize="12"
+                                           TextWrapping="Wrap" />
+                                <TextBox x:Name="SysPromptBox" Style="{StaticResource DarkTextBoxStyle}"
+                                         PlaceholderText="{}{{original}}&#x0a;&#x0a;Additional instructions for this character..."
+                                         AcceptsReturn="True" Height="100" />
+                            </controls:SpacedPanel>
+                        </Border>
+
+                        <Border Background="{StaticResource BackgroundCardBrush}" CornerRadius="12"
+                                Padding="16,12">
+                            <controls:SpacedPanel Spacing="6">
+                                <TextBlock Text="Post-History Instructions" Style="{StaticResource SubtitleTextStyle}" />
+                                <TextBlock Text="Injected after the chat history. Use {{original}} to include default."
+                                           Foreground="{StaticResource TextSecondaryBrush}" FontSize="12"
+                                           TextWrapping="Wrap" />
+                                <TextBox x:Name="PostHistoryBox" Style="{StaticResource DarkTextBoxStyle}"
+                                         PlaceholderText="Remember to stay in character..."
+                                         AcceptsReturn="True" Height="80" />
+                            </controls:SpacedPanel>
+                        </Border>
+
+                        <!-- Character lorebook info (shown when card was imported with one) -->
+                        <Border x:Name="LorebookInfoBorder" Visibility="Collapsed"
+                                Background="{StaticResource BackgroundCardBrush}" CornerRadius="12"
+                                Padding="16,12">
+                            <controls:SpacedPanel Orientation="Horizontal" Spacing="12">
+                                <TextBlock Text="&#xE736;" FontFamily="Segoe MDL2 Assets" FontSize="24"
+                                           Foreground="{StaticResource AccentPrimaryBrush}"
+                                           VerticalAlignment="Center" />
+                                <StackPanel>
+                                    <TextBlock Text="Character Lorebook"
+                                               Style="{StaticResource SubtitleTextStyle}" />
+                                    <TextBlock x:Name="LorebookEntryCount"
+                                               Foreground="{StaticResource TextSecondaryBrush}"
+                                               FontSize="12" />
+                                </StackPanel>
+                            </controls:SpacedPanel>
+                        </Border>
+
+                        </controls:SpacedPanel>
+                    </StackPanel>
+                </ScrollViewer>
+            </PivotItem>
+
+            <!-- Meta tab -->
+            <PivotItem>
+                <PivotItem.Header>
+                    <controls:SpacedPanel Orientation="Horizontal" Spacing="6">
+                        <TextBlock Text="&#xE946;" FontFamily="Segoe MDL2 Assets" FontSize="14"
+                                   VerticalAlignment="Center" />
+                        <TextBlock Text="Meta" VerticalAlignment="Center" />
                     </controls:SpacedPanel>
-                </Border>
+                </PivotItem.Header>
+                <ScrollViewer Padding="0,8,0,0">
+                    <StackPanel Padding="16,0,16,32">
+                        <controls:SpacedPanel Spacing="8">
 
-                <!-- Scenario -->
-                <Border Background="{StaticResource BackgroundCardBrush}" CornerRadius="12"
-                        Padding="16,12" Margin="0,8,0,0">
-                    <controls:SpacedPanel Spacing="6">
-                        <TextBlock Text="Scenario" Style="{StaticResource SubtitleTextStyle}" />
-                        <TextBox x:Name="ScenarioBox" Style="{StaticResource DarkTextBoxStyle}"
-                                 PlaceholderText="Setting or scenario context"
-                                 AcceptsReturn="True" Height="60" />
-                    </controls:SpacedPanel>
-                </Border>
+                        <Border Background="{StaticResource BackgroundCardBrush}" CornerRadius="12"
+                                Padding="16,12">
+                            <controls:SpacedPanel Spacing="6">
+                                <TextBlock Text="Tags" Style="{StaticResource SubtitleTextStyle}" />
+                                <TextBlock Text="Keywords for categorizing the character."
+                                           Foreground="{StaticResource TextSecondaryBrush}" FontSize="12"
+                                           TextWrapping="Wrap" />
+                                <TextBox x:Name="TagsBox" Style="{StaticResource DarkTextBoxStyle}"
+                                         PlaceholderText="fantasy, female, elf (comma-separated)" />
+                            </controls:SpacedPanel>
+                        </Border>
 
-                <!-- First Message -->
-                <Border Background="{StaticResource BackgroundCardBrush}" CornerRadius="12"
-                        Padding="16,12" Margin="0,8,0,0">
-                    <controls:SpacedPanel Spacing="6">
-                        <TextBlock Text="First Message" Style="{StaticResource SubtitleTextStyle}" />
-                        <TextBox x:Name="FirstMsgBox" Style="{StaticResource DarkTextBoxStyle}"
-                                 PlaceholderText="Opening message from the character"
-                                 AcceptsReturn="True" Height="80" />
-                    </controls:SpacedPanel>
-                </Border>
+                        <Border Background="{StaticResource BackgroundCardBrush}" CornerRadius="12"
+                                Padding="16,12">
+                            <controls:SpacedPanel Spacing="6">
+                                <TextBlock Text="Creator Notes" Style="{StaticResource SubtitleTextStyle}" />
+                                <TextBlock Text="Notes for users about the character (not used in prompts)."
+                                           Foreground="{StaticResource TextSecondaryBrush}" FontSize="12"
+                                           TextWrapping="Wrap" />
+                                <TextBox x:Name="CreatorNotesBox" Style="{StaticResource DarkTextBoxStyle}"
+                                         PlaceholderText="Tips for getting the best experience with this character..."
+                                         AcceptsReturn="True" Height="80" />
+                            </controls:SpacedPanel>
+                        </Border>
 
-                <!-- System Prompt -->
-                <Border Background="{StaticResource BackgroundCardBrush}" CornerRadius="12"
-                        Padding="16,12" Margin="0,8,0,0">
-                    <controls:SpacedPanel Spacing="6">
-                        <TextBlock Text="System Prompt" Style="{StaticResource SubtitleTextStyle}" />
-                        <TextBox x:Name="SysPromptBox" Style="{StaticResource DarkTextBoxStyle}"
-                                 PlaceholderText="Custom system prompt (optional)"
-                                 AcceptsReturn="True" Height="60" />
-                    </controls:SpacedPanel>
-                </Border>
+                        </controls:SpacedPanel>
+                    </StackPanel>
+                </ScrollViewer>
+            </PivotItem>
 
-                <!-- Tags -->
-                <Border Background="{StaticResource BackgroundCardBrush}" CornerRadius="12"
-                        Padding="16,12" Margin="0,8,0,0">
-                    <controls:SpacedPanel Spacing="6">
-                        <TextBlock Text="Tags" Style="{StaticResource SubtitleTextStyle}" />
-                        <TextBox x:Name="TagsBox" Style="{StaticResource DarkTextBoxStyle}"
-                                 PlaceholderText="fantasy, female, elf (comma-separated)" />
-                    </controls:SpacedPanel>
-                </Border>
-
-                <Border Height="32" />
-            </StackPanel>
-        </ScrollViewer>
+        </Pivot>
     </Grid>
 </Page>

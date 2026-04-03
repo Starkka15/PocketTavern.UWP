@@ -1,0 +1,96 @@
+<Page
+    x:Class="PocketTavern.UWP.Views.SetupGuidePage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:PocketTavern.UWP.Controls"
+    Background="{StaticResource BackgroundDeepBrush}">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Grid Grid.Row="0" Background="{StaticResource BackgroundSurfaceBrush}" Padding="4,8">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="48" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <Button Grid.Column="0" Background="Transparent" BorderThickness="0"
+                    Click="BackButton_Click">
+                <TextBlock Text="&#xE830;" FontFamily="Segoe MDL2 Assets" FontSize="18"
+                           Foreground="{StaticResource TextPrimaryBrush}" />
+            </Button>
+            <TextBlock Grid.Column="1" Text="Help" VerticalAlignment="Center"
+                       Style="{StaticResource TitleTextStyle}" />
+        </Grid>
+
+        <!-- Content -->
+        <ScrollViewer Grid.Row="1">
+            <StackPanel Padding="16"><controls:SpacedPanel Spacing="16">
+
+                <TextBlock Text="Welcome to PocketTavern"
+                           Style="{StaticResource TitleTextStyle}"
+                           Foreground="{StaticResource AccentPrimaryBrush}" />
+                <TextBlock TextWrapping="Wrap"
+                           Text="PocketTavern is a standalone AI character chat app for Windows. Connect directly to any LLM backend, manage characters and chats locally, and take your AI companions anywhere — no server or PC required."
+                           Foreground="{StaticResource TextSecondaryBrush}" />
+
+                <!-- Step 1 -->
+                <Border Background="{StaticResource BackgroundSurfaceBrush}" CornerRadius="8" Padding="12">
+                    <controls:SpacedPanel Spacing="8">
+                        <TextBlock Text="Step 1 — Set up your LLM backend"
+                                   Style="{StaticResource SubtitleTextStyle}" />
+                        <TextBlock TextWrapping="Wrap"
+                                   Text="Go to Settings → API Config and enter the URL of your LLM server. Supported backends include KoboldCpp, llama.cpp, Ooba, Ollama, and any OpenAI-compatible API."
+                                   Foreground="{StaticResource TextSecondaryBrush}" />
+                    </controls:SpacedPanel>
+                </Border>
+
+                <!-- Step 2 -->
+                <Border Background="{StaticResource BackgroundSurfaceBrush}" CornerRadius="8" Padding="12">
+                    <controls:SpacedPanel Spacing="8">
+                        <TextBlock Text="Step 2 — Add a character"
+                                   Style="{StaticResource SubtitleTextStyle}" />
+                        <TextBlock TextWrapping="Wrap"
+                                   Text="Tap the Characters tab and import a character card (PNG or JSON in SillyTavern V2 format), or create one from scratch. You can also browse CharaVault to download community cards."
+                                   Foreground="{StaticResource TextSecondaryBrush}" />
+                    </controls:SpacedPanel>
+                </Border>
+
+                <!-- Step 3 -->
+                <Border Background="{StaticResource BackgroundSurfaceBrush}" CornerRadius="8" Padding="12">
+                    <controls:SpacedPanel Spacing="8">
+                        <TextBlock Text="Step 3 — Start chatting"
+                                   Style="{StaticResource SubtitleTextStyle}" />
+                        <TextBlock TextWrapping="Wrap"
+                                   Text="Tap a character to open the chat. Type your message and press Send. The app will stream the response directly from your LLM backend."
+                                   Foreground="{StaticResource TextSecondaryBrush}" />
+                    </controls:SpacedPanel>
+                </Border>
+
+                <!-- Tips -->
+                <Border Background="{StaticResource BackgroundSurfaceBrush}" CornerRadius="8" Padding="12">
+                    <controls:SpacedPanel Spacing="8">
+                        <TextBlock Text="Tips"
+                                   Style="{StaticResource SubtitleTextStyle}" />
+                        <TextBlock TextWrapping="Wrap"
+                                   Text="• Use /sys [text] to insert a narrator message into the chat without sending it to the AI."
+                                   Foreground="{StaticResource TextSecondaryBrush}" />
+                        <TextBlock TextWrapping="Wrap"
+                                   Text="• Import your existing SillyTavern data via Settings → Import from SillyTavern."
+                                   Foreground="{StaticResource TextSecondaryBrush}" />
+                        <TextBlock TextWrapping="Wrap"
+                                   Text="• Enable extensions in Settings → Extensions to add quick replies, regex rules, and more."
+                                   Foreground="{StaticResource TextSecondaryBrush}" />
+                        <TextBlock TextWrapping="Wrap"
+                                   Text="• Use lorebooks (world info) to inject contextual information into prompts automatically."
+                                   Foreground="{StaticResource TextSecondaryBrush}" />
+                    </controls:SpacedPanel>
+                </Border>
+
+            </controls:SpacedPanel></StackPanel>
+        </ScrollViewer>
+    </Grid>
+</Page>

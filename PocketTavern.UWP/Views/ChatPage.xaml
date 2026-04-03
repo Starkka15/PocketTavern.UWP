@@ -69,9 +69,25 @@
                             </MenuFlyoutItem.Icon>
                         </MenuFlyoutItem>
                         <MenuFlyoutSeparator />
-                        <MenuFlyoutItem Text="Author's Note" Click="OnAuthorsNoteClick">
+                        <MenuFlyoutItem Text="Upload Background" Click="OnUploadBackgroundClick">
                             <MenuFlyoutItem.Icon>
-                                <FontIcon Glyph="&#xE8D2;" FontFamily="Segoe MDL2 Assets" />
+                                <FontIcon Glyph="&#xE8B9;" FontFamily="Segoe MDL2 Assets" />
+                            </MenuFlyoutItem.Icon>
+                        </MenuFlyoutItem>
+                        <MenuFlyoutItem x:Name="ClearBackgroundItem" Text="Clear Background" Click="OnClearBackgroundClick" Foreground="#FFE74C3C" Visibility="Collapsed">
+                            <MenuFlyoutItem.Icon>
+                                <FontIcon Glyph="&#xE74D;" FontFamily="Segoe MDL2 Assets" />
+                            </MenuFlyoutItem.Icon>
+                        </MenuFlyoutItem>
+                        <MenuFlyoutItem Text="Image Gallery" Click="OnImageGalleryClick">
+                            <MenuFlyoutItem.Icon>
+                                <FontIcon Glyph="&#xE722;" FontFamily="Segoe MDL2 Assets" />
+                            </MenuFlyoutItem.Icon>
+                        </MenuFlyoutItem>
+                        <MenuFlyoutSeparator />
+                        <MenuFlyoutItem Text="Debug Log" Click="OnDebugLogClick">
+                            <MenuFlyoutItem.Icon>
+                                <FontIcon Glyph="&#xEBE8;" FontFamily="Segoe MDL2 Assets" />
                             </MenuFlyoutItem.Icon>
                         </MenuFlyoutItem>
                         <MenuFlyoutSeparator />
@@ -85,10 +101,41 @@
                                 <FontIcon Glyph="&#xE74D;" FontFamily="Segoe MDL2 Assets" Foreground="#FFE74C3C" />
                             </MenuFlyoutItem.Icon>
                         </MenuFlyoutItem>
+                        <MenuFlyoutItem Text="Delete Character" Click="OnDeleteCharacterClick" Foreground="#FFE74C3C">
+                            <MenuFlyoutItem.Icon>
+                                <FontIcon Glyph="&#xE74D;" FontFamily="Segoe MDL2 Assets" Foreground="#FFE74C3C" />
+                            </MenuFlyoutItem.Icon>
+                        </MenuFlyoutItem>
                     </MenuFlyout>
                 </Button.Flyout>
             </Button>
         </Grid>
+
+        <!-- Typing indicator overlay — sits at bottom of message area, shown during generation -->
+        <Border Grid.Row="1" x:Name="TypingIndicator"
+                VerticalAlignment="Bottom" HorizontalAlignment="Left"
+                Margin="16,0,0,8"
+                Visibility="Collapsed">
+            <controls:SpacedPanel Orientation="Horizontal" Spacing="6">
+                <Border Background="{StaticResource AiBubbleBrush}"
+                        CornerRadius="4,12,12,12" Padding="12,8">
+                    <controls:SpacedPanel Orientation="Horizontal" Spacing="2">
+                        <TextBlock x:Name="TypingDot1" Text="●" FontSize="8"
+                                   Foreground="{StaticResource TextSecondaryBrush}"
+                                   VerticalAlignment="Center" />
+                        <TextBlock x:Name="TypingDot2" Text="●" FontSize="8"
+                                   Foreground="{StaticResource TextSecondaryBrush}"
+                                   VerticalAlignment="Center" Opacity="0.4" />
+                        <TextBlock x:Name="TypingDot3" Text="●" FontSize="8"
+                                   Foreground="{StaticResource TextSecondaryBrush}"
+                                   VerticalAlignment="Center" Opacity="0.2" />
+                    </controls:SpacedPanel>
+                </Border>
+            </controls:SpacedPanel>
+        </Border>
+
+                <!-- Background image (per-character) -->
+        <Image Grid.Row="1" x:Name="ChatBackground" Stretch="UniformToFill" Opacity="0.15" Visibility="Collapsed" />
 
         <!-- Messages -->
         <ListView Grid.Row="1" x:Name="MessagesList"
@@ -111,6 +158,21 @@
                                            Foreground="{StaticResource TextPrimaryBrush}"
                                            TextFontSize="14" />
                             </Border>
+                            <!-- Swipe indicators -->
+                            <Grid Margin="4,2,0,0" Visibility="{Binding SwipeCount, Converter={StaticResource IntGreaterThanOneToVisibilityConverter}}">
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
+                                    <TextBlock Text="&#xE76B;" FontFamily="Segoe MDL2 Assets" FontSize="10"
+                                               Foreground="{StaticResource TextSecondaryBrush}"
+                                               Opacity="0.6" VerticalAlignment="Center" />
+                                    <TextBlock FontSize="10" VerticalAlignment="Center" Margin="4,0"
+                                               Foreground="{StaticResource TextSecondaryBrush}">
+                                        <Run Text="{Binding CurrentSwipeIndex}" /><Run Text="/" /><Run Text="{Binding SwipeCount}" />
+                                    </TextBlock>
+                                    <TextBlock Text="&#xE76C;" FontFamily="Segoe MDL2 Assets" FontSize="10"
+                                               Foreground="{StaticResource TextSecondaryBrush}"
+                                               Opacity="0.6" VerticalAlignment="Center" />
+                                </StackPanel>
+                            </Grid>
                         </StackPanel>
                         <!-- User message: right side -->
                         <StackPanel HorizontalAlignment="Right" MaxWidth="300"
@@ -191,10 +253,10 @@
                               HorizontalScrollMode="Enabled"
                               VerticalScrollMode="Disabled"
                               Visibility="Collapsed">
-                    <StackPanel x:Name="QuickReplyPanel"
+                    <controls:SpacedPanel x:Name="QuickReplyPanel"
                                 Orientation="Horizontal"
                                 Spacing="6"
-                                Padding="8,6" />
+                                Margin="8,6" />
                 </ScrollViewer>
 
                 <!-- Toggle chevron — always visible when bar is shown -->
@@ -223,7 +285,8 @@
                      Style="{StaticResource DarkTextBoxStyle}"
                      AcceptsReturn="False"
                      InputScope="Text"
-                     KeyDown="OnInputKeyDown" />
+                     KeyDown="OnInputKeyDown"
+                     GotFocus="OnInputGotFocus" />
             <Button Grid.Column="1" x:Name="StopButton"
                     Background="Transparent" BorderThickness="0"
                     Foreground="{StaticResource AccentPrimaryBrush}"

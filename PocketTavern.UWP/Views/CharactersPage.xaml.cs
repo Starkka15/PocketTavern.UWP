@@ -8,6 +8,7 @@ namespace PocketTavern.UWP.Views
     public sealed partial class CharactersPage : Page
     {
         private readonly CharactersViewModel _vm = new CharactersViewModel();
+        private bool _showGroups = false;
 
         public CharactersPage()
         {
@@ -19,27 +20,60 @@ namespace PocketTavern.UWP.Views
             base.OnNavigatedTo(e);
             await _vm.LoadAsync();
             CharactersList.ItemsSource = _vm.Characters;
-            UpdateEmptyState();
+            UpdateTabVisibility();
         }
 
-        private void UpdateEmptyState()
+        private void SetActiveTab(bool groups)
         {
-            bool empty = _vm.Characters.Count == 0;
-            EmptyState.Visibility = empty ? Windows.UI.Xaml.Visibility.Visible : Windows.UI.Xaml.Visibility.Collapsed;
-            CharactersList.Visibility = empty ? Windows.UI.Xaml.Visibility.Collapsed : Windows.UI.Xaml.Visibility.Visible;
+            _showGroups = groups;
+            TabTitleText.Text = groups ? "Groups" : "Characters";
+            UpdateTabVisibility();
         }
+
+        private void UpdateTabVisibility()
+        {
+            if (_showGroups)
+            {
+                SearchBox.Visibility = Visibility.Collapsed;
+                CharactersList.Visibility = Visibility.Collapsed;
+                EmptyState.Visibility = Visibility.Collapsed;
+                GroupsPanel.Visibility = Visibility.Visible;
+            }
+            else
+            {
+                SearchBox.Visibility = Visibility.Visible;
+                GroupsPanel.Visibility = Visibility.Collapsed;
+                bool empty = _vm.Characters.Count == 0;
+                EmptyState.Visibility = empty ? Visibility.Visible : Visibility.Collapsed;
+                CharactersList.Visibility = empty ? Visibility.Collapsed : Visibility.Visible;
+            }
+        }
+
+        private void OnTabCharactersClick(object sender, RoutedEventArgs e)
+            => SetActiveTab(false);
+
+        private void OnTabGroupsClick(object sender, RoutedEventArgs e)
+            => SetActiveTab(true);
 
         private void OnBackClick(object sender, RoutedEventArgs e)
             => App.Navigation.GoBack();
 
         private void OnCreateClick(object sender, RoutedEventArgs e)
-            => App.Navigation.NavigateToCreateCharacter();
+        {
+            if (_showGroups)
+                App.Navigation.NavigateToGroups();
+            else
+                App.Navigation.NavigateToCreateCharacter();
+        }
 
         private async void OnRefreshClick(object sender, RoutedEventArgs e)
         {
-            await _vm.LoadAsync();
-            CharactersList.ItemsSource = _vm.Characters;
-            UpdateEmptyState();
+            if (!_showGroups)
+            {
+                await _vm.LoadAsync();
+                CharactersList.ItemsSource = _vm.Characters;
+                UpdateTabVisibility();
+            }
         }
 
         private void OnSearchChanged(object sender, TextChangedEventArgs e)
@@ -75,7 +109,7 @@ namespace PocketTavern.UWP.Views
                 await App.Characters.SaveCharacterAsync(item.Avatar ?? item.Name, ch);
                 await _vm.LoadAsync();
                 CharactersList.ItemsSource = _vm.Characters;
-                UpdateEmptyState();
+                UpdateTabVisibility();
             }
         }
 
@@ -98,7 +132,7 @@ namespace PocketTavern.UWP.Views
                     await App.Characters.DeleteCharacterAsync(item.Avatar ?? item.Name);
                     await _vm.LoadAsync();
                     CharactersList.ItemsSource = _vm.Characters;
-                    UpdateEmptyState();
+                    UpdateTabVisibility();
                 }
             }
         }

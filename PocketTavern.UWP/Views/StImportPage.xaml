@@ -1,0 +1,116 @@
+<Page
+    x:Class="PocketTavern.UWP.Views.StImportPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:PocketTavern.UWP.Controls"
+    Background="{StaticResource BackgroundDeepBrush}">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Grid Grid.Row="0" Background="{StaticResource BackgroundSurfaceBrush}" Padding="4,8">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="48" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <Button Grid.Column="0" Background="Transparent" BorderThickness="0"
+                    Click="BackButton_Click">
+                <TextBlock Text="&#xE830;" FontFamily="Segoe MDL2 Assets" FontSize="18"
+                           Foreground="{StaticResource TextPrimaryBrush}" />
+            </Button>
+            <TextBlock Grid.Column="1" Text="Import from SillyTavern" VerticalAlignment="Center"
+                       Style="{StaticResource TitleTextStyle}" />
+        </Grid>
+
+        <!-- Content -->
+        <ScrollViewer Grid.Row="1">
+            <StackPanel Padding="16"><controls:SpacedPanel Spacing="16">
+
+                <!-- Folder import section -->
+                <TextBlock Text="Import from Local Folder" Style="{StaticResource SubtitleTextStyle}" />
+                <TextBlock Text="Select your SillyTavern data folder (containing characters/, worlds/, chats/ sub-folders)."
+                           TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}" />
+                <Button x:Name="FolderImportButton" Content="Select Folder and Import"
+                        HorizontalAlignment="Stretch" Click="FolderImportButton_Click"
+                        Style="{StaticResource AccentButtonStyle}" />
+
+                <!-- Server import section -->
+                <TextBlock Text="Import from ST Server" Style="{StaticResource SubtitleTextStyle}"
+                           Margin="0,16,0,0" />
+                <TextBlock Text="Enter the URL of a running SillyTavern server."
+                           TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}" />
+
+                <controls:SpacedPanel Spacing="8">
+                    <TextBlock Text="Server URL (e.g. http://192.168.1.10:8000)"
+                               Foreground="{StaticResource TextSecondaryBrush}" />
+                    <TextBox x:Name="ServerUrlBox" PlaceholderText="http://localhost:8000"
+                             TextChanged="ServerUrlBox_TextChanged" />
+                </controls:SpacedPanel>
+
+                <controls:SpacedPanel Spacing="8">
+                    <TextBlock Text="Username (optional, for multi-user mode)"
+                               Foreground="{StaticResource TextSecondaryBrush}" />
+                    <TextBox x:Name="UsernameBox" PlaceholderText="username"
+                             TextChanged="UsernameBox_TextChanged" />
+                </controls:SpacedPanel>
+
+                <controls:SpacedPanel Spacing="8">
+                    <TextBlock Text="Password (optional)"
+                               Foreground="{StaticResource TextSecondaryBrush}" />
+                    <PasswordBox x:Name="PasswordBox" PlaceholderText="password"
+                                 PasswordChanged="PasswordBox_PasswordChanged" />
+                </controls:SpacedPanel>
+
+                <Button x:Name="ServerImportButton" Content="Import from Server"
+                        HorizontalAlignment="Stretch" Click="ServerImportButton_Click"
+                        Style="{StaticResource AccentButtonStyle}" />
+
+                <!-- Progress -->
+                <Border x:Name="ProgressPanel" Visibility="Collapsed"
+                        Background="{StaticResource BackgroundSurfaceBrush}"
+                        CornerRadius="8" Padding="12">
+                    <controls:SpacedPanel Spacing="8">
+                        <ProgressBar x:Name="ImportProgress" IsIndeterminate="True" />
+                        <TextBlock x:Name="CurrentItemText" TextWrapping="Wrap"
+                                   Foreground="{StaticResource TextSecondaryBrush}" />
+                    </controls:SpacedPanel>
+                </Border>
+
+                <!-- Log -->
+                <Border x:Name="LogPanel" Visibility="Collapsed"
+                        Background="{StaticResource BackgroundSurfaceBrush}"
+                        CornerRadius="8" Padding="12">
+                    <controls:SpacedPanel Spacing="4">
+                        <TextBlock Text="Import Log" Style="{StaticResource SubtitleTextStyle}" />
+                        <ListView x:Name="LogList" MaxHeight="300"
+                                  SelectionMode="None">
+                            <ListView.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding}" TextWrapping="Wrap" FontSize="12"
+                                               FontFamily="Consolas" />
+                                </DataTemplate>
+                            </ListView.ItemTemplate>
+                        </ListView>
+                    </controls:SpacedPanel>
+                </Border>
+
+                <!-- Results -->
+                <Border x:Name="ResultsPanel" Visibility="Collapsed"
+                        Background="{StaticResource BackgroundSurfaceBrush}"
+                        CornerRadius="8" Padding="12">
+                    <controls:SpacedPanel Spacing="4">
+                        <TextBlock Text="Import Complete" Style="{StaticResource SubtitleTextStyle}" />
+                        <TextBlock x:Name="ResultsText" TextWrapping="Wrap" />
+                        <Button Content="Import Again" Click="ResetButton_Click"
+                                HorizontalAlignment="Stretch" Margin="0,8,0,0" />
+                    </controls:SpacedPanel>
+                </Border>
+
+            </controls:SpacedPanel></StackPanel>
+        </ScrollViewer>
+    </Grid>
+</Page>

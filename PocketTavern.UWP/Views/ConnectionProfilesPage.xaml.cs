@@ -5,6 +5,7 @@ using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Navigation;
+using PocketTavern.UWP.Controls;
 using PocketTavern.UWP.Models;
 using PocketTavern.UWP.ViewModels;
 
@@ -63,7 +64,7 @@ namespace PocketTavern.UWP.Views
             var textStack = new StackPanel { VerticalAlignment = VerticalAlignment.Center };
 
             // Name row with optional ACTIVE badge
-            var nameRow = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8 };
+            var nameRow = new SpacedPanel { Orientation = Orientation.Horizontal, Spacing = 8 };
             nameRow.Children.Add(new TextBlock
             {
                 Text = profile.Name,
@@ -131,7 +132,7 @@ namespace PocketTavern.UWP.Views
             row.Children.Add(textStack);
 
             // Right: Activate + Delete buttons
-            var btnStack = new StackPanel
+            var btnStack = new SpacedPanel
             {
                 Orientation = Orientation.Horizontal,
                 VerticalAlignment = VerticalAlignment.Center,
@@ -201,7 +202,7 @@ namespace PocketTavern.UWP.Views
             var dialog = new ContentDialog
             {
                 Title = "Save Current Settings",
-                Content = new StackPanel
+                Content = new SpacedPanel
                 {
                     Spacing = 8,
                     Children =

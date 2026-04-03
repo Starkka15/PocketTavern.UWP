@@ -21,4 +21,13 @@ namespace PocketTavern.UWP.Converters
         public object ConvertBack(object value, Type targetType, object parameter, string language)
             => value is Visibility v && v == Visibility.Collapsed;
     }
+
+    public class IntGreaterThanOneToVisibilityConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, string language)
+            => (value is int i && i > 1) ? Visibility.Visible : Visibility.Collapsed;
+
+        public object ConvertBack(object value, Type targetType, object parameter, string language)
+            => throw new NotImplementedException();
+    }
 }

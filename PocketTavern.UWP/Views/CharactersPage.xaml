@@ -25,9 +25,37 @@
                     HorizontalAlignment="Center" VerticalAlignment="Center">
                 <TextBlock Text="&#xE72B;" FontFamily="Segoe MDL2 Assets" FontSize="18" />
             </Button>
-            <TextBlock Grid.Column="1" Text="Characters" Style="{StaticResource TitleTextStyle}"
-                       VerticalAlignment="Center" Margin="4,0" />
-            <Button Grid.Column="2" Background="Transparent" BorderThickness="0"
+
+            <!-- Tab dropdown title -->
+            <Button Grid.Column="1" x:Name="TabDropdownButton"
+                    Background="Transparent" BorderThickness="0"
+                    HorizontalAlignment="Left" VerticalAlignment="Center" Padding="4,0">
+                <Button.Flyout>
+                    <MenuFlyout>
+                        <MenuFlyoutItem Text="Characters" Click="OnTabCharactersClick">
+                            <MenuFlyoutItem.Icon>
+                                <FontIcon Glyph="&#xE77B;" FontFamily="Segoe MDL2 Assets" />
+                            </MenuFlyoutItem.Icon>
+                        </MenuFlyoutItem>
+                        <MenuFlyoutItem Text="Groups" Click="OnTabGroupsClick">
+                            <MenuFlyoutItem.Icon>
+                                <FontIcon Glyph="&#xE902;" FontFamily="Segoe MDL2 Assets" />
+                            </MenuFlyoutItem.Icon>
+                        </MenuFlyoutItem>
+                    </MenuFlyout>
+                </Button.Flyout>
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock x:Name="TabTitleText" Text="Characters"
+                               Style="{StaticResource TitleTextStyle}"
+                               VerticalAlignment="Center" />
+                    <TextBlock Text="&#xE972;" FontFamily="Segoe MDL2 Assets" FontSize="11"
+                               Foreground="{StaticResource TextSecondaryBrush}"
+                               VerticalAlignment="Center" Margin="4,3,0,0" />
+                </StackPanel>
+            </Button>
+
+            <Button Grid.Column="2" x:Name="CreateButton"
+                    Background="Transparent" BorderThickness="0"
                     Foreground="{StaticResource AccentPrimaryBrush}" Click="OnCreateClick"
                     HorizontalAlignment="Center" VerticalAlignment="Center">
                 <TextBlock Text="&#xE710;" FontFamily="Segoe MDL2 Assets" FontSize="22" />
@@ -39,12 +67,12 @@
             </Button>
         </Grid>
 
-        <!-- Search -->
+        <!-- Search (characters tab only) -->
         <TextBox Grid.Row="1" x:Name="SearchBox" PlaceholderText="Search characters..."
                  Style="{StaticResource DarkTextBoxStyle}" Margin="12,8"
                  TextChanged="OnSearchChanged" />
 
-        <!-- Character List -->
+        <!-- Characters list -->
         <ListView Grid.Row="2" x:Name="CharactersList"
                   SelectionMode="None" IsItemClickEnabled="True"
                   ItemClick="OnCharacterClicked"
@@ -123,7 +151,7 @@
             </ListView.ItemTemplate>
         </ListView>
 
-        <!-- Empty state -->
+        <!-- Characters empty state -->
         <StackPanel Grid.Row="2" x:Name="EmptyState" Visibility="Collapsed"
                     HorizontalAlignment="Center" VerticalAlignment="Center" Margin="32">
             <TextBlock Text="&#xE716;" FontFamily="Segoe MDL2 Assets" FontSize="64"
@@ -134,6 +162,19 @@
             <TextBlock Text="Tap + to create your first character"
                        Style="{StaticResource SubtitleTextStyle}"
                        HorizontalAlignment="Center" Margin="0,8,0,0" />
+        </StackPanel>
+
+        <!-- Groups panel (shown when Groups tab is active) -->
+        <StackPanel Grid.Row="2" x:Name="GroupsPanel" Visibility="Collapsed"
+                    HorizontalAlignment="Center" VerticalAlignment="Center"
+                    Padding="24">
+            <TextBlock Text="&#xE902;" FontFamily="Segoe MDL2 Assets" FontSize="64"
+                       Foreground="{StaticResource TextSecondaryBrush}"
+                       HorizontalAlignment="Center" />
+            <TextBlock Text="Group chats are not yet supported in standalone mode."
+                       Margin="0,12,0,0"
+                       TextWrapping="Wrap" TextAlignment="Center"
+                       Foreground="{StaticResource TextSecondaryBrush}" />
         </StackPanel>
 
         <!-- Bottom divider line -->

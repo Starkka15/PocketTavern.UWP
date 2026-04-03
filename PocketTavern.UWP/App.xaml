@@ -8,6 +8,7 @@
         <!-- Converters -->
         <local:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
         <local:InverseBoolToVisibilityConverter x:Key="InverseBoolToVisibilityConverter" />
+        <local:IntGreaterThanOneToVisibilityConverter x:Key="IntGreaterThanOneToVisibilityConverter" />
 
         <!--
             Default color palette — matches Android PocketTavern base theme.

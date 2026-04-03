@@ -22,6 +22,11 @@ namespace PocketTavern.UWP.Views
 
         private void OnBackClick(object sender, RoutedEventArgs e) => App.Navigation.GoBack();
 
+        private void OnLorebookClicked(object sender, ItemClickEventArgs e)
+        {
+            // Drill-down into lorebook entries (future: navigate to entries page)
+        }
+
         private void OnRefreshClick(object sender, RoutedEventArgs e)
         {
             _vm.Load();

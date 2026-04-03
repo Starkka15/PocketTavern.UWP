@@ -3,11 +3,13 @@ using Windows.ApplicationModel.DataTransfer;
 using Windows.System;
 using Windows.UI;
 using Windows.UI.Text;
+using Windows.UI.ViewManagement;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Navigation;
+using Newtonsoft.Json.Linq;
 using PocketTavern.UWP.Models;
 using PocketTavern.UWP.ViewModels;
 
@@ -16,10 +18,22 @@ namespace PocketTavern.UWP.Views
     public sealed partial class ChatPage : Page
     {
         private readonly ChatViewModel _vm = new ChatViewModel();
+        private readonly DispatcherTimer _typingTimer = new DispatcherTimer();
+        private int _typingStep = 0;
 
         public ChatPage()
         {
             this.InitializeComponent();
+            _typingTimer.Interval = TimeSpan.FromMilliseconds(400);
+            _typingTimer.Tick += OnTypingTick;
+        }
+
+        private void OnTypingTick(object sender, object e)
+        {
+            _typingStep = (_typingStep + 1) % 3;
+            TypingDot1.Opacity = _typingStep == 0 ? 1.0 : 0.3;
+            TypingDot2.Opacity = _typingStep == 1 ? 1.0 : 0.3;
+            TypingDot3.Opacity = _typingStep == 2 ? 1.0 : 0.3;
         }
 
         protected override async void OnNavigatedTo(NavigationEventArgs e)
@@ -52,8 +66,10 @@ namespace PocketTavern.UWP.Views
 
             MessagesList.ItemsSource = _vm.Messages;
             _vm.PropertyChanged += OnVmPropertyChanged;
+            InputPane.GetForCurrentView().Showing += OnKeyboardShowing;
             RefreshApiIndicator();
             RebuildQuickReplyBar();
+            RefreshBackground();
             ScrollToBottom();
         }
 
@@ -61,7 +77,9 @@ namespace PocketTavern.UWP.Views
         {
             base.OnNavigatedFrom(e);
             _vm.PropertyChanged -= OnVmPropertyChanged;
+            InputPane.GetForCurrentView().Showing -= OnKeyboardShowing;
             _vm.Cleanup();
+            _typingTimer.Stop();
         }
 
         private void OnVmPropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
@@ -70,9 +88,14 @@ namespace PocketTavern.UWP.Views
             {
                 SendButton.Visibility = _vm.IsGenerating ? Visibility.Collapsed : Visibility.Visible;
                 StopButton.Visibility = _vm.IsGenerating ? Visibility.Visible : Visibility.Collapsed;
-                // Hide quick reply bar while generating, show it again when done
                 QuickReplyBar.Visibility = _vm.IsGenerating || _vm.QuickReplyButtons.Count == 0
                     ? Visibility.Collapsed : Visibility.Visible;
+                RefreshTypingIndicator();
+            }
+            if (e.PropertyName == nameof(ChatViewModel.CurrentStreamingText))
+            {
+                RefreshTypingIndicator();
+                ScrollToBottom();
             }
             if (e.PropertyName == nameof(ChatViewModel.Messages))
                 ScrollToBottom();
@@ -81,6 +104,17 @@ namespace PocketTavern.UWP.Views
                 RefreshApiIndicator();
             if (e.PropertyName == nameof(ChatViewModel.QuickReplyButtons))
                 RebuildQuickReplyBar();
+            if (e.PropertyName == nameof(ChatViewModel.BackgroundPath))
+                RefreshBackground();
+        }
+
+        private void RefreshTypingIndicator()
+        {
+            // Show dots only while generating and before first token arrives
+            var showDots = _vm.IsGenerating && string.IsNullOrEmpty(_vm.CurrentStreamingText);
+            TypingIndicator.Visibility = showDots ? Visibility.Visible : Visibility.Collapsed;
+            if (showDots) _typingTimer.Start();
+            else          _typingTimer.Stop();
         }
 
         private void RefreshApiIndicator()
@@ -330,10 +364,15 @@ namespace PocketTavern.UWP.Views
             }
             if (msg == null) return;
             e.Handled = true;
-            ShowMessageMenu(msg, sender as UIElement, e.GetPosition(sender as UIElement));
+
+            // Notify extensions of long-press (fires MESSAGE_LONG_PRESSED event in JS)
+            var msgIdx = _vm.GetMessageIndex(msg);
+            _vm.ShowMessageActions(msgIdx);
+
+            ShowMessageMenu(msg, msgIdx, sender as UIElement, e.GetPosition(sender as UIElement));
         }
 
-        private void ShowMessageMenu(ChatMessage msg, UIElement anchor, Windows.Foundation.Point pos)
+        private void ShowMessageMenu(ChatMessage msg, int msgIdx, UIElement anchor, Windows.Foundation.Point pos)
         {
             var flyout = new MenuFlyout();
 
@@ -380,8 +419,189 @@ namespace PocketTavern.UWP.Views
             flyout.Items.Add(delete);
             flyout.Items.Add(deleteFrom);
 
+            if (!msg.IsUser && msg.SwipeCount > 1)
+            {
+                flyout.Items.Add(new MenuFlyoutSeparator());
+                if (msg.HasPrevSwipe)
+                {
+                    var swipeL = new MenuFlyoutItem { Text = $"\uE76B  Previous ({msg.CurrentSwipeIndex}/{msg.SwipeCount})" };
+                    swipeL.Click += async (s, e) => { await _vm.SwipeLeftAsync(msg); ScrollToBottom(); };
+                    flyout.Items.Add(swipeL);
+                }
+                if (msg.HasNextSwipe)
+                {
+                    var swipeR = new MenuFlyoutItem { Text = $"\uE76C  Next ({msg.CurrentSwipeIndex + 2}/{msg.SwipeCount})" };
+                    swipeR.Click += async (s, e) => { await _vm.SwipeRightAsync(msg); ScrollToBottom(); };
+                    flyout.Items.Add(swipeR);
+                }
+            }
+
+            var ttsConfig = App.Settings.GetTtsConfig();
+            if (ttsConfig.Enabled)
+            {
+                flyout.Items.Add(new MenuFlyoutSeparator());
+                if (_vm.IsTtsSpeaking)
+                {
+                    var stopTts = new MenuFlyoutItem { Text = "Stop TTS", Foreground = new SolidColorBrush(Windows.UI.Color.FromArgb(255, 0xFF, 0x74, 0x3C)) };
+                    stopTts.Click += (s, e) => _vm.StopTts();
+                    flyout.Items.Add(stopTts);
+                }
+                else
+                {
+                    var speakTts = new MenuFlyoutItem { Text = "Play TTS" };
+                    speakTts.Click += async (s, e) => await _vm.SpeakMessageAsync(msg);
+                    flyout.Items.Add(speakTts);
+                }
+            }
+
+            // Extension message actions
+            var extActions = App.Extensions.GetMessageActionSets();
+            if (extActions.Count > 0)
+            {
+                flyout.Items.Add(new MenuFlyoutSeparator());
+                foreach (var extKv in extActions)
+                {
+                    foreach (var actionObj in extKv.Value)
+                    {
+                        var jAction = actionObj as Newtonsoft.Json.Linq.JObject;
+                        if (jAction == null) continue;
+                        var label  = jAction.Value<string>("label") ?? "";
+                        var action = jAction.Value<string>("action") ?? "";
+                        if (string.IsNullOrEmpty(label)) continue;
+                        var item = new MenuFlyoutItem { Text = label };
+                        var capturedAction = action;
+                        var capturedLabel  = label;
+                        item.Click += async (s, e) =>
+                        {
+                            var safeAction = _vm.EscapeJsonString(capturedAction);
+                            var safeLabel  = _vm.EscapeJsonString(capturedLabel);
+                            await App.Extensions.DispatchEventAsync("BUTTON_CLICKED",
+                                $"{{\"action\":\"{safeAction}\",\"label\":\"{safeLabel}\"}}");
+                        };
+                        flyout.Items.Add(item);
+                    }
+                }
+            }
+
             flyout.ShowAt(anchor, pos);
         }
+
+        // ── Background / Gallery / Delete Character handlers ─────────────────
+
+        private void RefreshBackground()
+        {
+            if (!string.IsNullOrEmpty(_vm.BackgroundPath))
+            {
+                try
+                {
+                    ChatBackground.Source = new Windows.UI.Xaml.Media.Imaging.BitmapImage(
+                        new Uri("file:///" + _vm.BackgroundPath.Replace('\\', '/')));
+                    ChatBackground.Visibility = Visibility.Visible;
+                    ClearBackgroundItem.Visibility = Visibility.Visible;
+                }
+                catch
+                {
+                    ChatBackground.Visibility = Visibility.Collapsed;
+                    ClearBackgroundItem.Visibility = Visibility.Collapsed;
+                }
+            }
+            else
+            {
+                ChatBackground.Source = null;
+                ChatBackground.Visibility = Visibility.Collapsed;
+                ClearBackgroundItem.Visibility = Visibility.Collapsed;
+            }
+        }
+
+        private async void OnUploadBackgroundClick(object sender, RoutedEventArgs e)
+        {
+            var picker = new Windows.Storage.Pickers.FileOpenPicker();
+            picker.SuggestedStartLocation = Windows.Storage.Pickers.PickerLocationId.PicturesLibrary;
+            picker.FileTypeFilter.Add(".jpg");
+            picker.FileTypeFilter.Add(".jpeg");
+            picker.FileTypeFilter.Add(".png");
+            picker.FileTypeFilter.Add(".bmp");
+            picker.FileTypeFilter.Add(".webp");
+            var file = await picker.PickSingleFileAsync();
+            if (file != null)
+                await _vm.UploadBackgroundAsync(file);
+        }
+
+        private async void OnClearBackgroundClick(object sender, RoutedEventArgs e)
+        {
+            _vm.ClearBackground();
+        }
+
+        private async void OnImageGalleryClick(object sender, RoutedEventArgs e)
+        {
+            var images = await _vm.GetGalleryImagesAsync();
+
+            var panel = new StackPanel();
+
+            if (images.Count == 0)
+            {
+                panel.Children.Add(new TextBlock
+                {
+                    Text = "No images found in this character's chats.",
+                    Style = (Style)Application.Current.Resources["SubtitleTextStyle"]
+                });
+            }
+            else
+            {
+                var grid = new GridView
+                {
+                    ItemsPanel = (ItemsPanelTemplate)Windows.UI.Xaml.Markup.XamlReader.Load(
+                        @"<ItemsPanelTemplate xmlns='http://schemas.microsoft.com/winfx/2006/xaml/presentation'>
+                            <ItemsWrapPanel Orientation='Horizontal'/>
+                        </ItemsPanelTemplate>"),
+                    MaxHeight = 500
+                };
+                foreach (var img in images)
+                {
+                    try
+                    {
+                        var bmp = new Windows.UI.Xaml.Media.Imaging.BitmapImage(
+                            new Uri("file:///" + img.ImagePath.Replace('\\', '/')));
+                        var imgCtrl = new Image { Source = bmp, Width = 120, Height = 120, Stretch = Windows.UI.Xaml.Media.Stretch.UniformToFill, Margin = new Thickness(4) };
+                        grid.Items.Add(imgCtrl);
+                    }
+                    catch { }
+                }
+                panel.Children.Add(grid);
+            }
+
+            var dialog = new ContentDialog
+            {
+                Title = "Image Gallery",
+                Content = new ScrollViewer { Content = panel },
+                CloseButtonText = "Close",
+                RequestedTheme = ElementTheme.Dark
+            };
+            await dialog.ShowAsync();
+        }
+
+        private async void OnDeleteCharacterClick(object sender, RoutedEventArgs e)
+        {
+            var name = _vm.Character?.Name ?? "this character";
+            var dialog = new ContentDialog
+            {
+                Title = "Delete Character",
+                Content = $"Delete \"{name}\" and all their chats? This cannot be undone.",
+                PrimaryButtonText = "Delete",
+                CloseButtonText = "Cancel",
+                DefaultButton = ContentDialogButton.Close,
+                RequestedTheme = ElementTheme.Dark
+            };
+
+            if (await dialog.ShowAsync() == ContentDialogResult.Primary)
+            {
+                await _vm.DeleteCharacterAsync();
+                App.Navigation.GoBack();
+            }
+        }
+
+        private void OnDebugLogClick(object sender, RoutedEventArgs e)
+            => App.Navigation.NavigateToDebugLog();
 
         // ── Quick Reply bar ───────────────────────────────────────────────────
 
@@ -441,10 +661,20 @@ namespace PocketTavern.UWP.Views
 
         // ── Scroll ────────────────────────────────────────────────────────────
 
+        private void OnKeyboardShowing(InputPane sender, InputPaneVisibilityEventArgs args)
+            => ScrollToBottom();
+
+        private void OnInputGotFocus(object sender, RoutedEventArgs e)
+            => ScrollToBottom();
+
         private void ScrollToBottom()
         {
-            if (MessagesList.Items.Count > 0)
-                MessagesList.ScrollIntoView(MessagesList.Items[MessagesList.Items.Count - 1]);
+            // Defer to Low priority so the ListView has finished its layout pass first
+            var _ = Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Low, () =>
+            {
+                if (MessagesList.Items.Count > 0)
+                    MessagesList.ScrollIntoView(MessagesList.Items[MessagesList.Items.Count - 1]);
+            });
         }
     }
 }

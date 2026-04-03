@@ -1,0 +1,40 @@
+<Page
+    x:Class="PocketTavern.UWP.Views.RegexSettingsPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Background="{StaticResource BackgroundDeepBrush}">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Grid Grid.Row="0" Background="{StaticResource BackgroundSurfaceBrush}" Padding="4,8">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="48" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <Button Grid.Column="0" Background="Transparent" BorderThickness="0"
+                    Foreground="{StaticResource TextPrimaryBrush}" Click="OnBackClick"
+                    HorizontalAlignment="Center" VerticalAlignment="Center">
+                <TextBlock Text="&#xE72B;" FontFamily="Segoe MDL2 Assets" FontSize="18" />
+            </Button>
+            <TextBlock Grid.Column="1" Text="Regex Rules" Style="{StaticResource TitleTextStyle}"
+                       VerticalAlignment="Center" Margin="4,0" />
+            <Button Grid.Column="2" Background="Transparent" BorderThickness="0"
+                    Foreground="{StaticResource AccentPrimaryBrush}"
+                    Click="OnAddRuleClick" Margin="0,0,8,0"
+                    ToolTipService.ToolTip="Add rule">
+                <TextBlock Text="&#xE710;" FontFamily="Segoe MDL2 Assets" FontSize="22" />
+            </Button>
+        </Grid>
+
+        <!-- Scrollable content built in code-behind -->
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+            <StackPanel x:Name="RootPanel" Margin="0,8,0,32" />
+        </ScrollViewer>
+    </Grid>
+</Page>
