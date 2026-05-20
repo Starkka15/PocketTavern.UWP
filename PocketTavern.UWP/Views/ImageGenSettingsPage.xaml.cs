@@ -562,7 +562,7 @@ namespace PocketTavern.UWP.Views
                     var genParams = imgSvc.BuildParams("a beautiful fantasy landscape, detailed, high quality");
                     string resultBase64 = null;
                     string errorMessage = null;
-                    var prog = new Progress<GenerationState>(state =>
+                    var prog = new SyncProgress<GenerationState>(state =>
                     {
                         if (state is GenerationState.Complete c) resultBase64 = c.ImageBase64;
                         else if (state is GenerationState.Error e) errorMessage = e.Message;
@@ -773,6 +773,15 @@ namespace PocketTavern.UWP.Views
             });
             sp.Children.Add(control);
             return sp;
+        }
+
+        // Progress<T> posts callbacks asynchronously via SynchronizationContext.Post —
+        // the result isn't set by the time await returns. Use this instead.
+        private sealed class SyncProgress<T> : IProgress<T>
+        {
+            private readonly Action<T> _callback;
+            public SyncProgress(Action<T> callback) => _callback = callback;
+            void IProgress<T>.Report(T value) => _callback(value);
         }
     }
 }

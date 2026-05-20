@@ -174,7 +174,7 @@ namespace PocketTavern.UWP.ViewModels
                 var imgSvc = new ImageGenService(App.Settings);
                 var genParams = imgSvc.BuildParams(prompt);
                 string resultBase64 = null;
-                var progress = new Progress<GenerationState>(s =>
+                var progress = new SyncProgress<GenerationState>(s =>
                 {
                     if (s is GenerationState.Complete c) resultBase64 = c.ImageBase64;
                 });
@@ -203,6 +203,13 @@ namespace PocketTavern.UWP.ViewModels
                 foreach (var t in TagsText.Split(','))
                     if (!string.IsNullOrWhiteSpace(t)) tags.Add(t.Trim());
             return tags;
+        }
+
+        private sealed class SyncProgress<T> : IProgress<T>
+        {
+            private readonly Action<T> _callback;
+            public SyncProgress(Action<T> callback) => _callback = callback;
+            void IProgress<T>.Report(T value) => _callback(value);
         }
 
         private static string SanitizeFileName(string name)
