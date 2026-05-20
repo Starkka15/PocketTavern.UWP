@@ -592,9 +592,7 @@ namespace PocketTavern.UWP.ViewModels
                 {
                     var displayed = continuationPrefix + t.Accumulated;
                     CurrentStreamingText = displayed;
-                    aiMsg.Content = displayed;
-                    if (aiIdx < Messages.Count)
-                        Messages[aiIdx] = aiMsg;
+                    aiMsg.Content = displayed;  // INPC fires; no collection replace needed
                 }
                 else if (evt is StreamEvent.Complete c)
                 {
@@ -609,9 +607,6 @@ namespace PocketTavern.UWP.ViewModels
 
                     aiMsg.Content = displayText;
                     aiMsg.RawContent = processed != displayText ? processed : null;
-
-                    if (aiIdx < Messages.Count)
-                        Messages[aiIdx] = aiMsg;
 
                     var safeText = EscapeJson(displayText);
                     var _ = App.Extensions.DispatchEventAsync("MESSAGE_RECEIVED",

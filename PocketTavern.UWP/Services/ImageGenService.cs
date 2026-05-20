@@ -34,10 +34,25 @@ namespace PocketTavern.UWP.Services
         public IImageGenBackend GetActiveBackend()
         {
             var config = _settings.GetImageGenConfig();
-            if (Enum.TryParse<ImageGenBackendType>(config.ActiveBackend, out var type)
-                && _backends.TryGetValue(type, out var backend))
-                return backend;
-            return _backends[ImageGenBackendType.SdWebui];
+            var type = ParseBackendKey(config.ActiveBackend);
+            return _backends.TryGetValue(type, out var backend)
+                ? backend
+                : _backends[ImageGenBackendType.SdWebui];
+        }
+
+        private static ImageGenBackendType ParseBackendKey(string key)
+        {
+            switch (key?.ToUpperInvariant())
+            {
+                case "SD_WEBUI":     return ImageGenBackendType.SdWebui;
+                case "COMFYUI":      return ImageGenBackendType.ComfyUI;
+                case "DALLE":        return ImageGenBackendType.Dalle;
+                case "STABILITY":    return ImageGenBackendType.Stability;
+                case "POLLINATIONS": return ImageGenBackendType.Pollinations;
+                case "HUGGINGFACE":  return ImageGenBackendType.HuggingFace;
+                case "NANOGPT":      return ImageGenBackendType.NanoGpt;
+                default:             return ImageGenBackendType.SdWebui;
+            }
         }
 
         public IImageGenBackend GetBackend(ImageGenBackendType type) =>

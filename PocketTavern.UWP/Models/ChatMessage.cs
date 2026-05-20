@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 
 namespace PocketTavern.UWP.Models
@@ -20,10 +21,19 @@ namespace PocketTavern.UWP.Models
         public int? NoteRole { get; set; }
     }
 
-    public class ChatMessage
+    public class ChatMessage : INotifyPropertyChanged
     {
+        public event PropertyChangedEventHandler PropertyChanged;
+        private void Notify(string name) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+
         public string Id { get; set; } = Guid.NewGuid().ToString();
-        public string Content { get; set; } = "";
+
+        private string _content = "";
+        public string Content
+        {
+            get => _content;
+            set { if (_content != value) { _content = value; Notify(nameof(Content)); } }
+        }
         public bool IsUser { get; set; }
         public bool IsNarrator { get; set; } = false;
         public DateTimeOffset Timestamp { get; set; } = DateTimeOffset.Now;
