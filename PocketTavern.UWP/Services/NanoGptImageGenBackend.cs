@@ -98,10 +98,25 @@ namespace PocketTavern.UWP.Services
 
                 var root = JObject.Parse(body);
                 var b64 = root["data"]?[0]?["b64_json"]?.ToString();
+
                 if (!string.IsNullOrEmpty(b64))
+                {
                     progress?.Report(new GenerationState.Complete { ImageBase64 = b64 });
+                }
                 else
-                    progress?.Report(new GenerationState.Error { Message = "No image returned" });
+                {
+                    // API returned a URL — download and convert to base64
+                    var imageUrl = root["data"]?[0]?["url"]?.ToString();
+                    if (!string.IsNullOrEmpty(imageUrl))
+                    {
+                        var imageBytes = await _http.GetByteArrayAsync(imageUrl);
+                        progress?.Report(new GenerationState.Complete { ImageBase64 = Convert.ToBase64String(imageBytes) });
+                    }
+                    else
+                    {
+                        progress?.Report(new GenerationState.Error { Message = "No image returned" });
+                    }
+                }
             }
             catch (OperationCanceledException) { }
             catch (Exception ex)
