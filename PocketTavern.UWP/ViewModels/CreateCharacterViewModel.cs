@@ -1,7 +1,10 @@
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Threading;
 using System.Threading.Tasks;
 using PocketTavern.UWP.Models;
+using PocketTavern.UWP.Services;
 
 namespace PocketTavern.UWP.ViewModels
 {
@@ -20,6 +23,9 @@ namespace PocketTavern.UWP.ViewModels
         private string _postHistoryInstructions = "";
         private string _tagsText = "";
         private string _avatarFilePath = "";
+        private string _avatarBase64 = null;
+        private string _avatarPrompt = "";
+        private bool _isGeneratingAvatar = false;
         private bool _isSaving = false;
         private bool _hasCharacterBook = false;
         private int _characterBookEntryCount = 0;
@@ -35,6 +41,9 @@ namespace PocketTavern.UWP.ViewModels
         public string PostHistoryInstructions { get => _postHistoryInstructions; set => Set(ref _postHistoryInstructions, value); }
         public string TagsText                { get => _tagsText; set => Set(ref _tagsText, value); }
         public string AvatarFilePath          { get => _avatarFilePath; set => Set(ref _avatarFilePath, value); }
+        public string AvatarBase64            { get => _avatarBase64;   set => Set(ref _avatarBase64, value); }
+        public string AvatarPrompt            { get => _avatarPrompt;   set => Set(ref _avatarPrompt, value); }
+        public bool   IsGeneratingAvatar      { get => _isGeneratingAvatar; set => Set(ref _isGeneratingAvatar, value); }
         public bool   IsSaving                { get => _isSaving; set => Set(ref _isSaving, value); }
         public bool   HasCharacterBook        { get => _hasCharacterBook; set => Set(ref _hasCharacterBook, value); }
         public int    CharacterBookEntryCount { get => _characterBookEntryCount; set => Set(ref _characterBookEntryCount, value); }
@@ -105,6 +114,12 @@ namespace PocketTavern.UWP.ViewModels
                 await App.Characters.CopyAvatarAsync(AvatarFilePath, avatarName);
                 existing.Avatar = avatarName;
             }
+            else if (!string.IsNullOrEmpty(AvatarBase64))
+            {
+                var avatarName = SanitizeFileName(Name.Trim()) + ".png";
+                await App.Characters.SaveAvatarFromBytesAsync(Convert.FromBase64String(AvatarBase64), avatarName);
+                existing.Avatar = avatarName;
+            }
 
             await App.Characters.SaveCharacterAsync(_editingFileName, existing);
         }
@@ -120,6 +135,11 @@ namespace PocketTavern.UWP.ViewModels
                 var ext = System.IO.Path.GetExtension(AvatarFilePath);
                 avatarPath = fileName + ext;
                 await App.Characters.CopyAvatarAsync(AvatarFilePath, avatarPath);
+            }
+            else if (!string.IsNullOrEmpty(AvatarBase64))
+            {
+                avatarPath = fileName + ".png";
+                await App.Characters.SaveAvatarFromBytesAsync(Convert.FromBase64String(AvatarBase64), avatarPath);
             }
 
             var character = new Character
@@ -139,6 +159,41 @@ namespace PocketTavern.UWP.ViewModels
             };
 
             await App.Characters.SaveCharacterAsync(fileName, character);
+        }
+
+        public async Task GenerateAvatarAsync()
+        {
+            if (IsGeneratingAvatar) return;
+            IsGeneratingAvatar = true;
+            AvatarBase64 = null;
+            try
+            {
+                var prompt = !string.IsNullOrWhiteSpace(AvatarPrompt)
+                    ? AvatarPrompt
+                    : BuildDefaultAvatarPrompt();
+                var imgSvc = new ImageGenService(App.Settings);
+                var genParams = imgSvc.BuildParams(prompt);
+                string resultBase64 = null;
+                var progress = new Progress<GenerationState>(s =>
+                {
+                    if (s is GenerationState.Complete c) resultBase64 = c.ImageBase64;
+                });
+                using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(120));
+                await imgSvc.GenerateAsync(genParams, progress, cts.Token);
+                AvatarBase64 = resultBase64;
+            }
+            catch { }
+            finally { IsGeneratingAvatar = false; }
+        }
+
+        private string BuildDefaultAvatarPrompt()
+        {
+            var name = Name?.Trim() ?? "";
+            var desc = Description?.Trim() ?? "";
+            var snippet = desc.Length > 100 ? desc.Substring(0, 100) : desc;
+            return string.IsNullOrEmpty(snippet)
+                ? $"portrait of {name}, high quality, detailed, fantasy character art"
+                : $"portrait of {name}, {snippet}, high quality, detailed, fantasy character art";
         }
 
         private List<string> ParseTags()

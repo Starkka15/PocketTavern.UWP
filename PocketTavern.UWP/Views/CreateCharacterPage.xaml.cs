@@ -116,6 +116,38 @@ namespace PocketTavern.UWP.Views
             await _vm.SaveAsync();
         }
 
+        private async void OnGenerateAvatarClick(object sender, RoutedEventArgs e)
+        {
+            _vm.AvatarPrompt = AvatarPromptBox.Text;
+            GenerateAvatarBtn.IsEnabled = false;
+            AvatarGenRing.Visibility = Visibility.Visible;
+            AvatarGenRing.IsActive = true;
+
+            await _vm.GenerateAvatarAsync();
+
+            AvatarGenRing.IsActive = false;
+            AvatarGenRing.Visibility = Visibility.Collapsed;
+            GenerateAvatarBtn.IsEnabled = true;
+
+            if (!string.IsNullOrEmpty(_vm.AvatarBase64))
+            {
+                try
+                {
+                    var bytes = Convert.FromBase64String(_vm.AvatarBase64);
+                    var bmp = new BitmapImage();
+                    using (var ms = new System.IO.MemoryStream(bytes))
+                    {
+                        var ras = ms.AsRandomAccessStream();
+                        await bmp.SetSourceAsync(ras);
+                    }
+                    AvatarImage.Source   = bmp;
+                    AvatarImage.Visibility   = Visibility.Visible;
+                    AvatarInitial.Visibility = Visibility.Collapsed;
+                }
+                catch { }
+            }
+        }
+
         // Alternate Greetings management
         private void OnAddAltGreetingClick(object sender, RoutedEventArgs e)
         {

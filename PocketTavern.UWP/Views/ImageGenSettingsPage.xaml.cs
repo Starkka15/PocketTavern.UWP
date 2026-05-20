@@ -1,14 +1,18 @@
 using System;
 using System.Collections.Generic;
+using System.Runtime.InteropServices.WindowsRuntime;
 using Windows.UI;
 using Windows.UI.Text;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Controls.Primitives;
 using Windows.UI.Xaml.Media;
+using Windows.UI.Xaml.Media.Imaging;
 using Windows.UI.Xaml.Navigation;
 using Windows.UI.Xaml.Shapes;
 using PocketTavern.UWP.Controls;
+using PocketTavern.UWP.Models;
+using PocketTavern.UWP.Services;
 using PocketTavern.UWP.ViewModels;
 
 namespace PocketTavern.UWP.Views
@@ -445,6 +449,95 @@ namespace PocketTavern.UWP.Views
             _negativePromptBox.LostFocus += (s, ev) => { cfg.NegativePrompt = _negativePromptBox.Text; _vm.Save(); };
             _negativePromptSection.Children.Add(_negativePromptBox);
             _settingsBody.Children.Add(negCard);
+
+            // ── TEST GENERATION ───────────────────────────────────────────────
+            _settingsBody.Children.Add(MakeSectionLabel("TEST GENERATION", accent));
+            var testGenCard = MakeCard(cardBg);
+            var testGenStack = (SpacedPanel)testGenCard.Child;
+
+            var testGenBtn = new Button
+            {
+                Content = "Generate Test Image",
+                HorizontalAlignment = HorizontalAlignment.Stretch
+            };
+            var testGenRing = new ProgressRing
+            {
+                Width = 32, Height = 32,
+                Foreground = accent,
+                HorizontalAlignment = HorizontalAlignment.Center,
+                Visibility = Visibility.Collapsed,
+                IsActive = false
+            };
+            var testGenStatusLabel = new TextBlock
+            {
+                FontSize = 12,
+                Foreground = textSec,
+                TextWrapping = TextWrapping.Wrap,
+                Visibility = Visibility.Collapsed
+            };
+            var testGenImage = new Image
+            {
+                Height = 200,
+                Stretch = Windows.UI.Xaml.Media.Stretch.Uniform,
+                HorizontalAlignment = HorizontalAlignment.Center,
+                Margin = new Thickness(0, 4, 0, 0),
+                Visibility = Visibility.Collapsed
+            };
+
+            testGenBtn.Click += async (s, ev) =>
+            {
+                testGenBtn.IsEnabled = false;
+                testGenRing.IsActive = true;
+                testGenRing.Visibility = Visibility.Visible;
+                testGenImage.Visibility = Visibility.Collapsed;
+                testGenStatusLabel.Visibility = Visibility.Collapsed;
+                try
+                {
+                    var imgSvc = new ImageGenService(App.Settings);
+                    var genParams = imgSvc.BuildParams("a beautiful fantasy landscape, detailed, high quality");
+                    string resultBase64 = null;
+                    var prog = new Progress<GenerationState>(state =>
+                    {
+                        if (state is GenerationState.Complete c) resultBase64 = c.ImageBase64;
+                    });
+                    using var cts = new System.Threading.CancellationTokenSource(TimeSpan.FromSeconds(120));
+                    await imgSvc.GenerateAsync(genParams, prog, cts.Token);
+                    if (!string.IsNullOrEmpty(resultBase64))
+                    {
+                        var bytes = Convert.FromBase64String(resultBase64);
+                        var bmp = new BitmapImage();
+                        using (var ms = new System.IO.MemoryStream(bytes))
+                        {
+                            var ras = ms.AsRandomAccessStream();
+                            await bmp.SetSourceAsync(ras);
+                        }
+                        testGenImage.Source = bmp;
+                        testGenImage.Visibility = Visibility.Visible;
+                        testGenStatusLabel.Text = "Success!";
+                        testGenStatusLabel.Foreground = accent;
+                    }
+                    else
+                    {
+                        testGenStatusLabel.Text = "No image returned — check backend settings.";
+                        testGenStatusLabel.Foreground = new SolidColorBrush(Color.FromArgb(255, 224, 85, 85));
+                    }
+                }
+                catch (Exception ex)
+                {
+                    testGenStatusLabel.Text = "Error: " + ex.Message;
+                    testGenStatusLabel.Foreground = new SolidColorBrush(Color.FromArgb(255, 224, 85, 85));
+                }
+                testGenRing.IsActive = false;
+                testGenRing.Visibility = Visibility.Collapsed;
+                testGenStatusLabel.Visibility = Visibility.Visible;
+                testGenBtn.IsEnabled = true;
+            };
+
+            testGenStack.Children.Add(testGenBtn);
+            testGenStack.Children.Add(testGenRing);
+            testGenStack.Children.Add(testGenStatusLabel);
+            testGenStack.Children.Add(testGenImage);
+            _settingsBody.Children.Add(testGenCard);
 
             // Apply current backend visibility
             ApplyBackendVisibility(cfg.ActiveBackend);

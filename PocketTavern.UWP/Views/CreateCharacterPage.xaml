@@ -87,6 +87,34 @@
                             </Grid>
                         </Button>
 
+                        <!-- AI avatar generation -->
+                        <Border Background="{StaticResource BackgroundCardBrush}" CornerRadius="12"
+                                Padding="16,12" Margin="0,8,0,0">
+                            <controls:SpacedPanel Spacing="6">
+                                <TextBlock Text="AI Avatar Prompt" Style="{StaticResource SubtitleTextStyle}" />
+                                <TextBlock Text="Optional — leave blank to auto-generate from name and description."
+                                           Foreground="{StaticResource TextSecondaryBrush}" FontSize="12"
+                                           TextWrapping="Wrap" />
+                                <TextBox x:Name="AvatarPromptBox" Style="{StaticResource DarkTextBoxStyle}"
+                                         PlaceholderText="portrait of a tall elven mage with silver hair..." />
+                                <Grid>
+                                    <Button x:Name="GenerateAvatarBtn" HorizontalAlignment="Stretch"
+                                            Background="{StaticResource AccentPrimaryBrush}"
+                                            Foreground="White" Click="OnGenerateAvatarClick">
+                                        <controls:SpacedPanel Orientation="Horizontal" Spacing="6">
+                                            <TextBlock Text="&#xE706;" FontFamily="Segoe MDL2 Assets" FontSize="14" VerticalAlignment="Center" />
+                                            <TextBlock Text="Generate with AI" VerticalAlignment="Center" />
+                                        </controls:SpacedPanel>
+                                    </Button>
+                                    <ProgressRing x:Name="AvatarGenRing" IsActive="False"
+                                                  Width="24" Height="24"
+                                                  Foreground="{StaticResource AccentPrimaryBrush}"
+                                                  HorizontalAlignment="Right" VerticalAlignment="Center"
+                                                  Margin="0,0,8,0" Visibility="Collapsed" />
+                                </Grid>
+                            </controls:SpacedPanel>
+                        </Border>
+
                         <!-- Name field -->
                         <Border Background="{StaticResource BackgroundCardBrush}" CornerRadius="12"
                                 Padding="16,12" Margin="0,16,0,0">

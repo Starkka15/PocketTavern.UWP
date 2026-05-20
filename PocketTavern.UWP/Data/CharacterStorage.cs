@@ -96,6 +96,14 @@ namespace PocketTavern.UWP.Data
             await sourceFile.CopyAsync(destFolder, destFileName, NameCollisionOption.ReplaceExisting);
         }
 
+        /// <summary>Saves raw image bytes (e.g. from AI generation) directly into the avatars folder.</summary>
+        public Task SaveAvatarFromBytesAsync(byte[] bytes, string destFileName)
+        {
+            var destPath = Path.Combine(_avatarsDir, destFileName);
+            File.WriteAllBytes(destPath, bytes);
+            return System.Threading.Tasks.Task.CompletedTask;
+        }
+
         // ── DB sync ──────────────────────────────────────────────────────────────
 
         private void UpsertEntity(string fileName, Character ch)
