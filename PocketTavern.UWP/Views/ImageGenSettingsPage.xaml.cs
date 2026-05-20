@@ -69,7 +69,10 @@ namespace PocketTavern.UWP.Views
         private SpacedPanel _dalleModelRow;
         private SpacedPanel _pollinationsModelRow;
         private SpacedPanel _hfModelRow;
-        private SpacedPanel _nanoGptModelRow;
+        // nano-gpt model lives in the API key card, not the model card
+        private SpacedPanel _nanoGptApiModelSection;
+        private TextBlock _apiKeyTestResultLabel;
+        private SpacedPanel _apiKeyTestSection;
 
         public ImageGenSettingsPage() { this.InitializeComponent(); }
 
@@ -194,7 +197,7 @@ namespace PocketTavern.UWP.Views
             _urlCard = urlCard;
             _settingsBody.Children.Add(urlCard);
 
-            // API Key section (DALLE / STABILITY / HUGGINGFACE / POLLINATIONS)
+            // API Key section (DALLE / STABILITY / HUGGINGFACE / POLLINATIONS / NANOGPT)
             _apiKeySection = new SpacedPanel { Spacing = 8 };
             var apiKeyCard = MakeCardWith(_apiKeySection, cardBg);
 
@@ -206,10 +209,61 @@ namespace PocketTavern.UWP.Views
             _apiKeyBox.LostFocus += OnApiKeyLostFocus;
             _apiKeySection.Children.Add(MakeLabeledControl("API Key", _apiKeyBox, textSec));
 
+            // nano-gpt: model selection inline (matches Android pattern)
+            var nanoModelHeader = new Grid();
+            nanoModelHeader.ColumnDefinitions.Add(new ColumnDefinition { Width = new Windows.UI.Xaml.GridLength(1, Windows.UI.Xaml.GridUnitType.Star) });
+            nanoModelHeader.ColumnDefinitions.Add(new ColumnDefinition { Width = Windows.UI.Xaml.GridLength.Auto });
+            nanoModelHeader.Children.Add(new TextBlock { Text = "Model", FontSize = 12, Foreground = textSec, VerticalAlignment = VerticalAlignment.Center });
+            var fetchNanoModelsBtn = new Button { Content = "Load Models", Padding = new Thickness(10, 4, 10, 4), FontSize = 12 };
+            Grid.SetColumn(fetchNanoModelsBtn, 1);
+            nanoModelHeader.Children.Add(fetchNanoModelsBtn);
+
+            _nanoGptModelBox = new ComboBox { HorizontalAlignment = HorizontalAlignment.Stretch };
+            if (!string.IsNullOrEmpty(cfg.NanoGptModel)) _nanoGptModelBox.Items.Add(cfg.NanoGptModel);
+            if (_nanoGptModelBox.Items.Count > 0) _nanoGptModelBox.SelectedIndex = 0;
+            _nanoGptModelBox.SelectionChanged += (s, ev) =>
+            {
+                if (!_suppress && _nanoGptModelBox.SelectedItem is string m) { cfg.NanoGptModel = m; _vm.Save(); }
+            };
+            fetchNanoModelsBtn.Click += async (s, ev) =>
+            {
+                fetchNanoModelsBtn.IsEnabled = false;
+                var models = await _vm.FetchModelsAsync();
+                if (models.Count > 0)
+                {
+                    _suppress = true;
+                    _nanoGptModelBox.Items.Clear();
+                    foreach (var m in models) _nanoGptModelBox.Items.Add(m);
+                    var idx = models.IndexOf(cfg.NanoGptModel ?? "");
+                    _nanoGptModelBox.SelectedIndex = idx >= 0 ? idx : 0;
+                    if (_nanoGptModelBox.SelectedItem is string sel) { cfg.NanoGptModel = sel; _vm.Save(); }
+                    _suppress = false;
+                }
+                fetchNanoModelsBtn.IsEnabled = true;
+            };
+
+            _nanoGptApiModelSection = new SpacedPanel { Spacing = 4, Margin = new Thickness(0, 4, 0, 0) };
+            _nanoGptApiModelSection.Children.Add(nanoModelHeader);
+            _nanoGptApiModelSection.Children.Add(_nanoGptModelBox);
+            _apiKeySection.Children.Add(_nanoGptApiModelSection);
+
+            // Test Connection button — shown for all API-key backends (matches Android)
+            _apiKeyTestSection = new SpacedPanel { Spacing = 6, Margin = new Thickness(0, 8, 0, 0) };
+            var apiTestBtn = new Button { Content = "Test Connection", HorizontalAlignment = HorizontalAlignment.Left };
+            apiTestBtn.Click += async (s, ev) =>
+            {
+                await _vm.TestConnectionAsync();
+                _apiKeyTestResultLabel.Text = _vm.TestResult ?? "";
+            };
+            _apiKeyTestResultLabel = new TextBlock { FontSize = 12, Foreground = textSec, TextWrapping = TextWrapping.Wrap };
+            _apiKeyTestSection.Children.Add(apiTestBtn);
+            _apiKeyTestSection.Children.Add(_apiKeyTestResultLabel);
+            _apiKeySection.Children.Add(_apiKeyTestSection);
+
             _apiKeyCard = apiKeyCard;
             _settingsBody.Children.Add(apiKeyCard);
 
-            // Model section
+            // Model section (DALLE, POLLINATIONS, HUGGINGFACE — nano-gpt handled above)
             _modelSection = new SpacedPanel { Spacing = 8 };
             var modelCard = MakeCardWith(_modelSection, cardBg);
 
@@ -239,45 +293,6 @@ namespace PocketTavern.UWP.Views
             _hfModelBox.LostFocus += (s, ev) => { cfg.HuggingfaceModel = _hfModelBox.Text.Trim(); _vm.Save(); };
             _hfModelRow = MakeLabeledControl("Model", _hfModelBox, textSec);
             _modelSection.Children.Add(_hfModelRow);
-
-            // nano-gpt model with Fetch button
-            var nanoGptModelHeader = new Grid();
-            nanoGptModelHeader.ColumnDefinitions.Add(new ColumnDefinition { Width = new Windows.UI.Xaml.GridLength(1, Windows.UI.Xaml.GridUnitType.Star) });
-            nanoGptModelHeader.ColumnDefinitions.Add(new ColumnDefinition { Width = Windows.UI.Xaml.GridLength.Auto });
-            nanoGptModelHeader.Children.Add(new TextBlock { Text = "Model", FontSize = 12, Foreground = textSec, VerticalAlignment = VerticalAlignment.Center });
-            var fetchNanoGptModelsBtn = new Button { Content = "Fetch", Padding = new Thickness(10, 4, 10, 4), FontSize = 12 };
-            Grid.SetColumn(fetchNanoGptModelsBtn, 1);
-            nanoGptModelHeader.Children.Add(fetchNanoGptModelsBtn);
-
-            _nanoGptModelBox = new ComboBox { HorizontalAlignment = HorizontalAlignment.Stretch };
-            if (!string.IsNullOrEmpty(cfg.NanoGptModel)) _nanoGptModelBox.Items.Add(cfg.NanoGptModel);
-            if (_nanoGptModelBox.Items.Count > 0) _nanoGptModelBox.SelectedIndex = 0;
-            _nanoGptModelBox.SelectionChanged += (s, ev) =>
-            {
-                if (!_suppress && _nanoGptModelBox.SelectedItem is string m) { cfg.NanoGptModel = m; _vm.Save(); }
-            };
-            fetchNanoGptModelsBtn.Click += async (s, ev) =>
-            {
-                fetchNanoGptModelsBtn.IsEnabled = false;
-                var models = await _vm.FetchModelsAsync();
-                if (models.Count > 0)
-                {
-                    _suppress = true;
-                    _nanoGptModelBox.Items.Clear();
-                    foreach (var m in models) _nanoGptModelBox.Items.Add(m);
-                    var idx = models.IndexOf(cfg.NanoGptModel ?? "");
-                    _nanoGptModelBox.SelectedIndex = idx >= 0 ? idx : 0;
-                    if (_nanoGptModelBox.SelectedItem is string sel) { cfg.NanoGptModel = sel; _vm.Save(); }
-                    _suppress = false;
-                }
-                fetchNanoGptModelsBtn.IsEnabled = true;
-            };
-
-            var nanoGptModelStack = new SpacedPanel { Spacing = 4 };
-            nanoGptModelStack.Children.Add(nanoGptModelHeader);
-            nanoGptModelStack.Children.Add(_nanoGptModelBox);
-            _nanoGptModelRow = nanoGptModelStack;
-            _modelSection.Children.Add(_nanoGptModelRow);
 
             _modelCard = modelCard;
             _settingsBody.Children.Add(modelCard);
@@ -635,18 +650,21 @@ namespace PocketTavern.UWP.Views
                 _suppress = false;
             }
 
-            // Model section
+            // nano-gpt inline model + test (inside API key card)
+            bool hasNanoGpt = backend == "NANOGPT";
+            SetVis(_nanoGptApiModelSection, hasNanoGpt);
+            SetVis(_apiKeyTestSection, isApiKey);
+
+            // Model card (DALLE, POLLINATIONS, HUGGINGFACE — not nano-gpt)
             bool hasDalle        = backend == "DALLE";
             bool hasPollinations = backend == "POLLINATIONS";
             bool hasHf           = backend == "HUGGINGFACE";
-            bool hasNanoGpt      = backend == "NANOGPT";
-            bool hasModel        = hasDalle || hasPollinations || hasHf || hasNanoGpt;
+            bool hasModel        = hasDalle || hasPollinations || hasHf;
 
             SetVis(_modelCard, hasModel);
             SetVis(_dalleModelRow, hasDalle);
             SetVis(_pollinationsModelRow, hasPollinations);
             SetVis(_hfModelRow, hasHf);
-            SetVis(_nanoGptModelRow, hasNanoGpt);
 
             // Parameters
             SetVis(_sdModelSection, isSd);
