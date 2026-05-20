@@ -114,7 +114,8 @@ namespace PocketTavern.UWP.Services
                     }
                     else
                     {
-                        progress?.Report(new GenerationState.Error { Message = "No image returned" });
+                        var preview = body.Length > 300 ? body.Substring(0, 300) : body;
+                        progress?.Report(new GenerationState.Error { Message = $"No image in response: {preview}" });
                     }
                 }
             }
