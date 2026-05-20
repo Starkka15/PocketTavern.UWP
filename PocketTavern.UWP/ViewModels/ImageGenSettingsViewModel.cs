@@ -5,6 +5,7 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
 using PocketTavern.UWP.Models;
+using PocketTavern.UWP.Services;
 
 namespace PocketTavern.UWP.ViewModels
 {
@@ -68,7 +69,22 @@ namespace PocketTavern.UWP.ViewModels
 
         public async Task<List<string>> FetchModelsAsync()
         {
-            var url = _config?.SdWebuiUrl;
+            if (_config == null) return new List<string>();
+            var backend = _config.ActiveBackend;
+
+            // API-key backends delegate to ImageGenService
+            if (backend != "SD_WEBUI" && backend != "COMFYUI")
+            {
+                try
+                {
+                    var svc = new ImageGenService(App.Settings);
+                    return await svc.GetModelsAsync();
+                }
+                catch { return new List<string>(); }
+            }
+
+            // URL-based backends
+            var url = _config.SdWebuiUrl;
             if (string.IsNullOrWhiteSpace(url)) return new List<string>();
             try
             {
@@ -86,11 +102,32 @@ namespace PocketTavern.UWP.ViewModels
         public async Task TestConnectionAsync()
         {
             if (_config == null) return;
+            var backend = _config.ActiveBackend;
 
+            // API-key backends delegate to ImageGenService
+            if (backend != "SD_WEBUI" && backend != "COMFYUI")
+            {
+                IsLoading = true;
+                TestResult = "Testing...";
+                try
+                {
+                    var svc = new ImageGenService(App.Settings);
+                    var ok = await svc.TestConnectionAsync();
+                    TestResult = ok ? "Connected" : "Connection failed";
+                }
+                catch (Exception ex)
+                {
+                    TestResult = $"Failed: {ex.Message}";
+                }
+                finally { IsLoading = false; }
+                return;
+            }
+
+            // URL-based backends
             string url = null;
-            if (_config.ActiveBackend == "SD_WEBUI")
+            if (backend == "SD_WEBUI")
                 url = _config.SdWebuiUrl?.TrimEnd('/') + "/sdapi/v1/options";
-            else if (_config.ActiveBackend == "COMFYUI")
+            else if (backend == "COMFYUI")
                 url = _config.ComfyuiUrl?.TrimEnd('/') + "/system_stats";
 
             if (string.IsNullOrWhiteSpace(url))
@@ -103,9 +140,8 @@ namespace PocketTavern.UWP.ViewModels
             TestResult = "Testing...";
             try
             {
-                using (var client = new HttpClient())
+                using (var client = new HttpClient { Timeout = TimeSpan.FromSeconds(8) })
                 {
-                    client.Timeout = TimeSpan.FromSeconds(8);
                     var resp = await client.GetAsync(url);
                     TestResult = resp.IsSuccessStatusCode
                         ? $"Connected ({(int)resp.StatusCode})"
@@ -116,10 +152,7 @@ namespace PocketTavern.UWP.ViewModels
             {
                 TestResult = $"Failed: {ex.Message}";
             }
-            finally
-            {
-                IsLoading = false;
-            }
+            finally { IsLoading = false; }
         }
     }
 }
