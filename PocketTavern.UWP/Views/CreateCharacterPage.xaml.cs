@@ -135,11 +135,10 @@ namespace PocketTavern.UWP.Views
                 {
                     var bytes = Convert.FromBase64String(_vm.AvatarBase64);
                     var bmp = new BitmapImage();
-                    using (var ms = new System.IO.MemoryStream(bytes))
-                    {
-                        var ras = ms.AsRandomAccessStream();
-                        await bmp.SetSourceAsync(ras);
-                    }
+                    var ras = new Windows.Storage.Streams.InMemoryRandomAccessStream();
+                    await ras.WriteAsync(bytes.AsBuffer());
+                    ras.Seek(0);
+                    await bmp.SetSourceAsync(ras);
                     AvatarImage.Source   = bmp;
                     AvatarImage.Visibility   = Visibility.Visible;
                     AvatarInitial.Visibility = Visibility.Collapsed;

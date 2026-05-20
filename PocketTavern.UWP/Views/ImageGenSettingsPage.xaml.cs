@@ -33,7 +33,7 @@ namespace PocketTavern.UWP.Views
         private ComboBox _dalleModelCombo;
         private ComboBox _pollinationsModelCombo;
         private TextBox _hfModelBox;
-        private TextBox _nanoGptModelBox;
+        private ComboBox _nanoGptModelBox;
         private SpacedPanel _testSection;
         private TextBlock _testResultLabel;
         private SpacedPanel _samplerSection;
@@ -61,6 +61,15 @@ namespace PocketTavern.UWP.Views
 
         private ToggleSwitch _enabledToggle;
         private StackPanel _settingsBody;
+
+        // Card references for direct visibility control
+        private Border _urlCard;
+        private Border _apiKeyCard;
+        private Border _modelCard;
+        private SpacedPanel _dalleModelRow;
+        private SpacedPanel _pollinationsModelRow;
+        private SpacedPanel _hfModelRow;
+        private SpacedPanel _nanoGptModelRow;
 
         public ImageGenSettingsPage() { this.InitializeComponent(); }
 
@@ -182,6 +191,7 @@ namespace PocketTavern.UWP.Views
             _testSection.Children.Add(_testResultLabel);
             _urlSection.Children.Add(_testSection);
 
+            _urlCard = urlCard;
             _settingsBody.Children.Add(urlCard);
 
             // API Key section (DALLE / STABILITY / HUGGINGFACE / POLLINATIONS)
@@ -196,6 +206,7 @@ namespace PocketTavern.UWP.Views
             _apiKeyBox.LostFocus += OnApiKeyLostFocus;
             _apiKeySection.Children.Add(MakeLabeledControl("API Key", _apiKeyBox, textSec));
 
+            _apiKeyCard = apiKeyCard;
             _settingsBody.Children.Add(apiKeyCard);
 
             // Model section
@@ -210,7 +221,8 @@ namespace PocketTavern.UWP.Views
             {
                 if (!_suppress && _dalleModelCombo.SelectedItem is string m) { cfg.DalleModel = m; _vm.Save(); }
             };
-            _modelSection.Children.Add(MakeLabeledControl("Model", _dalleModelCombo, textSec));
+            _dalleModelRow = MakeLabeledControl("Model", _dalleModelCombo, textSec);
+            _modelSection.Children.Add(_dalleModelRow);
 
             _pollinationsModelCombo = new ComboBox { HorizontalAlignment = HorizontalAlignment.Stretch };
             foreach (var m in new[] { "flux", "flux-realism", "flux-anime", "flux-3d", "flux-cablyai", "turbo" })
@@ -220,16 +232,54 @@ namespace PocketTavern.UWP.Views
             {
                 if (!_suppress && _pollinationsModelCombo.SelectedItem is string m) { cfg.PollinationsModel = m; _vm.Save(); }
             };
-            _modelSection.Children.Add(MakeLabeledControl("Model", _pollinationsModelCombo, textSec));
+            _pollinationsModelRow = MakeLabeledControl("Model", _pollinationsModelCombo, textSec);
+            _modelSection.Children.Add(_pollinationsModelRow);
 
             _hfModelBox = MakeTextBox("Model", "stabilityai/stable-diffusion-xl-base-1.0", cfg.HuggingfaceModel, textPri);
             _hfModelBox.LostFocus += (s, ev) => { cfg.HuggingfaceModel = _hfModelBox.Text.Trim(); _vm.Save(); };
-            _modelSection.Children.Add(MakeLabeledControl("Model", _hfModelBox, textSec));
+            _hfModelRow = MakeLabeledControl("Model", _hfModelBox, textSec);
+            _modelSection.Children.Add(_hfModelRow);
 
-            _nanoGptModelBox = MakeTextBox("Model", "chroma", cfg.NanoGptModel, textPri);
-            _nanoGptModelBox.LostFocus += (s, ev) => { cfg.NanoGptModel = _nanoGptModelBox.Text.Trim(); _vm.Save(); };
-            _modelSection.Children.Add(MakeLabeledControl("Model", _nanoGptModelBox, textSec));
+            // nano-gpt model with Fetch button
+            var nanoGptModelHeader = new Grid();
+            nanoGptModelHeader.ColumnDefinitions.Add(new ColumnDefinition { Width = new Windows.UI.Xaml.GridLength(1, Windows.UI.Xaml.GridUnitType.Star) });
+            nanoGptModelHeader.ColumnDefinitions.Add(new ColumnDefinition { Width = Windows.UI.Xaml.GridLength.Auto });
+            nanoGptModelHeader.Children.Add(new TextBlock { Text = "Model", FontSize = 12, Foreground = textSec, VerticalAlignment = VerticalAlignment.Center });
+            var fetchNanoGptModelsBtn = new Button { Content = "Fetch", Padding = new Thickness(10, 4, 10, 4), FontSize = 12 };
+            Grid.SetColumn(fetchNanoGptModelsBtn, 1);
+            nanoGptModelHeader.Children.Add(fetchNanoGptModelsBtn);
 
+            _nanoGptModelBox = new ComboBox { HorizontalAlignment = HorizontalAlignment.Stretch };
+            if (!string.IsNullOrEmpty(cfg.NanoGptModel)) _nanoGptModelBox.Items.Add(cfg.NanoGptModel);
+            if (_nanoGptModelBox.Items.Count > 0) _nanoGptModelBox.SelectedIndex = 0;
+            _nanoGptModelBox.SelectionChanged += (s, ev) =>
+            {
+                if (!_suppress && _nanoGptModelBox.SelectedItem is string m) { cfg.NanoGptModel = m; _vm.Save(); }
+            };
+            fetchNanoGptModelsBtn.Click += async (s, ev) =>
+            {
+                fetchNanoGptModelsBtn.IsEnabled = false;
+                var models = await _vm.FetchModelsAsync();
+                if (models.Count > 0)
+                {
+                    _suppress = true;
+                    _nanoGptModelBox.Items.Clear();
+                    foreach (var m in models) _nanoGptModelBox.Items.Add(m);
+                    var idx = models.IndexOf(cfg.NanoGptModel ?? "");
+                    _nanoGptModelBox.SelectedIndex = idx >= 0 ? idx : 0;
+                    if (_nanoGptModelBox.SelectedItem is string sel) { cfg.NanoGptModel = sel; _vm.Save(); }
+                    _suppress = false;
+                }
+                fetchNanoGptModelsBtn.IsEnabled = true;
+            };
+
+            var nanoGptModelStack = new SpacedPanel { Spacing = 4 };
+            nanoGptModelStack.Children.Add(nanoGptModelHeader);
+            nanoGptModelStack.Children.Add(_nanoGptModelBox);
+            _nanoGptModelRow = nanoGptModelStack;
+            _modelSection.Children.Add(_nanoGptModelRow);
+
+            _modelCard = modelCard;
             _settingsBody.Children.Add(modelCard);
 
             // ── PARAMETERS ────────────────────────────────────────────────────
@@ -506,11 +556,10 @@ namespace PocketTavern.UWP.Views
                     {
                         var bytes = Convert.FromBase64String(resultBase64);
                         var bmp = new BitmapImage();
-                        using (var ms = new System.IO.MemoryStream(bytes))
-                        {
-                            var ras = ms.AsRandomAccessStream();
-                            await bmp.SetSourceAsync(ras);
-                        }
+                        var ras = new Windows.Storage.Streams.InMemoryRandomAccessStream();
+                        await ras.WriteAsync(bytes.AsBuffer());
+                        ras.Seek(0);
+                        await bmp.SetSourceAsync(ras);
                         testGenImage.Source = bmp;
                         testGenImage.Visibility = Visibility.Visible;
                         testGenStatusLabel.Text = "Success!";
@@ -564,17 +613,14 @@ namespace PocketTavern.UWP.Views
             bool hasCfg    = backend == "SD_WEBUI" || backend == "COMFYUI" || backend == "STABILITY";
             bool hasNeg    = backend == "SD_WEBUI" || backend == "COMFYUI" || backend == "STABILITY" || backend == "HUGGINGFACE";
 
-            // URL row visibility
+            // URL card + row visibility
+            SetVis(_urlCard, isUrl);
             SetVis(_sdUrlBox?.Parent as FrameworkElement, backend == "SD_WEBUI");
             SetVis(_comfyUrlBox?.Parent as FrameworkElement, backend == "COMFYUI");
             SetVis(_testSection, isUrl);
 
-            // Parent card visibility
-            var urlCardParent = (_urlSection?.Parent as Border);
-            if (urlCardParent != null) urlCardParent.Visibility = isUrl ? Visibility.Visible : Visibility.Collapsed;
-
-            var apiCardParent = (_apiKeySection?.Parent as Border);
-            if (apiCardParent != null) apiCardParent.Visibility = isApiKey ? Visibility.Visible : Visibility.Collapsed;
+            // API key card
+            SetVis(_apiKeyCard, isApiKey);
 
             // API key value for the active backend
             if (_apiKeyBox != null)
@@ -590,19 +636,17 @@ namespace PocketTavern.UWP.Views
             }
 
             // Model section
-            bool hasDalle       = backend == "DALLE";
+            bool hasDalle        = backend == "DALLE";
             bool hasPollinations = backend == "POLLINATIONS";
-            bool hasHf          = backend == "HUGGINGFACE";
-            bool hasNanoGpt     = backend == "NANOGPT";
-            bool hasModel       = hasDalle || hasPollinations || hasHf || hasNanoGpt;
+            bool hasHf           = backend == "HUGGINGFACE";
+            bool hasNanoGpt      = backend == "NANOGPT";
+            bool hasModel        = hasDalle || hasPollinations || hasHf || hasNanoGpt;
 
-            var modelCardParent = (_modelSection?.Parent as Border);
-            if (modelCardParent != null) modelCardParent.Visibility = hasModel ? Visibility.Visible : Visibility.Collapsed;
-
-            SetVis(_dalleModelCombo?.Parent as FrameworkElement, hasDalle);
-            SetVis(_pollinationsModelCombo?.Parent as FrameworkElement, hasPollinations);
-            SetVis(_hfModelBox?.Parent as FrameworkElement, hasHf);
-            SetVis(_nanoGptModelBox?.Parent as FrameworkElement, hasNanoGpt);
+            SetVis(_modelCard, hasModel);
+            SetVis(_dalleModelRow, hasDalle);
+            SetVis(_pollinationsModelRow, hasPollinations);
+            SetVis(_hfModelRow, hasHf);
+            SetVis(_nanoGptModelRow, hasNanoGpt);
 
             // Parameters
             SetVis(_sdModelSection, isSd);

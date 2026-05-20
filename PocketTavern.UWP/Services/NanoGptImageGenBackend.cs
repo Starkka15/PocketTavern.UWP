@@ -83,7 +83,7 @@ namespace PocketTavern.UWP.Services
                 }
 
                 var model = !string.IsNullOrWhiteSpace(config.NanoGptModel) ? config.NanoGptModel : "chroma";
-                var payload = JsonConvert.SerializeObject(new { prompt = parameters.Prompt, model });
+                var payload = JsonConvert.SerializeObject(new { prompt = parameters.Prompt, model, n = 1, response_format = "b64_json" });
 
                 var req = new HttpRequestMessage(HttpMethod.Post, $"{BaseUrl}/v1/images/generations");
                 req.Headers.TryAddWithoutValidation("Authorization", $"Bearer {config.NanoGptApiKey}");
