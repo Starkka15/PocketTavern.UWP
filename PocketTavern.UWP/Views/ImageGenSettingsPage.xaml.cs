@@ -69,6 +69,12 @@ namespace PocketTavern.UWP.Views
 
         private void OnBackClick(object sender, RoutedEventArgs e) => App.Navigation.GoBack();
 
+        private void OnSaveClick(object sender, RoutedEventArgs e)
+        {
+            _vm.Save();
+            App.Navigation.GoBack();
+        }
+
         // ── Content builder ───────────────────────────────────────────────────
 
         private void BuildContent()
