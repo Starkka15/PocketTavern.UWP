@@ -961,7 +961,7 @@ namespace PocketTavern.UWP.ViewModels
                 var imageConfig = App.Settings.GetImageGenConfig();
                 if (!imageConfig.Enabled)
                 {
-                    await App.Extensions.ResolveImageGenerateAsync(cbId, "null");
+                    await App.Extensions.ResolveImageGenerateAsync(cbId, "");
                     return;
                 }
                 JObject options;
@@ -987,19 +987,18 @@ namespace PocketTavern.UWP.ViewModels
                 };
 
                 string resultBase64 = "";
-                var progress = new Progress<GenerationState>(s =>
+                var progress = new SyncProgress<GenerationState>(s =>
                 {
                     if (s is GenerationState.Complete c) resultBase64 = c.ImageBase64;
                 });
                 using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(120));
                 await imgSvc.GenerateAsync(@params, progress, cts.Token);
 
-                var resultJson = JsonConvert.SerializeObject(new { base64 = resultBase64 });
-                await App.Extensions.ResolveImageGenerateAsync(cbId, resultJson);
+                await App.Extensions.ResolveImageGenerateAsync(cbId, resultBase64);
             }
             catch
             {
-                await App.Extensions.ResolveImageGenerateAsync(cbId, "null");
+                await App.Extensions.ResolveImageGenerateAsync(cbId, "");
             }
         }
 
@@ -1483,5 +1482,12 @@ namespace PocketTavern.UWP.ViewModels
         public string ChatFileName { get; set; }
         public long   Timestamp    { get; set; }
         public int    MessageIndex { get; set; }
+    }
+
+    internal sealed class SyncProgress<T> : IProgress<T>
+    {
+        private readonly Action<T> _callback;
+        public SyncProgress(Action<T> callback) => _callback = callback;
+        void IProgress<T>.Report(T value) => _callback(value);
     }
 }

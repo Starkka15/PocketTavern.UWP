@@ -96,24 +96,26 @@ namespace PocketTavern.UWP.Data
 
             for (int i = 0; i < assetPaths.Length; i++)
             {
-                string assetRelPath = assetPaths[i];
-                string localDir = localDirs[i];
-                StorageFolder assetFolder;
                 try
                 {
-                    assetFolder = await Package.Current.InstalledLocation.GetFolderAsync(assetRelPath);
+                    string assetRelPath = assetPaths[i];
+                    string localDir = localDirs[i];
+                    var assetFolder = await Package.Current.InstalledLocation.GetFolderAsync(assetRelPath);
+                    var localFolder = await StorageFolder.GetFolderFromPathAsync(localDir);
+                    var files = await assetFolder.GetFilesAsync();
+
+                    foreach (var file in files)
+                    {
+                        try
+                        {
+                            var destPath = Path.Combine(localDir, file.Name);
+                            if (!File.Exists(destPath))
+                                await file.CopyAsync(localFolder, file.Name, NameCollisionOption.FailIfExists);
+                        }
+                        catch { /* skip file if copy fails */ }
+                    }
                 }
                 catch { continue; }
-
-                var localFolder = await StorageFolder.GetFolderFromPathAsync(localDir);
-                var files = await assetFolder.GetFilesAsync();
-
-                foreach (var file in files)
-                {
-                    var destPath = Path.Combine(localDir, file.Name);
-                    if (!File.Exists(destPath))
-                        await file.CopyAsync(localFolder, file.Name, NameCollisionOption.FailIfExists);
-                }
             }
         }
 
