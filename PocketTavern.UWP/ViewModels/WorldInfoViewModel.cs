@@ -1,6 +1,9 @@
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
+using System.Threading.Tasks;
 using Windows.Storage;
+using PocketTavern.UWP.Data;
 
 namespace PocketTavern.UWP.ViewModels
 {
@@ -13,6 +16,7 @@ namespace PocketTavern.UWP.ViewModels
 
     public class WorldInfoViewModel : ViewModelBase
     {
+        private readonly LoreBookStorage _storage = new LoreBookStorage();
         private ObservableCollection<WorldInfoItem> _items = new ObservableCollection<WorldInfoItem>();
         public ObservableCollection<WorldInfoItem> Items { get => _items; set => Set(ref _items, value); }
 
@@ -35,11 +39,21 @@ namespace PocketTavern.UWP.ViewModels
                 catch { }
                 Items.Add(new WorldInfoItem
                 {
-                    Name = Path.GetFileNameWithoutExtension(f),
-                    FilePath = f,
+                    Name       = Path.GetFileNameWithoutExtension(f),
+                    FilePath   = f,
                     EntryCount = entryCount > 0 ? $"{entryCount} entries" : "No entries"
                 });
             }
+        }
+
+        public async Task CreateLorebookAsync(string name)
+        {
+            await _storage.SaveLorebookAsync(name, new List<Models.WorldInfoEntry>());
+        }
+
+        public async Task DeleteLorebookAsync(string name)
+        {
+            await _storage.DeleteLorebookAsync(name);
         }
     }
 }

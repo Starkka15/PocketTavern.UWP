@@ -41,6 +41,9 @@ namespace PocketTavern.UWP.Services
         private readonly Dictionary<int, List<object>> _messageHeaders = new Dictionary<int, List<object>>();
         // idx → list of header objects
 
+        private readonly Dictionary<string, HashSet<string>> _extensionHooks = new Dictionary<string, HashSet<string>>();
+        // extId → set of event names registered via PT.eventSource.on()
+
         private bool _loaded;
 
         // ── Events ────────────────────────────────────────────────────────────
@@ -156,6 +159,8 @@ namespace PocketTavern.UWP.Services
         public IReadOnlyDictionary<string, List<object>> GetButtonSets() => _buttonSets;
         public IReadOnlyDictionary<string, List<object>> GetMessageActionSets() => _messageActionSets;
         public IReadOnlyDictionary<int, List<object>> GetMessageHeaders() => _messageHeaders;
+        public IReadOnlyList<string> GetActiveHooksForExtension(string extId)
+            => _extensionHooks.TryGetValue(extId, out var h) ? h.ToList() : new List<string>();
 
         // ── Callback completions (C# → JS resolve) ───────────────────────────
 
@@ -334,6 +339,19 @@ namespace PocketTavern.UWP.Services
                     });
                     break;
 
+                case "reportHook":
+                {
+                    var extId     = msg.Value<string>("extId") ?? "";
+                    var eventName = msg.Value<string>("event") ?? "";
+                    if (!string.IsNullOrEmpty(extId) && !string.IsNullOrEmpty(eventName))
+                    {
+                        if (!_extensionHooks.ContainsKey(extId))
+                            _extensionHooks[extId] = new HashSet<string>();
+                        _extensionHooks[extId].Add(eventName);
+                    }
+                    break;
+                }
+
                 case "log":
                     System.Diagnostics.Debug.WriteLine($"[JsExt] {msg.Value<string>("msg")}");
                     break;
@@ -433,6 +451,7 @@ namespace PocketTavern.UWP.Services
             _messageActionSets.Clear();
             _outputFilters.Clear();
             _messageHeaders.Clear();
+            _extensionHooks.Clear();
         }
     }
 

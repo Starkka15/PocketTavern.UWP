@@ -13,6 +13,7 @@ using PocketTavern.UWP.Data;
 using PocketTavern.UWP.Models;
 using PocketTavern.UWP.Services;
 using Windows.Storage;
+using Windows.Storage.AccessCache;
 using Windows.Storage.Pickers;
 
 namespace PocketTavern.UWP.ViewModels
@@ -63,6 +64,65 @@ namespace PocketTavern.UWP.ViewModels
 
         public ObservableCollection<string> Log { get; } = new ObservableCollection<string>();
 
+        // ── Checkpoint ────────────────────────────────────────────────────────
+
+        private static readonly string CheckpointPath =
+            Path.Combine(ApplicationData.Current.LocalFolder.Path, "import_checkpoint.json");
+
+        private class ImportCheckpoint
+        {
+            [JsonProperty("sourceType")]  public string SourceType { get; set; } = ""; // "folder" or "server"
+            [JsonProperty("serverUrl")]   public string ServerUrl { get; set; } = "";
+            [JsonProperty("username")]    public string Username { get; set; } = "";
+            [JsonProperty("password")]    public string Password { get; set; } = "";
+            [JsonProperty("folderToken")] public string FolderToken { get; set; } = "";
+            [JsonProperty("chars")]       public HashSet<string> ImportedChars { get; set; } = new HashSet<string>();
+            [JsonProperty("lorebooks")]   public HashSet<string> ImportedLorebooks { get; set; } = new HashSet<string>();
+            [JsonProperty("chats")]       public HashSet<string> ImportedChats { get; set; } = new HashSet<string>();
+        }
+
+        private ImportCheckpoint _checkpoint;
+
+        private bool _hasResumeCheckpoint;
+        public bool HasResumeCheckpoint
+        {
+            get => _hasResumeCheckpoint;
+            set => Set(ref _hasResumeCheckpoint, value);
+        }
+
+        public void CheckForCheckpoint()
+        {
+            HasResumeCheckpoint = File.Exists(CheckpointPath);
+        }
+
+        private void LoadCheckpoint()
+        {
+            try
+            {
+                if (File.Exists(CheckpointPath))
+                {
+                    _checkpoint = JsonConvert.DeserializeObject<ImportCheckpoint>(File.ReadAllText(CheckpointPath))
+                        ?? new ImportCheckpoint();
+                }
+                else _checkpoint = new ImportCheckpoint();
+            }
+            catch { _checkpoint = new ImportCheckpoint(); }
+        }
+
+        private void SaveCheckpoint()
+        {
+            try { File.WriteAllText(CheckpointPath, JsonConvert.SerializeObject(_checkpoint)); }
+            catch { }
+        }
+
+        public void ClearCheckpoint()
+        {
+            _checkpoint = new ImportCheckpoint();
+            try { if (File.Exists(CheckpointPath)) File.Delete(CheckpointPath); }
+            catch { }
+            HasResumeCheckpoint = false;
+        }
+
         // ── Reset ──────────────────────────────────────────────────────────────
 
         public void ResetState()
@@ -85,16 +145,28 @@ namespace PocketTavern.UWP.ViewModels
         /// Opens a folder picker and imports ST data from the selected folder.
         /// Looks for characters/, worlds/, chats/ sub-folders.
         /// </summary>
-        public async Task ImportFromFolderAsync()
+        public async Task ImportFromFolderAsync(bool isResume = false)
         {
             StorageFolder folder;
             try
             {
-                var picker = new FolderPicker();
-                picker.SuggestedStartLocation = PickerLocationId.DocumentsLibrary;
-                picker.FileTypeFilter.Add("*");
-                folder = await picker.PickSingleFolderAsync();
-                if (folder == null) return;
+                if (isResume && _checkpoint != null && !string.IsNullOrEmpty(_checkpoint.FolderToken)
+                    && StorageApplicationPermissions.FutureAccessList.ContainsItem(_checkpoint.FolderToken))
+                {
+                    folder = await StorageApplicationPermissions.FutureAccessList
+                        .GetFolderAsync(_checkpoint.FolderToken);
+                    AddLog("Resuming from checkpoint...");
+                }
+                else
+                {
+                    var picker = new FolderPicker();
+                    picker.SuggestedStartLocation = PickerLocationId.DocumentsLibrary;
+                    picker.FileTypeFilter.Add("*");
+                    folder = await picker.PickSingleFolderAsync();
+                    if (folder == null) return;
+                    // Fresh import — clear any old checkpoint
+                    ClearCheckpoint();
+                }
             }
             catch (Exception ex)
             {
@@ -102,9 +174,16 @@ namespace PocketTavern.UWP.ViewModels
                 return;
             }
 
+            // Save folder token for future resume
+            var token = StorageApplicationPermissions.FutureAccessList.Add(folder, "import_folder");
+            LoadCheckpoint();
+            _checkpoint.SourceType = "folder";
+            _checkpoint.FolderToken = token;
+            SaveCheckpoint();
+
             IsImporting = true;
             IsComplete = false;
-            Log.Clear();
+            if (!isResume) Log.Clear();
             int chars = 0, lorebooks = 0, chats = 0, errors = 0;
 
             try
@@ -116,21 +195,24 @@ namespace PocketTavern.UWP.ViewModels
                     var pngs = (await charsFolder.GetFilesAsync())
                         .Where(f => f.FileType.Equals(".png", StringComparison.OrdinalIgnoreCase))
                         .ToList();
-                    AddLog($"Found {pngs.Count} character PNG(s)");
-                    for (int i = 0; i < pngs.Count; i++)
+                    var pending = pngs.Where(f => !_checkpoint.ImportedChars.Contains(f.Name)).ToList();
+                    AddLog($"Found {pngs.Count} character PNG(s), {pending.Count} pending");
+                    for (int i = 0; i < pending.Count; i++)
                     {
-                        UpdateProgress(i + 1, pngs.Count, pngs[i].Name);
+                        UpdateProgress(i + 1, pending.Count, pending[i].Name);
                         try
                         {
-                            var bytes = await ReadFileBytesAsync(pngs[i]);
-                            await App.Characters.ImportCharacterFromBytesAsync(pngs[i].Name, bytes);
+                            var bytes = await ReadFileBytesAsync(pending[i]);
+                            await App.Characters.ImportCharacterFromBytesAsync(pending[i].Name, bytes);
                             chars++;
-                            AddLog("Imported character: " + pngs[i].Name);
+                            _checkpoint.ImportedChars.Add(pending[i].Name);
+                            SaveCheckpoint();
+                            AddLog("Imported character: " + pending[i].Name);
                         }
                         catch (Exception ex)
                         {
                             errors++;
-                            AddLog($"ERROR importing {pngs[i].Name}: {ex.Message}");
+                            AddLog($"ERROR importing {pending[i].Name}: {ex.Message}");
                         }
                     }
                 }
@@ -147,8 +229,9 @@ namespace PocketTavern.UWP.ViewModels
                     var books = (await worldsFolder.GetFilesAsync())
                         .Where(f => f.FileType.Equals(".json", StringComparison.OrdinalIgnoreCase))
                         .ToList();
-                    AddLog($"Found {books.Count} lorebook(s)");
-                    foreach (var book in books)
+                    var pendingBooks = books.Where(b => !_checkpoint.ImportedLorebooks.Contains(b.Name)).ToList();
+                    AddLog($"Found {books.Count} lorebook(s), {pendingBooks.Count} pending");
+                    foreach (var book in pendingBooks)
                     {
                         try
                         {
@@ -157,6 +240,8 @@ namespace PocketTavern.UWP.ViewModels
                             var entries = ParseWorldInfoJson(text);
                             await _lorebookStorage.SaveLorebookAsync(name, entries);
                             lorebooks++;
+                            _checkpoint.ImportedLorebooks.Add(book.Name);
+                            SaveCheckpoint();
                             AddLog($"Imported lorebook: {name} ({entries.Count} entries)");
                         }
                         catch (Exception ex)
@@ -175,7 +260,7 @@ namespace PocketTavern.UWP.ViewModels
                 var chatsFolder = await TryGetFolderAsync(folder, "chats");
                 if (chatsFolder != null)
                 {
-                    var result = await ImportChatsFromFolderAsync(chatsFolder);
+                    var result = await ImportChatsFromFolderAsync(chatsFolder, _checkpoint);
                     chats += result.Item1;
                     errors += result.Item2;
                 }
@@ -191,11 +276,14 @@ namespace PocketTavern.UWP.ViewModels
             }
             finally
             {
+                if (errors == 0) ClearCheckpoint();
+                else HasResumeCheckpoint = File.Exists(CheckpointPath);
                 FinishImport(chars, lorebooks, chats, errors);
             }
         }
 
-        private async Task<Tuple<int, int>> ImportChatsFromFolderAsync(StorageFolder chatsFolder)
+        private async Task<Tuple<int, int>> ImportChatsFromFolderAsync(StorageFolder chatsFolder,
+            ImportCheckpoint checkpoint = null)
         {
             int imported = 0, errors = 0;
             var charDirs = await chatsFolder.GetFoldersAsync();
@@ -212,13 +300,20 @@ namespace PocketTavern.UWP.ViewModels
 
                 foreach (var chatFile in chatFiles)
                 {
+                    var chatKey = $"{charDir.Name}/{chatFile.Name}";
+                    if (checkpoint != null && checkpoint.ImportedChats.Contains(chatKey)) continue;
                     try
                     {
                         var text = await FileIO.ReadTextAsync(chatFile);
                         var destPath = Path.Combine(destDir, chatFile.Name);
                         File.WriteAllText(destPath, text);
                         imported++;
-                        AddLog($"Imported chat: {charDir.Name}/{chatFile.Name}");
+                        if (checkpoint != null)
+                        {
+                            checkpoint.ImportedChats.Add(chatKey);
+                            SaveCheckpoint();
+                        }
+                        AddLog($"Imported chat: {chatKey}");
                     }
                     catch (Exception ex)
                     {
@@ -232,7 +327,7 @@ namespace PocketTavern.UWP.ViewModels
 
         // ── Server Import ──────────────────────────────────────────────────────
 
-        public async Task ImportFromServerAsync()
+        public async Task ImportFromServerAsync(bool isResume = false)
         {
             var baseUrl = ServerUrl?.Trim().TrimEnd('/') ?? "";
             if (string.IsNullOrEmpty(baseUrl))
@@ -241,9 +336,17 @@ namespace PocketTavern.UWP.ViewModels
                 return;
             }
 
+            if (!isResume) ClearCheckpoint();
+            LoadCheckpoint();
+            _checkpoint.SourceType = "server";
+            _checkpoint.ServerUrl  = ServerUrl ?? "";
+            _checkpoint.Username   = Username ?? "";
+            _checkpoint.Password   = Password ?? "";
+            SaveCheckpoint();
+
             IsImporting = true;
             IsComplete = false;
-            Log.Clear();
+            if (!isResume) Log.Clear();
 
             int chars = 0, lorebooks = 0, errors = 0;
 
@@ -283,10 +386,12 @@ namespace PocketTavern.UWP.ViewModels
                 var charList = await FetchCharacterListAsync(baseUrl, csrfToken, activeCookie);
                 AddLog($"Found {charList.Count} character(s)");
 
-                for (int i = 0; i < charList.Count; i++)
+                var pendingChars = charList.Where(c => !_checkpoint.ImportedChars.Contains(c.Item2)).ToList();
+                AddLog($"Found {charList.Count} character(s), {pendingChars.Count} pending");
+                for (int i = 0; i < pendingChars.Count; i++)
                 {
-                    var name = charList[i].Item1; var filename = charList[i].Item2;
-                    UpdateProgress(i + 1, charList.Count, name);
+                    var name = pendingChars[i].Item1; var filename = pendingChars[i].Item2;
+                    UpdateProgress(i + 1, pendingChars.Count, name);
                     try
                     {
                         var pngBytes = await ExportCharacterAsync(baseUrl, csrfToken, activeCookie,
@@ -296,6 +401,8 @@ namespace PocketTavern.UWP.ViewModels
                             var safeName = string.IsNullOrEmpty(filename) ? $"{name}.png" : filename;
                             await App.Characters.ImportCharacterFromBytesAsync(safeName, pngBytes);
                             chars++;
+                            _checkpoint.ImportedChars.Add(filename ?? name);
+                            SaveCheckpoint();
                             AddLog("Imported: " + name);
                         }
                         else
@@ -314,15 +421,18 @@ namespace PocketTavern.UWP.ViewModels
                 // 4. Import lorebooks
                 AddLog("Fetching lorebook list...");
                 var lorebookNames = await FetchLorebookListAsync(baseUrl, csrfToken, activeCookie);
-                AddLog($"Found {lorebookNames.Count} lorebook(s)");
+                var pendingBooks = lorebookNames.Where(n => !_checkpoint.ImportedLorebooks.Contains(n)).ToList();
+                AddLog($"Found {lorebookNames.Count} lorebook(s), {pendingBooks.Count} pending");
 
-                foreach (var lbName in lorebookNames)
+                foreach (var lbName in pendingBooks)
                 {
                     try
                     {
                         var entries = await FetchLorebookAsync(baseUrl, csrfToken, activeCookie, lbName);
                         await _lorebookStorage.SaveLorebookAsync(lbName, entries);
                         lorebooks++;
+                        _checkpoint.ImportedLorebooks.Add(lbName);
+                        SaveCheckpoint();
                         AddLog($"Imported lorebook: {lbName} ({entries.Count} entries)");
                     }
                     catch (Exception ex)
@@ -339,7 +449,25 @@ namespace PocketTavern.UWP.ViewModels
             }
             finally
             {
+                if (errors == 0) ClearCheckpoint();
+                else HasResumeCheckpoint = File.Exists(CheckpointPath);
                 FinishImport(chars: chars, lorebooks: lorebooks, errors: errors);
+            }
+        }
+
+        public async Task ResumeImportAsync()
+        {
+            LoadCheckpoint();
+            if (_checkpoint.SourceType == "server")
+            {
+                ServerUrl = _checkpoint.ServerUrl;
+                Username  = _checkpoint.Username;
+                Password  = _checkpoint.Password;
+                await ImportFromServerAsync(isResume: true);
+            }
+            else
+            {
+                await ImportFromFolderAsync(isResume: true);
             }
         }
 

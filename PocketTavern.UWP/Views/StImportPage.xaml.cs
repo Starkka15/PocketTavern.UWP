@@ -21,6 +21,25 @@ namespace PocketTavern.UWP.Views
         {
             base.OnNavigatedTo(e);
             _vm.ResetState();
+            _vm.CheckForCheckpoint();
+            ResumeBanner.Visibility = _vm.HasResumeCheckpoint
+                ? Windows.UI.Xaml.Visibility.Visible
+                : Windows.UI.Xaml.Visibility.Collapsed;
+        }
+
+        private async void ResumeImportButton_Click(object sender, RoutedEventArgs e)
+        {
+            ResumeBanner.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
+            SetImportingState(true);
+            await _vm.ResumeImportAsync();
+            SetImportingState(false);
+            ShowResults();
+        }
+
+        private void DiscardCheckpointButton_Click(object sender, RoutedEventArgs e)
+        {
+            _vm.ClearCheckpoint();
+            ResumeBanner.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
         }
 
         private void OnLogChanged(object sender, NotifyCollectionChangedEventArgs e)

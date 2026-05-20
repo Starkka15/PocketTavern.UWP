@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 namespace PocketTavern.UWP.Models
 {
     public class JsExtensionItem
@@ -10,5 +12,6 @@ namespace PocketTavern.UWP.Models
         public string SourceUrl { get; set; } = "";
         public bool Enabled { get; set; } = true;
         public bool Bundled { get; set; } = false;
+        public List<string> ActiveHooks { get; set; } = new List<string>();
     }
 }

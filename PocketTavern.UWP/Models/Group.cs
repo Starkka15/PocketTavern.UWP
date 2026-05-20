@@ -17,6 +17,12 @@ namespace PocketTavern.UWP.Models
         public const int Append = 1;
     }
 
+    public static class ChatStyle
+    {
+        public const int Dialogue = 0;
+        public const int RP = 1;
+    }
+
     public class Group
     {
         public string Id { get; set; } = "";
@@ -27,6 +33,8 @@ namespace PocketTavern.UWP.Models
         public bool Favorite { get; set; } = false;
         public int ActivationStrategyValue { get; set; } = ActivationStrategy.Natural;
         public int GenerationModeValue { get; set; } = GenerationMode.Swap;
+        public int ChatStyleValue { get; set; } = ChatStyle.Dialogue;
+        public string SystemPrompt { get; set; } = "";
         public List<string> DisabledMembers { get; set; } = new List<string>();
         public bool AllowSelfResponses { get; set; } = false;
         public List<string> Chats { get; set; } = new List<string>();

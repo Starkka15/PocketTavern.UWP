@@ -16,6 +16,7 @@ namespace PocketTavern.UWP
         public static ChatStorage Chats { get; private set; }
         public static ConnectionProfileStorage ConnectionProfiles { get; private set; }
         public static PresetStorage Presets { get; private set; }
+        public static GroupStorage Groups { get; private set; }
         public static NavigationService Navigation { get; private set; }
         public static ThemeManager Theme { get; private set; }
         public static JsExtensionHost Extensions { get; private set; }
@@ -35,6 +36,7 @@ namespace PocketTavern.UWP
                 Chats = new ChatStorage();
                 ConnectionProfiles = new ConnectionProfileStorage();
                 Presets = new PresetStorage();
+                Groups = new GroupStorage();
                 Navigation = new NavigationService();
                 Theme = new ThemeManager();
                 Extensions = new JsExtensionHost();

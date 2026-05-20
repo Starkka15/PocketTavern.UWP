@@ -41,12 +41,17 @@
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
             <TextBox x:Name="SearchBox" Grid.Column="0"
                      Style="{StaticResource DarkTextBoxStyle}"
                      PlaceholderText="Search characters…"
                      KeyDown="OnSearchKeyDown" />
-            <Button Grid.Column="1" Margin="8,0,0,0"
+            <CheckBox x:Name="NsfwToggle" Grid.Column="1"
+                      Content="NSFW" Foreground="{StaticResource TextSecondaryBrush}"
+                      FontSize="11" Margin="6,0,0,0" VerticalAlignment="Center"
+                      Checked="OnNsfwToggleChanged" Unchecked="OnNsfwToggleChanged" />
+            <Button Grid.Column="2" Margin="8,0,0,0"
                     Style="{StaticResource AccentButtonStyle}"
                     Click="OnSearchClick">
                 <TextBlock Text="&#xE721;" FontFamily="Segoe MDL2 Assets" FontSize="16" />

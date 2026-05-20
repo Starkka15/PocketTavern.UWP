@@ -64,9 +64,14 @@
         on: function (eventName, callback) {
             // Tag the callback with the currently loading extension's ID
             // so per-character filtering can skip disabled extensions' handlers.
-            callback.__ptExtId = window.__ptCurrentExtId || null;
+            var extId = window.__ptCurrentExtId || null;
+            callback.__ptExtId = extId;
             if (!_listeners[eventName]) _listeners[eventName] = [];
             _listeners[eventName].push(callback);
+            // Report hook registration to native layer for dashboard display
+            if (extId && window.external) {
+                try { window.external.notify(JSON.stringify({ m: 'reportHook', extId: extId, event: eventName })); } catch (e) {}
+            }
         },
 
         /**

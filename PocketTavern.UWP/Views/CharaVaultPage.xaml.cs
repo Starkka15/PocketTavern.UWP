@@ -1,3 +1,4 @@
+using System;
 using Windows.System;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
@@ -88,7 +89,93 @@ namespace PocketTavern.UWP.Views
             }
         }
 
-        private void OnCardClicked(object sender, ItemClickEventArgs e) { /* detail view reserved */ }
+        private void OnNsfwToggleChanged(object sender, RoutedEventArgs e)
+            => _vm.ShowNsfw = NsfwToggle.IsChecked == true;
+
+        private async void OnCardClicked(object sender, ItemClickEventArgs e)
+        {
+            if (!(e.ClickedItem is CharaVaultCardItem item)) return;
+
+            var panel = new StackPanel { MinWidth = 260 };
+
+            // Avatar image
+            if (!string.IsNullOrEmpty(item.AvatarUrl))
+            {
+                try
+                {
+                    var img = new Windows.UI.Xaml.Controls.Image
+                    {
+                        Source = new Windows.UI.Xaml.Media.Imaging.BitmapImage(new Uri(item.AvatarUrl)),
+                        Width = 80, Height = 80,
+                        Stretch = Windows.UI.Xaml.Media.Stretch.UniformToFill,
+                        HorizontalAlignment = HorizontalAlignment.Center,
+                        Margin = new Thickness(0, 0, 0, 8)
+                    };
+                    panel.Children.Add(img);
+                }
+                catch { }
+            }
+
+            panel.Children.Add(new TextBlock
+            {
+                Text = item.Author,
+                Style = (Style)Application.Current.Resources["SubtitleTextStyle"],
+                FontSize = 11, HorizontalAlignment = HorizontalAlignment.Center,
+                Margin = new Thickness(0, 0, 0, 8)
+            });
+
+            if (!string.IsNullOrEmpty(item.Tagline))
+            {
+                panel.Children.Add(new TextBlock
+                {
+                    Text = item.Tagline,
+                    Foreground = (Windows.UI.Xaml.Media.Brush)Application.Current.Resources["TextPrimaryBrush"],
+                    FontSize = 13, TextWrapping = TextWrapping.Wrap,
+                    Margin = new Thickness(0, 0, 0, 8)
+                });
+            }
+
+            if (item.Stars > 0)
+            {
+                panel.Children.Add(new TextBlock
+                {
+                    Text = new string('★', item.Stars) + new string('☆', System.Math.Max(0, 5 - item.Stars)),
+                    FontSize = 16,
+                    Foreground = (Windows.UI.Xaml.Media.Brush)Application.Current.Resources["AccentPrimaryBrush"],
+                    HorizontalAlignment = HorizontalAlignment.Center,
+                    Margin = new Thickness(0, 0, 0, 8)
+                });
+            }
+
+            var dialog = new ContentDialog
+            {
+                Title = item.Name,
+                Content = new ScrollViewer { Content = panel, MaxHeight = 420 },
+                PrimaryButtonText = "Download",
+                CloseButtonText = "Close",
+                DefaultButton = ContentDialogButton.Primary,
+                RequestedTheme = ElementTheme.Dark
+            };
+
+            if (await dialog.ShowAsync() == ContentDialogResult.Primary)
+            {
+                var error = await _vm.ImportCharacterAsync(item);
+                if (error != null)
+                {
+                    var errDialog = new ContentDialog
+                    {
+                        Title = "Import Failed", Content = error,
+                        CloseButtonText = "OK",
+                        RequestedTheme = ElementTheme.Dark
+                    };
+                    await errDialog.ShowAsync();
+                }
+                else
+                {
+                    StatusLabel.Text = $"Imported {item.Name}";
+                }
+            }
+        }
 
         private async void OnImportClick(object sender, RoutedEventArgs e)
         {

@@ -1,58 +1,57 @@
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Linq;
+using System.Threading.Tasks;
 using PocketTavern.UWP.Models;
 
 namespace PocketTavern.UWP.ViewModels
 {
-    /// <summary>
-    /// Groups are not yet supported in standalone mode.
-    /// This is a stub that mirrors Android GroupsViewModel.
-    /// </summary>
     public class GroupsViewModel : ViewModelBase
     {
-        private bool _showCreateDialog;
-        private bool _showDeleteDialog;
-        private string _error;
-        private string _newGroupName = "";
-
         public ObservableCollection<Group> Groups { get; } = new ObservableCollection<Group>();
+        public ObservableCollection<Character> AllCharacters { get; } = new ObservableCollection<Character>();
 
-        public bool ShowCreateDialog { get => _showCreateDialog; set => Set(ref _showCreateDialog, value); }
-        public bool ShowDeleteDialog { get => _showDeleteDialog; set => Set(ref _showDeleteDialog, value); }
-        public string Error           { get => _error;           set => Set(ref _error,           value); }
-        public string NewGroupName    { get => _newGroupName;    set => Set(ref _newGroupName,    value); }
+        private string _error;
+        public string Error { get => _error; set => Set(ref _error, value); }
 
-        public void Load()
+        public async Task LoadAsync()
         {
-            // Groups are not yet supported
+            var groups = await App.Groups.GetAllGroupsAsync();
+            Groups.Clear();
+            foreach (var g in groups) Groups.Add(g);
+
+            var chars = await App.Characters.GetAllCharactersAsync();
+            AllCharacters.Clear();
+            foreach (var c in chars) AllCharacters.Add(c);
         }
 
-        public void ShowCreateDialogMethod()
+        public Group CreateGroup(string name, List<string> memberAvatars)
         {
-            Error = "Group chats are not yet supported.";
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                Error = "Group name cannot be empty.";
+                return null;
+            }
+            if (memberAvatars == null || memberAvatars.Count == 0)
+            {
+                Error = "A group needs at least one member.";
+                return null;
+            }
+            var group = App.Groups.CreateGroup(name.Trim(), memberAvatars);
+            Groups.Add(group);
+            return group;
         }
 
-        public void DismissCreateDialog()
+        public void DeleteGroup(Group group)
         {
-            ShowCreateDialog = false;
-            NewGroupName = "";
+            App.Groups.DeleteGroup(group.Id);
+            Groups.Remove(group);
         }
 
-        public void CreateGroup()
+        public string MemberSummary(Group group)
         {
-            Error = "Group chats are not yet supported.";
-            DismissCreateDialog();
-        }
-
-        public void ShowDeleteConfirmation(Group group)
-        {
-            ShowDeleteDialog = true;
-        }
-
-        public void DismissDeleteDialog() => ShowDeleteDialog = false;
-
-        public void DeleteGroup()
-        {
-            ShowDeleteDialog = false;
+            if (group.Members == null || group.Members.Count == 0) return "No members";
+            return group.Members.Count == 1 ? "1 member" : $"{group.Members.Count} members";
         }
 
         public void ClearError() => Error = null;

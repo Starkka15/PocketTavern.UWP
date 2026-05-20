@@ -53,7 +53,7 @@ namespace PocketTavern.UWP.Views
             => SetActiveTab(false);
 
         private void OnTabGroupsClick(object sender, RoutedEventArgs e)
-            => SetActiveTab(true);
+            => App.Navigation.NavigateToGroups();
 
         private void OnBackClick(object sender, RoutedEventArgs e)
             => App.Navigation.GoBack();

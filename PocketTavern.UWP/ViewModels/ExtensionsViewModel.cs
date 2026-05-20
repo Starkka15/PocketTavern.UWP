@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Threading.Tasks;
 using Windows.Storage;
 using PocketTavern.UWP.Data;
@@ -133,7 +134,11 @@ namespace PocketTavern.UWP.ViewModels
         {
             var exts = _jsStorage.ListExtensions();
             JsExtensions.Clear();
-            foreach (var e in exts) JsExtensions.Add(e);
+            foreach (var e in exts)
+            {
+                e.ActiveHooks = App.Extensions.GetActiveHooksForExtension(e.Id).ToList();
+                JsExtensions.Add(e);
+            }
 
             JsExtensionSettings = new Dictionary<string, Dictionary<string, object>>();
             foreach (var e in exts)

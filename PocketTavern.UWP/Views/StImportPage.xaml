@@ -30,6 +30,32 @@
         <ScrollViewer Grid.Row="1">
             <StackPanel Padding="16"><controls:SpacedPanel Spacing="16">
 
+                <!-- Resume section (shown when checkpoint exists) -->
+                <Border x:Name="ResumeBanner" Visibility="Collapsed"
+                        Background="{StaticResource BackgroundCardBrush}" CornerRadius="10" Padding="14,10">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel>
+                            <TextBlock Text="Interrupted import found"
+                                       Foreground="{StaticResource TextPrimaryBrush}"
+                                       FontWeight="SemiBold" FontSize="14" />
+                            <TextBlock Text="Resume from where it left off, or start fresh."
+                                       Foreground="{StaticResource TextSecondaryBrush}" FontSize="12" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Orientation="Horizontal">
+                            <Button Content="Resume" Click="ResumeImportButton_Click"
+                                    Style="{StaticResource AccentButtonStyle}"
+                                    Margin="0,0,8,0" />
+                            <Button Content="Discard" Click="DiscardCheckpointButton_Click"
+                                    Background="Transparent" BorderThickness="0"
+                                    Foreground="{StaticResource TextSecondaryBrush}" />
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
                 <!-- Folder import section -->
                 <TextBlock Text="Import from Local Folder" Style="{StaticResource SubtitleTextStyle}" />
                 <TextBlock Text="Select your SillyTavern data folder (containing characters/, worlds/, chats/ sub-folders)."

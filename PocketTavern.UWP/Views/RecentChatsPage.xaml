@@ -59,6 +59,7 @@
                             <ColumnDefinition Width="56" />
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
 
                         <Border Width="48" Height="48" CornerRadius="24"
@@ -87,6 +88,12 @@
                         <TextBlock Grid.Column="2" Text="{Binding DateLabel}"
                                    Style="{StaticResource SubtitleTextStyle}"
                                    FontSize="11" VerticalAlignment="Top" Margin="8,2,0,0" />
+                        <Button Grid.Column="3" Background="Transparent" BorderThickness="0"
+                                Padding="8,4" Tag="{Binding}"
+                                Click="OnRenameChatClick" VerticalAlignment="Center">
+                            <TextBlock Text="&#xE70F;" FontFamily="Segoe MDL2 Assets" FontSize="14"
+                                       Foreground="{StaticResource TextSecondaryBrush}" />
+                        </Button>
                     </Grid>
                 </DataTemplate>
             </ListView.ItemTemplate>

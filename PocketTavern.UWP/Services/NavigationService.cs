@@ -43,6 +43,8 @@ namespace PocketTavern.UWP.Services
         public void NavigateToGroups()                => NavigateTo(typeof(GroupsPage));
         public void NavigateToGroupChat(string groupId) => NavigateTo(typeof(GroupChatPage), groupId);
         public void NavigateToStImport()              => NavigateTo(typeof(StImportPage));
+        public void NavigateToBackupExport()          => NavigateTo(typeof(BackupExportPage));
         public void NavigateToSetupGuide()            => NavigateTo(typeof(SetupGuidePage));
+        public void NavigateToLorebookEntries(string name) => NavigateTo(typeof(LorebookEntriesPage), name);
     }
 }

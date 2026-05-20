@@ -26,7 +26,8 @@ namespace PocketTavern.UWP.Services
                 [ImageGenBackendType.Dalle]      = new DalleImageGenBackend(getConfig),
                 [ImageGenBackendType.Stability]  = new StabilityImageGenBackend(getConfig),
                 [ImageGenBackendType.Pollinations] = new PollinationsImageGenBackend(getConfig),
-                [ImageGenBackendType.HuggingFace] = new HuggingFaceImageGenBackend(getConfig)
+                [ImageGenBackendType.HuggingFace] = new HuggingFaceImageGenBackend(getConfig),
+                [ImageGenBackendType.NanoGpt]     = new NanoGptImageGenBackend(getConfig)
             };
         }
 

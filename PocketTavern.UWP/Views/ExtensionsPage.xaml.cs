@@ -224,6 +224,22 @@ namespace PocketTavern.UWP.Views
                 infoStack.Children.Add(new TextBlock { Text = ext.Description, FontSize = 12, Foreground = textSec, TextWrapping = TextWrapping.Wrap });
             if (!string.IsNullOrEmpty(ext.Author))
                 infoStack.Children.Add(new TextBlock { Text = $"by {ext.Author}", FontSize = 11, Foreground = textSec });
+            if (ext.ActiveHooks != null && ext.ActiveHooks.Count > 0)
+            {
+                var hooksPanel = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 4, 0, 0) };
+                hooksPanel.Children.Add(new TextBlock { Text = "hooks: ", FontSize = 10, Foreground = textSec, VerticalAlignment = VerticalAlignment.Center });
+                foreach (var hook in ext.ActiveHooks)
+                {
+                    var chip = new Border
+                    {
+                        Background = surfaceBg, CornerRadius = new CornerRadius(4),
+                        Padding = new Thickness(5, 2, 5, 2), Margin = new Thickness(0, 0, 4, 0)
+                    };
+                    chip.Child = new TextBlock { Text = hook, FontSize = 10, Foreground = accent };
+                    hooksPanel.Children.Add(chip);
+                }
+                infoStack.Children.Add(hooksPanel);
+            }
             Grid.SetColumn(infoStack, 1);
             topRow.Children.Add(infoStack);
 

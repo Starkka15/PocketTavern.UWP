@@ -37,6 +37,7 @@ namespace PocketTavern.UWP.Views
         private void OnTtsClick(object sender, RoutedEventArgs e)                => App.Navigation.NavigateToTtsSettings();
         private void OnDebugLogClick(object sender, RoutedEventArgs e)           => App.Navigation.NavigateToDebugLog();
         private void OnStImportClick(object sender, RoutedEventArgs e)           => App.Navigation.NavigateToStImport();
+        private void OnExportClick(object sender, RoutedEventArgs e)             => App.Navigation.NavigateToBackupExport();
         private void OnHelpClick(object sender, RoutedEventArgs e)               => App.Navigation.NavigateToSetupGuide();
     }
 }

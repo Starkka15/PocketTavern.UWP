@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace PocketTavern.UWP.Models
 {
@@ -38,6 +39,11 @@ namespace PocketTavern.UWP.Models
         public int SwipeCount => Alternates?.Count ?? 0;
         public bool HasPrevSwipe => CurrentSwipeIndex > 0;
         public bool HasNextSwipe => Alternates != null && CurrentSwipeIndex < Alternates.Count - 1;
+
+        public bool HasHeaders => ExtensionHeaders != null && ExtensionHeaders.Count > 0
+            && ExtensionHeaders.Exists(h => !string.IsNullOrEmpty(h.Text));
+        public string HeaderText => ExtensionHeaders == null ? ""
+            : string.Join("  ·  ", ExtensionHeaders.Where(h => !string.IsNullOrEmpty(h.Text)).Select(h => h.Text));
 
         public void AddAlternate(string text)
         {

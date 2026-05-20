@@ -46,6 +46,10 @@ namespace PocketTavern.UWP.ViewModels
         private bool _isTtsSpeaking;
         private bool _isTtsEnabled;
 
+        // Search
+        private List<int> _searchResults = new List<int>();
+        private int _searchIndex = -1;
+
         // Auto-continue
         private bool _autoContinueEnabled;
         private int _autoContinueMinLength = 200;
@@ -640,6 +644,7 @@ namespace PocketTavern.UWP.ViewModels
                 }
             });
 
+            ShowTokenCount = true;
             try
             {
                 if (config.UsesChatCompletions)
@@ -649,6 +654,7 @@ namespace PocketTavern.UWP.ViewModels
                         ? await App.Presets.GetOaiPresetAsync(presetName) ?? new OaiPreset()
                         : new OaiPreset();
                     var builtMessages = BuildChatCompletionMessages(history, preset, userMessage);
+                    TokenCount = EstimateTokens(string.Join(" ", builtMessages.Select(m => m.Value<string>("content") ?? "")));
                     await _llm.GenerateChatCompletionAsync(config, preset, builtMessages, progress, _generationCts.Token);
                 }
                 else
@@ -659,6 +665,7 @@ namespace PocketTavern.UWP.ViewModels
                         : new TextGenPreset();
                     var systemPrompt = BuildTextGenSystemPrompt();
                     var prompt = BuildTextGenPrompt(history, systemPrompt, userMessage);
+                    TokenCount = EstimateTokens(prompt);
                     await _llm.GenerateTextGenAsync(config, preset, prompt, progress,
                         _generationCts.Token, stopSequences.Count > 0 ? stopSequences : null);
                 }
@@ -1071,6 +1078,84 @@ namespace PocketTavern.UWP.ViewModels
             await DoExtensionImageGenerateAsync(req.Prompt, req.OptionsJson, req.CbId);
         }
 
+        public bool IsImageGenEnabled => App.Settings.GetImageGenConfig().Enabled;
+
+        public async Task GenerateImageDirectAsync()
+        {
+            if (IsGenerating || _character == null) return;
+            var imageConfig = App.Settings.GetImageGenConfig();
+            if (!imageConfig.Enabled) return;
+
+            // Build prompt from character description + last assistant message for context
+            var promptParts = new System.Text.StringBuilder();
+            if (!string.IsNullOrWhiteSpace(_character.Description))
+                promptParts.Append(_character.Description.Length > 200
+                    ? _character.Description.Substring(0, 200)
+                    : _character.Description);
+
+            var lastAssistant = Messages.LastOrDefault(m => !m.IsUser);
+            if (lastAssistant != null && !string.IsNullOrWhiteSpace(lastAssistant.Content))
+            {
+                var snippet = lastAssistant.Content.Length > 150
+                    ? lastAssistant.Content.Substring(0, 150)
+                    : lastAssistant.Content;
+                if (promptParts.Length > 0) promptParts.Append(", ");
+                promptParts.Append(snippet);
+            }
+
+            var prompt = promptParts.Length > 0 ? promptParts.ToString() : _character.Name;
+
+            IsGenerating = true;
+            try
+            {
+                var imgSvc = new ImageGenService(App.Settings);
+                var @params = new ForgeGenerationParams
+                {
+                    Prompt         = prompt,
+                    NegativePrompt = imageConfig.NegativePrompt,
+                    Width          = imageConfig.Width,
+                    Height         = imageConfig.Height,
+                    Steps          = imageConfig.Steps,
+                    CfgScale       = imageConfig.CfgScale,
+                    Sampler        = imageConfig.Sampler,
+                    Seed           = imageConfig.Seed
+                };
+
+                string resultBase64 = null;
+                var progress = new Progress<GenerationState>(s =>
+                {
+                    if (s is GenerationState.Complete c) resultBase64 = c.ImageBase64;
+                });
+                using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(120));
+                await imgSvc.GenerateAsync(@params, progress, cts.Token);
+
+                if (!string.IsNullOrEmpty(resultBase64))
+                {
+                    var imagePath = await SaveExtensionImageAsync(resultBase64);
+                    if (imagePath != null)
+                    {
+                        var msg = new ChatMessage
+                        {
+                            IsUser    = false,
+                            Content   = "",
+                            ImagePath = imagePath,
+                            Timestamp = DateTimeOffset.Now
+                        };
+                        Messages.Add(msg);
+                        await SaveChatAsync();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Direct image gen failed: {ex.Message}");
+            }
+            finally
+            {
+                IsGenerating = false;
+            }
+        }
+
         private async void OnInsertMessageRequested(object sender, InsertMessageRequest req)
         {
             await DoExtensionInsertMessageAsync(req.Content, req.OptionsJson);
@@ -1319,6 +1404,54 @@ namespace PocketTavern.UWP.ViewModels
         {
             if (string.IsNullOrEmpty(text)) return 0;
             return (int)(text.Length / 3.5);
+        }
+
+        // ── Message search ────────────────────────────────────────────────────
+
+        public string SearchResultText { get; private set; } = "";
+
+        public void SearchMessages(string query)
+        {
+            _searchResults.Clear();
+            _searchIndex = -1;
+            if (!string.IsNullOrWhiteSpace(query))
+            {
+                for (int i = 0; i < _messages.Count; i++)
+                    if (_messages[i].Content?.IndexOf(query, StringComparison.OrdinalIgnoreCase) >= 0)
+                        _searchResults.Add(i);
+                if (_searchResults.Count > 0) _searchIndex = 0;
+            }
+            UpdateSearchResultText();
+        }
+
+        public int SearchNext()
+        {
+            if (_searchResults.Count == 0) return -1;
+            _searchIndex = (_searchIndex + 1) % _searchResults.Count;
+            UpdateSearchResultText();
+            return _searchResults[_searchIndex];
+        }
+
+        public int SearchPrev()
+        {
+            if (_searchResults.Count == 0) return -1;
+            _searchIndex = (_searchIndex - 1 + _searchResults.Count) % _searchResults.Count;
+            UpdateSearchResultText();
+            return _searchResults[_searchIndex];
+        }
+
+        public int CurrentSearchMessageIndex()
+        {
+            if (_searchIndex < 0 || _searchIndex >= _searchResults.Count) return -1;
+            return _searchResults[_searchIndex];
+        }
+
+        private void UpdateSearchResultText()
+        {
+            SearchResultText = _searchResults.Count == 0
+                ? ""
+                : $"{_searchIndex + 1}/{_searchResults.Count}";
+            OnPropertyChanged(nameof(SearchResultText));
         }
 
         private static string EscapeJson(string s)

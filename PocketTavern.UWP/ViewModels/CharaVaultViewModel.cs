@@ -38,6 +38,7 @@ namespace PocketTavern.UWP.ViewModels
         private string _statusText = "";
         private int _currentOffset = 0;
         private bool _hasMore = false;
+        private bool _showNsfw = false;
 
         public ObservableCollection<CharaVaultCardItem> Results
         {
@@ -67,6 +68,12 @@ namespace PocketTavern.UWP.ViewModels
         {
             get => _hasMore;
             set => Set(ref _hasMore, value);
+        }
+
+        public bool ShowNsfw
+        {
+            get => _showNsfw;
+            set => Set(ref _showNsfw, value);
         }
 
         private string GetBaseUrl()
@@ -116,7 +123,8 @@ namespace PocketTavern.UWP.ViewModels
                 var q       = Uri.EscapeDataString(SearchQuery ?? "");
 
                 // CharaVault.net API — GET /api/cards
-                var url = $"{baseUrl}/api/cards?q={q}&limit={PageSize}&offset={_currentOffset}&sort=most_downloaded&nsfw=false";
+                var nsfw = _showNsfw ? "true" : "false";
+                var url = $"{baseUrl}/api/cards?q={q}&limit={PageSize}&offset={_currentOffset}&sort=most_downloaded&nsfw={nsfw}";
 
                 var request = new HttpRequestMessage(HttpMethod.Get, url);
                 request.Headers.TryAddWithoutValidation("Accept", "application/json");
@@ -133,10 +141,10 @@ namespace PocketTavern.UWP.ViewModels
 
                 // CharaVault response: { cards: [...], total: N }
                 // Fallback to common alternate shapes
-                var nodes = root["cards"] as JArray
+                var nodes = root["results"] as JArray
+                         ?? root["cards"] as JArray
                          ?? root["data"]?["nodes"] as JArray
-                         ?? root["nodes"] as JArray
-                         ?? root["results"] as JArray;
+                         ?? root["nodes"] as JArray;
 
                 if (nodes == null || nodes.Count == 0)
                 {
@@ -147,24 +155,20 @@ namespace PocketTavern.UWP.ViewModels
 
                 foreach (var n in nodes)
                 {
-                    // Reconstruct folder/file path from whatever the API returns
                     var folder = n["folder"]?.ToString() ?? "";
                     var file   = n["file"]?.ToString() ?? "";
-                    var path   = n["path"]?.ToString() ?? n["fullPath"]?.ToString() ?? "";
+                    var path   = !string.IsNullOrEmpty(folder) && !string.IsNullOrEmpty(file)
+                                 ? $"{folder}/{file}"
+                                 : n["path"]?.ToString() ?? n["fullPath"]?.ToString() ?? n["id"]?.ToString() ?? "";
 
-                    // If API returns separate folder+file fields, prefer those
-                    if (!string.IsNullOrEmpty(folder) && !string.IsNullOrEmpty(file))
-                        path = $"{folder}/{file}";
-                    else if (string.IsNullOrEmpty(path))
-                        path = n["id"]?.ToString() ?? "";
-
-                    var parts   = path.Split('/');
-                    var creator = !string.IsNullOrEmpty(folder) ? folder
-                                : parts.Length >= 1 ? parts[0]
-                                : (n["creator"]?.ToString() ?? "");
                     var name    = n["name"]?.ToString()
-                               ?? (!string.IsNullOrEmpty(file) ? file.Replace('_', ' ')
-                               : parts.Length >= 2 ? parts[1].Replace('_', ' ') : "Unknown");
+                               ?? (!string.IsNullOrEmpty(file) ? System.IO.Path.GetFileNameWithoutExtension(file) : "Unknown");
+                    var creator = n["creator"]?.ToString() ?? folder;
+
+                    // Thumbnail served from /cards/thumb/{folder}/{file}
+                    var thumbUrl = (!string.IsNullOrEmpty(folder) && !string.IsNullOrEmpty(file))
+                                  ? $"{baseUrl}/cards/thumb/{folder}/{file}"
+                                  : "";
 
                     Results.Add(new CharaVaultCardItem
                     {
@@ -172,9 +176,9 @@ namespace PocketTavern.UWP.ViewModels
                         FullPath  = path,
                         Name      = name,
                         Author    = creator,
-                        Tagline   = n["tagline"]?.ToString() ?? n["description"]?.ToString() ?? "",
-                        AvatarUrl = n["avatar_url"]?.ToString() ?? "",
-                        Stars     = n["rating"]?.Value<int>() ?? n["starCount"]?.Value<int>() ?? 0
+                        Tagline   = n["description_preview"]?.ToString() ?? n["tagline"]?.ToString() ?? "",
+                        AvatarUrl = thumbUrl,
+                        Stars     = (int)(n["avg_rating"]?.Value<float>() ?? n["rating"]?.Value<float>() ?? 0f)
                     });
                 }
 

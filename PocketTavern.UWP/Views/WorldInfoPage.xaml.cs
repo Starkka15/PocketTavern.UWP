@@ -1,7 +1,7 @@
+using PocketTavern.UWP.ViewModels;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Navigation;
-using PocketTavern.UWP.ViewModels;
 
 namespace PocketTavern.UWP.Views
 {
@@ -13,28 +13,72 @@ namespace PocketTavern.UWP.Views
         protected override void OnNavigatedTo(NavigationEventArgs e)
         {
             base.OnNavigatedTo(e);
-            _vm.Load();
-            WorldsList.ItemsSource = _vm.Items;
-            EmptyState.Visibility = _vm.Items.Count == 0
-                ? Windows.UI.Xaml.Visibility.Visible
-                : Windows.UI.Xaml.Visibility.Collapsed;
+            Reload();
         }
 
-        private void OnBackClick(object sender, RoutedEventArgs e) => App.Navigation.GoBack();
-
-        private void OnLorebookClicked(object sender, ItemClickEventArgs e)
-        {
-            // Drill-down into lorebook entries (future: navigate to entries page)
-        }
-
-        private void OnRefreshClick(object sender, RoutedEventArgs e)
+        private void Reload()
         {
             _vm.Load();
             WorldsList.ItemsSource = null;
             WorldsList.ItemsSource = _vm.Items;
             EmptyState.Visibility = _vm.Items.Count == 0
-                ? Windows.UI.Xaml.Visibility.Visible
-                : Windows.UI.Xaml.Visibility.Collapsed;
+                ? Visibility.Visible : Visibility.Collapsed;
+        }
+
+        private void OnBackClick(object sender, RoutedEventArgs e) => App.Navigation.GoBack();
+
+        private void OnRefreshClick(object sender, RoutedEventArgs e) => Reload();
+
+        private void OnOpenLorebookClick(object sender, RoutedEventArgs e)
+        {
+            var item = (sender as Button)?.Tag as WorldInfoItem;
+            if (item == null) return;
+            App.Navigation.NavigateToLorebookEntries(item.Name);
+        }
+
+        private void OnLorebookClicked(object sender, ItemClickEventArgs e)
+        {
+            var item = e.ClickedItem as WorldInfoItem;
+            if (item == null) return;
+            App.Navigation.NavigateToLorebookEntries(item.Name);
+        }
+
+        private async void OnNewLorebookClick(object sender, RoutedEventArgs e)
+        {
+            var nameBox = new TextBox
+            {
+                PlaceholderText = "Lorebook name",
+                Header = "Name"
+            };
+            var dialog = new ContentDialog
+            {
+                Title = "New Lorebook",
+                Content = nameBox,
+                PrimaryButtonText = "Create",
+                CloseButtonText = "Cancel"
+            };
+            if (await dialog.ShowAsync() != ContentDialogResult.Primary) return;
+            var name = nameBox.Text.Trim();
+            if (string.IsNullOrWhiteSpace(name)) return;
+            await _vm.CreateLorebookAsync(name);
+            Reload();
+            App.Navigation.NavigateToLorebookEntries(name);
+        }
+
+        private async void OnDeleteLorebookClick(object sender, RoutedEventArgs e)
+        {
+            var item = (sender as Button)?.Tag as WorldInfoItem;
+            if (item == null) return;
+            var dialog = new ContentDialog
+            {
+                Title = "Delete lorebook?",
+                Content = $"Delete \"{item.Name}\"? This cannot be undone.",
+                PrimaryButtonText = "Delete",
+                CloseButtonText = "Cancel"
+            };
+            if (await dialog.ShowAsync() != ContentDialogResult.Primary) return;
+            await _vm.DeleteLorebookAsync(item.Name);
+            Reload();
         }
     }
 }

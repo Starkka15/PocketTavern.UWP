@@ -46,7 +46,8 @@ namespace PocketTavern.UWP.Models
         Dalle,
         Stability,
         Pollinations,
-        HuggingFace
+        HuggingFace,
+        NanoGpt
     }
 
     public class ImageGenCapabilities
@@ -80,6 +81,8 @@ namespace PocketTavern.UWP.Models
         public string PollinationsModel { get; set; } = "flux";
         public string HuggingfaceApiKey { get; set; } = "";
         public string HuggingfaceModel { get; set; } = "stabilityai/stable-diffusion-xl-base-1.0";
+        public string NanoGptApiKey { get; set; } = "";
+        public string NanoGptModel { get; set; } = "chroma";
         public string SdModel { get; set; } = "";
         public string Sampler { get; set; } = "Euler";
         public string Scheduler { get; set; } = "";

@@ -13,6 +13,7 @@ namespace PocketTavern.UWP.ViewModels
         public string LastMessage { get; set; }
         public int MessageCount { get; set; }
         public string FileName { get; set; }
+        public string ChatDisplayName { get; set; }
         public string CharacterInitial => CharacterName?.Length > 0 ? CharacterName[0].ToString().ToUpper() : "?";
         public string DateLabel { get; set; }
         public string AvatarLocalPath { get; set; }
@@ -57,6 +58,7 @@ namespace PocketTavern.UWP.ViewModels
                         LastMessage = latest.LastMessage,
                         MessageCount = latest.MessageCount,
                         FileName = latest.FileName,
+                        ChatDisplayName = latest.FileName,
                         AvatarLocalPath = avatarPath,
                         HasAvatar = File.Exists(avatarPath),
                         DateLabel = DateTimeOffset.FromFileTime(latest.LastModified)
@@ -69,5 +71,13 @@ namespace PocketTavern.UWP.ViewModels
 
         public void OpenChat(RecentChatItem item)
             => App.Navigation.NavigateToChat(item.CharacterAvatar ?? item.CharacterName);
+
+        public async Task RenameChatAsync(RecentChatItem item, string newName)
+        {
+            if (string.IsNullOrWhiteSpace(newName) || newName == item.FileName) return;
+            await App.Chats.RenameChatAsync(item.CharacterName, item.FileName, newName);
+            item.FileName = newName;
+            item.ChatDisplayName = newName;
+        }
     }
 }

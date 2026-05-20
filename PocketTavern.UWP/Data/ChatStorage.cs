@@ -106,6 +106,19 @@ namespace PocketTavern.UWP.Data
         public string CreateChatFileName(string characterName) =>
             characterName + " - " + DateTime.UtcNow.ToString("yyyy-MM-ddTHH.mm.ss");
 
+        public Task RenameChatAsync(string characterName, string oldFileName, string newFileName)
+        {
+            var dir = GetChatDir(characterName);
+            var oldPath = FindChatFile(dir, oldFileName);
+            if (oldPath == null) return Task.CompletedTask;
+            var ext  = Path.GetExtension(oldPath);
+            var safe = SanitizeName(newFileName);
+            var newPath = Path.Combine(dir, safe + ext);
+            if (!File.Exists(newPath))
+                File.Move(oldPath, newPath);
+            return Task.CompletedTask;
+        }
+
         // ── Serialization ────────────────────────────────────────────────────────
 
         private async Task<List<ChatMessage>> LoadMessagesAsync(string path)

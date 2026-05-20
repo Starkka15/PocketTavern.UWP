@@ -29,6 +29,7 @@ namespace PocketTavern.UWP.Views
         private ComboBox _dalleModelCombo;
         private ComboBox _pollinationsModelCombo;
         private TextBox _hfModelBox;
+        private TextBox _nanoGptModelBox;
         private SpacedPanel _testSection;
         private TextBlock _testResultLabel;
         private SpacedPanel _samplerSection;
@@ -51,8 +52,8 @@ namespace PocketTavern.UWP.Views
         private TextBlock _resolutionLabel;
 
         // Backend string values matching the combo index
-        private static readonly string[] BackendKeys = { "SD_WEBUI", "COMFYUI", "DALLE", "STABILITY", "POLLINATIONS", "HUGGINGFACE" };
-        private static readonly string[] BackendDisplays = { "SD WebUI / Forge", "ComfyUI", "DALL-E (OpenAI)", "Stability AI", "Pollinations", "HuggingFace" };
+        private static readonly string[] BackendKeys = { "SD_WEBUI", "COMFYUI", "DALLE", "STABILITY", "POLLINATIONS", "HUGGINGFACE", "NANOGPT" };
+        private static readonly string[] BackendDisplays = { "SD WebUI / Forge", "ComfyUI", "DALL-E (OpenAI)", "Stability AI", "Pollinations", "HuggingFace", "nano-gpt" };
 
         private ToggleSwitch _enabledToggle;
         private StackPanel _settingsBody;
@@ -214,6 +215,10 @@ namespace PocketTavern.UWP.Views
             _hfModelBox = MakeTextBox("Model", "stabilityai/stable-diffusion-xl-base-1.0", cfg.HuggingfaceModel, textPri);
             _hfModelBox.LostFocus += (s, ev) => { cfg.HuggingfaceModel = _hfModelBox.Text.Trim(); _vm.Save(); };
             _modelSection.Children.Add(MakeLabeledControl("Model", _hfModelBox, textSec));
+
+            _nanoGptModelBox = MakeTextBox("Model", "chroma", cfg.NanoGptModel, textPri);
+            _nanoGptModelBox.LostFocus += (s, ev) => { cfg.NanoGptModel = _nanoGptModelBox.Text.Trim(); _vm.Save(); };
+            _modelSection.Children.Add(MakeLabeledControl("Model", _nanoGptModelBox, textSec));
 
             _settingsBody.Children.Add(modelCard);
 
@@ -455,7 +460,7 @@ namespace PocketTavern.UWP.Views
         private void ApplyBackendVisibility(string backend)
         {
             bool isUrl     = backend == "SD_WEBUI" || backend == "COMFYUI";
-            bool isApiKey  = backend == "DALLE" || backend == "STABILITY" || backend == "HUGGINGFACE" || backend == "POLLINATIONS";
+            bool isApiKey  = backend == "DALLE" || backend == "STABILITY" || backend == "HUGGINGFACE" || backend == "POLLINATIONS" || backend == "NANOGPT";
             bool isSd      = backend == "SD_WEBUI" || backend == "COMFYUI";
             bool hasCfg    = backend == "SD_WEBUI" || backend == "COMFYUI" || backend == "STABILITY";
             bool hasNeg    = backend == "SD_WEBUI" || backend == "COMFYUI" || backend == "STABILITY" || backend == "HUGGINGFACE";
@@ -480,6 +485,7 @@ namespace PocketTavern.UWP.Views
                     : backend == "STABILITY" ? _vm.Config.StabilityApiKey
                     : backend == "HUGGINGFACE" ? _vm.Config.HuggingfaceApiKey
                     : backend == "POLLINATIONS" ? _vm.Config.PollinationsApiKey
+                    : backend == "NANOGPT" ? _vm.Config.NanoGptApiKey
                     : "";
                 _suppress = false;
             }
@@ -488,7 +494,8 @@ namespace PocketTavern.UWP.Views
             bool hasDalle       = backend == "DALLE";
             bool hasPollinations = backend == "POLLINATIONS";
             bool hasHf          = backend == "HUGGINGFACE";
-            bool hasModel       = hasDalle || hasPollinations || hasHf;
+            bool hasNanoGpt     = backend == "NANOGPT";
+            bool hasModel       = hasDalle || hasPollinations || hasHf || hasNanoGpt;
 
             var modelCardParent = (_modelSection?.Parent as Border);
             if (modelCardParent != null) modelCardParent.Visibility = hasModel ? Visibility.Visible : Visibility.Collapsed;
@@ -496,6 +503,7 @@ namespace PocketTavern.UWP.Views
             SetVis(_dalleModelCombo?.Parent as FrameworkElement, hasDalle);
             SetVis(_pollinationsModelCombo?.Parent as FrameworkElement, hasPollinations);
             SetVis(_hfModelBox?.Parent as FrameworkElement, hasHf);
+            SetVis(_nanoGptModelBox?.Parent as FrameworkElement, hasNanoGpt);
 
             // Parameters
             SetVis(_sdModelSection, isSd);
@@ -521,6 +529,7 @@ namespace PocketTavern.UWP.Views
                 case "STABILITY":   cfg.StabilityApiKey     = key; break;
                 case "HUGGINGFACE": cfg.HuggingfaceApiKey   = key; break;
                 case "POLLINATIONS": cfg.PollinationsApiKey = key; break;
+                case "NANOGPT":     cfg.NanoGptApiKey       = key; break;
             }
             _vm.Save();
         }

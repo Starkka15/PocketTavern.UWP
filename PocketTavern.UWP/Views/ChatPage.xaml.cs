@@ -70,6 +70,7 @@ namespace PocketTavern.UWP.Views
             RefreshApiIndicator();
             RebuildQuickReplyBar();
             RefreshBackground();
+            RefreshImageGenButton();
             ScrollToBottom();
         }
 
@@ -86,8 +87,9 @@ namespace PocketTavern.UWP.Views
         {
             if (e.PropertyName == nameof(ChatViewModel.IsGenerating))
             {
-                SendButton.Visibility = _vm.IsGenerating ? Visibility.Collapsed : Visibility.Visible;
-                StopButton.Visibility = _vm.IsGenerating ? Visibility.Visible : Visibility.Collapsed;
+                SendButton.Visibility    = _vm.IsGenerating ? Visibility.Collapsed : Visibility.Visible;
+                StopButton.Visibility    = _vm.IsGenerating ? Visibility.Visible   : Visibility.Collapsed;
+                ImageGenButton.IsEnabled = !_vm.IsGenerating;
                 QuickReplyBar.Visibility = _vm.IsGenerating || _vm.QuickReplyButtons.Count == 0
                     ? Visibility.Collapsed : Visibility.Visible;
                 RefreshTypingIndicator();
@@ -102,6 +104,9 @@ namespace PocketTavern.UWP.Views
             if (e.PropertyName == nameof(ChatViewModel.CurrentApiName) ||
                 e.PropertyName == nameof(ChatViewModel.CurrentModelName))
                 RefreshApiIndicator();
+            if (e.PropertyName == nameof(ChatViewModel.TokenCount) ||
+                e.PropertyName == nameof(ChatViewModel.ShowTokenCount))
+                RefreshTokenCounter();
             if (e.PropertyName == nameof(ChatViewModel.QuickReplyButtons))
                 RebuildQuickReplyBar();
             if (e.PropertyName == nameof(ChatViewModel.BackgroundPath))
@@ -117,6 +122,11 @@ namespace PocketTavern.UWP.Views
             else          _typingTimer.Stop();
         }
 
+        private void RefreshImageGenButton()
+        {
+            ImageGenButton.Visibility = _vm.IsImageGenEnabled ? Visibility.Visible : Visibility.Collapsed;
+        }
+
         private void RefreshApiIndicator()
         {
             var api   = _vm.CurrentApiName ?? "";
@@ -129,6 +139,20 @@ namespace PocketTavern.UWP.Views
             ApiNameLabel.Text   = api;
             ModelNameLabel.Text = model;
             ApiIndicatorBar.Visibility = Visibility.Visible;
+        }
+
+        private void RefreshTokenCounter()
+        {
+            if (_vm.ShowTokenCount && _vm.TokenCount > 0)
+            {
+                TokenCountLabel.Text = $" · {_vm.TokenCount} ctx";
+                TokenCountLabel.Visibility = Visibility.Visible;
+                ApiIndicatorBar.Visibility = Visibility.Visible;
+            }
+            else
+            {
+                TokenCountLabel.Visibility = Visibility.Collapsed;
+            }
         }
 
         private async void OnSendClick(object sender, RoutedEventArgs e)
@@ -165,6 +189,12 @@ namespace PocketTavern.UWP.Views
 
         private void OnStopClick(object sender, RoutedEventArgs e)
             => _vm.StopGeneration();
+
+        private async void OnImageGenClick(object sender, RoutedEventArgs e)
+        {
+            await _vm.GenerateImageDirectAsync();
+            ScrollToBottom();
+        }
 
         private void OnBackClick(object sender, RoutedEventArgs e)
             => App.Navigation.GoBack();
@@ -602,6 +632,61 @@ namespace PocketTavern.UWP.Views
 
         private void OnDebugLogClick(object sender, RoutedEventArgs e)
             => App.Navigation.NavigateToDebugLog();
+
+        // ── Message search ────────────────────────────────────────────────────
+
+        private void OnSearchToggleClick(object sender, RoutedEventArgs e)
+        {
+            var visible = SearchBarRow.Visibility == Visibility.Visible;
+            SearchBarRow.Visibility = visible ? Visibility.Collapsed : Visibility.Visible;
+            if (!visible)
+                SearchBox.Focus(FocusState.Programmatic);
+            else
+            {
+                SearchBox.Text = "";
+                SearchCountLabel.Text = "";
+            }
+        }
+
+        private void OnSearchQueryChanged(object sender, TextChangedEventArgs e)
+        {
+            _vm.SearchMessages(SearchBox.Text);
+            SearchCountLabel.Text = _vm.SearchResultText;
+            ScrollToSearchMatch();
+        }
+
+        private void OnSearchNextClick(object sender, RoutedEventArgs e)
+        {
+            var idx = _vm.SearchNext();
+            SearchCountLabel.Text = _vm.SearchResultText;
+            ScrollToIndex(idx);
+        }
+
+        private void OnSearchPrevClick(object sender, RoutedEventArgs e)
+        {
+            var idx = _vm.SearchPrev();
+            SearchCountLabel.Text = _vm.SearchResultText;
+            ScrollToIndex(idx);
+        }
+
+        private void OnSearchCloseClick(object sender, RoutedEventArgs e)
+        {
+            SearchBarRow.Visibility = Visibility.Collapsed;
+            SearchBox.Text = "";
+            SearchCountLabel.Text = "";
+        }
+
+        private void ScrollToSearchMatch()
+        {
+            ScrollToIndex(_vm.CurrentSearchMessageIndex());
+        }
+
+        private void ScrollToIndex(int idx)
+        {
+            if (idx < 0 || idx >= _vm.Messages.Count) return;
+            var _ = Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Low, () =>
+                MessagesList.ScrollIntoView(_vm.Messages[idx]));
+        }
 
         // ── Quick Reply bar ───────────────────────────────────────────────────
 
