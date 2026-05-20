@@ -561,9 +561,11 @@ namespace PocketTavern.UWP.Views
                     var imgSvc = new ImageGenService(App.Settings);
                     var genParams = imgSvc.BuildParams("a beautiful fantasy landscape, detailed, high quality");
                     string resultBase64 = null;
+                    string errorMessage = null;
                     var prog = new Progress<GenerationState>(state =>
                     {
                         if (state is GenerationState.Complete c) resultBase64 = c.ImageBase64;
+                        else if (state is GenerationState.Error e) errorMessage = e.Message;
                     });
                     using var cts = new System.Threading.CancellationTokenSource(TimeSpan.FromSeconds(120));
                     await imgSvc.GenerateAsync(genParams, prog, cts.Token);
@@ -582,7 +584,7 @@ namespace PocketTavern.UWP.Views
                     }
                     else
                     {
-                        testGenStatusLabel.Text = "No image returned — check backend settings.";
+                        testGenStatusLabel.Text = errorMessage ?? "No image returned — check backend settings.";
                         testGenStatusLabel.Foreground = new SolidColorBrush(Color.FromArgb(255, 224, 85, 85));
                     }
                 }
