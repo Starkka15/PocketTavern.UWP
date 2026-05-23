@@ -1,4 +1,7 @@
 using System;
+using System.Net.Http;
+using System.Text;
+using Newtonsoft.Json.Linq;
 using Windows.System;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
@@ -24,6 +27,16 @@ namespace PocketTavern.UWP.Views
             _vm.PropertyChanged += OnVmPropertyChanged;
             StatusLabel.Text  = _vm.StatusText;
             FooterStatus.Text = _vm.StatusText;
+            UpdateLoginIcon();
+        }
+
+        private void UpdateLoginIcon()
+        {
+            var isLoggedIn = !string.IsNullOrEmpty(App.Settings.GetCharaVaultToken());
+            LoginIcon.Text = isLoggedIn ? "\xE8F8" : "\xE77B";
+            LoginButton.Foreground = isLoggedIn
+                ? (Windows.UI.Xaml.Media.Brush)Application.Current.Resources["AccentPrimaryBrush"]
+                : (Windows.UI.Xaml.Media.Brush)Application.Current.Resources["TextSecondaryBrush"];
         }
 
         protected override void OnNavigatedFrom(NavigationEventArgs e)
@@ -203,6 +216,110 @@ namespace PocketTavern.UWP.Views
 
         private void OnBackClick(object sender, RoutedEventArgs e)
             => App.Navigation.GoBack();
+
+        private static readonly HttpClient _http = new HttpClient { Timeout = TimeSpan.FromSeconds(20) };
+
+        private async void OnLoginClick(object sender, RoutedEventArgs e)
+        {
+            var isLoggedIn = !string.IsNullOrEmpty(App.Settings.GetCharaVaultToken());
+
+            if (isLoggedIn)
+            {
+                var confirm = new ContentDialog
+                {
+                    Title = "Log Out",
+                    Content = $"Logged in as {App.Settings.GetCharaVaultEmail() ?? "unknown"}. Log out?",
+                    PrimaryButtonText = "Log Out",
+                    CloseButtonText = "Cancel",
+                    DefaultButton = ContentDialogButton.Close,
+                    RequestedTheme = ElementTheme.Dark
+                };
+                if (await confirm.ShowAsync() == ContentDialogResult.Primary)
+                {
+                    App.Settings.ClearCharaVaultSession();
+                    UpdateLoginIcon();
+                    StatusLabel.Text = "Logged out";
+                }
+                return;
+            }
+
+            var emailBox = new TextBox
+            {
+                PlaceholderText = "Email",
+                Style = (Style)Application.Current.Resources["DarkTextBoxStyle"],
+                Margin = new Thickness(0, 0, 0, 8)
+            };
+            var passwordBox = new PasswordBox
+            {
+                PlaceholderText = "Password or App Password (cv_...)",
+                Background = (Windows.UI.Xaml.Media.Brush)Application.Current.Resources["BackgroundSurfaceBrush"],
+                Foreground = (Windows.UI.Xaml.Media.Brush)Application.Current.Resources["TextPrimaryBrush"],
+                BorderThickness = new Thickness(0)
+            };
+            var errorText = new TextBlock
+            {
+                Foreground = (Windows.UI.Xaml.Media.Brush)Application.Current.Resources["AccentPrimaryBrush"],
+                FontSize = 12, Visibility = Visibility.Collapsed, Margin = new Thickness(0, 8, 0, 0)
+            };
+            var panel = new StackPanel();
+            panel.Children.Add(emailBox);
+            panel.Children.Add(passwordBox);
+            panel.Children.Add(errorText);
+
+            var dialog = new ContentDialog
+            {
+                Title = "Log In to CharaVault",
+                Content = panel,
+                PrimaryButtonText = "Log In",
+                CloseButtonText = "Cancel",
+                DefaultButton = ContentDialogButton.Primary,
+                RequestedTheme = ElementTheme.Dark
+            };
+
+            if (await dialog.ShowAsync() != ContentDialogResult.Primary) return;
+
+            var email = emailBox.Text.Trim();
+            var password = passwordBox.Password;
+            if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(password)) return;
+
+            var baseUrl = _vm.GetBaseUrl();
+            try
+            {
+                var body = Newtonsoft.Json.JsonConvert.SerializeObject(new { email, password });
+                var resp = await _http.PostAsync(
+                    $"{baseUrl}/api/auth/login",
+                    new StringContent(body, Encoding.UTF8, "application/json"));
+
+                var json = await resp.Content.ReadAsStringAsync();
+                if (!resp.IsSuccessStatusCode)
+                {
+                    var msg = JObject.Parse(json)?["detail"]?.ToString() ?? resp.ReasonPhrase;
+                    var errDialog = new ContentDialog
+                    {
+                        Title = "Login Failed", Content = msg,
+                        CloseButtonText = "OK", RequestedTheme = ElementTheme.Dark
+                    };
+                    await errDialog.ShowAsync();
+                    return;
+                }
+
+                var obj = JObject.Parse(json);
+                var token = obj["token"]?.ToString();
+                var displayEmail = obj["user"]?["email"]?.ToString() ?? email;
+                App.Settings.SaveCharaVaultSession(token, displayEmail);
+                UpdateLoginIcon();
+                StatusLabel.Text = $"Logged in as {displayEmail}";
+            }
+            catch (Exception ex)
+            {
+                var errDialog = new ContentDialog
+                {
+                    Title = "Login Error", Content = ex.Message,
+                    CloseButtonText = "OK", RequestedTheme = ElementTheme.Dark
+                };
+                await errDialog.ShowAsync();
+            }
+        }
 
         private async void OnConfigureClick(object sender, RoutedEventArgs e)
         {

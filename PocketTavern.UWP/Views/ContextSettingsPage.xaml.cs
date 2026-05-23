@@ -27,6 +27,8 @@ namespace PocketTavern.UWP.Views
             AutoContinueToggle.IsOn = _vm.AutoContinueEnabled;
             AutoContinueMinLengthBox.Text = _vm.AutoContinueMinLength.ToString();
             UpdateAutoContinueMinLengthVisibility(_vm.AutoContinueEnabled);
+
+            MemoryToggle.IsOn = App.Settings.GetMemoryEnabled();
         }
 
         private void OnNotePositionChanged(object sender, SelectionChangedEventArgs e)
@@ -37,6 +39,9 @@ namespace PocketTavern.UWP.Views
 
         private void OnAutoContinueToggled(object sender, RoutedEventArgs e)
             => UpdateAutoContinueMinLengthVisibility(AutoContinueToggle.IsOn);
+
+        private void OnMemoryToggled(object sender, RoutedEventArgs e)
+            => App.Settings.SetMemoryEnabled(MemoryToggle.IsOn);
 
         private void UpdateAutoContinueMinLengthVisibility(bool enabled)
             => AutoContinueMinLengthRow.Visibility = enabled ? Visibility.Visible : Visibility.Collapsed;

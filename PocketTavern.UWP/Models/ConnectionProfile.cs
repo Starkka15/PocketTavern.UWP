@@ -12,6 +12,7 @@ namespace PocketTavern.UWP.Models
         public string ChatCompletionSource { get; set; } = "openai";
         public string CustomUrl { get; set; }
         public string ApiKey { get; set; } = "";
+        public bool ShouldSerializeApiKey() => false;
         public string Model { get; set; } = "";
         public string TextGenPreset { get; set; } = "";
         public string InstructPreset { get; set; } = "";

@@ -1,3 +1,5 @@
+using System;
+using Windows.Security.Credentials;
 using Windows.Storage;
 using PocketTavern.UWP.Models;
 using Newtonsoft.Json;
@@ -6,16 +8,49 @@ namespace PocketTavern.UWP.Data
 {
     /// <summary>
     /// Persists app settings to ApplicationData.LocalSettings — equivalent of Android DataStore.
+    /// Sensitive credentials (API keys, auth tokens) are stored in PasswordVault (Windows Credential
+    /// Manager / DPAPI) and never written to LocalSettings.
     /// </summary>
     public class SettingsStorage
     {
         private readonly ApplicationDataContainer _settings =
             ApplicationData.Current.LocalSettings;
 
+        // Single vault instance — PasswordVault is per-process, no benefit to re-instantiating (V26)
+        private readonly PasswordVault _vault = new PasswordVault();
+
+        // PasswordVault resource name — username distinguishes each secret
+        private const string VaultResource = "PocketTavernSettings";
+
+        private string GetVaultSecret(string username)
+        {
+            try
+            {
+                var cred = _vault.Retrieve(VaultResource, username);
+                cred.RetrievePassword();
+                return cred.Password;
+            }
+            catch { return null; }
+        }
+
+        private void SetVaultSecret(string username, string value)
+        {
+            try { _vault.Remove(_vault.Retrieve(VaultResource, username)); } catch { }
+            if (!string.IsNullOrEmpty(value))
+                _vault.Add(new PasswordCredential(VaultResource, username, value));
+        }
+
+        private void RemoveVaultSecret(string username)
+        {
+            try { _vault.Remove(_vault.Retrieve(VaultResource, username)); } catch { }
+        }
+
         // ── LLM Config ──────────────────────────────────────────────────────────
 
         public ApiConfiguration GetLlmConfig()
         {
+            // Read from PasswordVault; fall back to plaintext for migration
+            var apiKey = GetVaultSecret("llm_api_key") ?? Get("llm_api_key", "");
             return new ApiConfiguration
             {
                 MainApi = Get("llm_main_api", "textgenerationwebui"),
@@ -23,20 +58,28 @@ namespace PocketTavern.UWP.Data
                 ApiServer = Get("llm_api_server", "http://127.0.0.1:5001"),
                 ChatCompletionSource = Get("llm_chat_completion_source", "openai"),
                 CustomUrl = GetOrNull("llm_custom_url"),
-                ApiKey = Get("llm_api_key", ""),
+                ApiKey = apiKey,
                 CurrentModel = Get("llm_current_model", "")
             };
         }
 
         public void SaveLlmConfig(ApiConfiguration config)
         {
+            try
+            {
+                SetVaultSecret("llm_api_key", config.ApiKey ?? "");
+                Remove("llm_api_key"); // only after vault write confirmed (V27)
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[SettingsStorage] llm_api_key vault write failed: {ex.Message}");
+            }
             Set("llm_main_api", config.MainApi);
             Set("llm_text_gen_type", config.TextGenType);
             Set("llm_api_server", config.ApiServer?.TrimEnd('/') ?? "");
             Set("llm_chat_completion_source", config.ChatCompletionSource);
             if (config.CustomUrl != null) Set("llm_custom_url", config.CustomUrl);
             else Remove("llm_custom_url");
-            Set("llm_api_key", config.ApiKey ?? "");
             Set("llm_current_model", config.CurrentModel ?? "");
         }
 
@@ -62,10 +105,28 @@ namespace PocketTavern.UWP.Data
         public string GetCharaVaultUrl() => Get("cardvault_url", "");
         public void SaveCharaVaultUrl(string url) => Set("cardvault_url", url?.TrimEnd('/') ?? "");
 
-        public string GetCharaVaultToken() => GetOrNull("charavault_token");
+        public string GetCharaVaultToken() =>
+            GetVaultSecret("charavault_token") ?? GetOrNull("charavault_token");
         public string GetCharaVaultEmail() => GetOrNull("charavault_email");
-        public void SaveCharaVaultSession(string token, string email) { Set("charavault_token", token); Set("charavault_email", email); }
-        public void ClearCharaVaultSession() { Remove("charavault_token"); Remove("charavault_email"); }
+        public void SaveCharaVaultSession(string token, string email)
+        {
+            try
+            {
+                SetVaultSecret("charavault_token", token);
+                Remove("charavault_token"); // only after vault write confirmed (V27)
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[SettingsStorage] charavault_token vault write failed: {ex.Message}");
+            }
+            Set("charavault_email", email);
+        }
+        public void ClearCharaVaultSession()
+        {
+            RemoveVaultSecret("charavault_token");
+            Remove("charavault_token");
+            Remove("charavault_email");
+        }
 
         public string GetCharaVaultMode() => Get("charavault_mode", "local");
         public void SaveCharaVaultMode(string mode) => Set("charavault_mode", mode);
@@ -134,7 +195,7 @@ namespace PocketTavern.UWP.Data
             Provider = Get("tts_provider", "system"),
             AutoPlay = GetBool("tts_auto_play", true),
             OpenAiUrl = Get("tts_openai_url", ""),
-            OpenAiKey = Get("tts_openai_key", ""),
+            OpenAiKey = GetVaultSecret("tts_openai_key") ?? Get("tts_openai_key", ""),
             OpenAiVoice = Get("tts_openai_voice", "alloy"),
             OpenAiModel = Get("tts_openai_model", "tts-1"),
             Speed = GetFloat("tts_speed", 1.0f),
@@ -147,7 +208,15 @@ namespace PocketTavern.UWP.Data
             Set("tts_provider", c.Provider);
             SetBool("tts_auto_play", c.AutoPlay);
             Set("tts_openai_url", c.OpenAiUrl);
-            Set("tts_openai_key", c.OpenAiKey);
+            try
+            {
+                SetVaultSecret("tts_openai_key", c.OpenAiKey);
+                Remove("tts_openai_key"); // only after vault write confirmed (V27)
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[SettingsStorage] tts_openai_key vault write failed: {ex.Message}");
+            }
             Set("tts_openai_voice", c.OpenAiVoice);
             Set("tts_openai_model", c.OpenAiModel);
             SetFloat("tts_speed", c.Speed);
@@ -187,12 +256,23 @@ namespace PocketTavern.UWP.Data
         public bool GetQuickReplyBarVisible() => GetBool("quick_reply_bar_visible", true);
         public void SetQuickReplyBarVisible(bool v) => SetBool("quick_reply_bar_visible", v);
 
+        // ── Long-Term Memory ──────────────────────────────────────────────────────
+
+        public bool GetMemoryEnabled() => GetBool("memory_enabled", true);
+        public void SetMemoryEnabled(bool v) => SetBool("memory_enabled", v);
+
         // ── Theme ─────────────────────────────────────────────────────────────────
 
         public string GetThemeKey() => Get("app_theme_key", "default");
         public void SaveThemeKey(string key) => Set("app_theme_key", key);
 
-        public void ClearAll() => _settings.Values.Clear();
+        public void ClearAll()
+        {
+            _settings.Values.Clear();
+            RemoveVaultSecret("llm_api_key");
+            RemoveVaultSecret("charavault_token");
+            RemoveVaultSecret("tts_openai_key");
+        }
 
         // ── Helpers ──────────────────────────────────────────────────────────────
 

@@ -112,7 +112,6 @@ namespace PocketTavern.UWP.Services
             string prompt,
             CancellationToken ct = default)
         {
-            string result = "";
             var tcs = new TaskCompletionSource<string>();
             var progress = new Progress<StreamEvent>(evt =>
             {
@@ -120,6 +119,54 @@ namespace PocketTavern.UWP.Services
                 else if (evt is StreamEvent.Error e) tcs.TrySetResult("");
             });
             var _ = GenerateTextGenAsync(config, preset, prompt, progress, ct);
+            return await tcs.Task;
+        }
+
+        /// <summary>
+        /// Non-streaming single-call completion for background tasks (translation, summarization).
+        /// Uses chat completions for OAI-compatible backends, text-gen otherwise.
+        /// </summary>
+        public async Task<string> GenerateSimpleAsync(
+            ApiConfiguration config,
+            string systemPrompt,
+            string userMessage,
+            CancellationToken ct = default)
+        {
+            var tcs = new TaskCompletionSource<string>();
+            var progress = new Progress<StreamEvent>(evt =>
+            {
+                if (evt is StreamEvent.Complete c) tcs.TrySetResult(c.FullText);
+                else if (evt is StreamEvent.Error e) tcs.TrySetException(new Exception(e.Message));
+            });
+
+            if (config.UsesChatCompletions)
+            {
+                var messages = new List<JObject>
+                {
+                    new JObject { ["role"] = "system", ["content"] = systemPrompt ?? "" },
+                    new JObject { ["role"] = "user",   ["content"] = userMessage   ?? "" }
+                };
+                var body = new JObject
+                {
+                    ["model"] = config.CurrentModel ?? "",
+                    ["messages"] = new JArray(messages)
+                };
+                var url = config.ChatCompletionBaseUrl.TrimEnd('/') + "/v1/chat/completions";
+                var _ = StreamRequestAsync(url, config.ApiKey, body, progress, ct, isClaude: config.ChatCompletionSource == "claude");
+            }
+            else
+            {
+                var prompt = $"[INST] <<SYS>>\n{systemPrompt}\n<</SYS>>\n{userMessage} [/INST]";
+                var body = new JObject
+                {
+                    ["prompt"] = prompt,
+                    ["max_tokens"] = 600,
+                    ["temperature"] = 0.3
+                };
+                var url = config.ApiServer.TrimEnd('/') + "/v1/completions";
+                var _ = StreamRequestAsync(url, config.ApiKey, body, progress, ct);
+            }
+
             return await tcs.Task;
         }
 

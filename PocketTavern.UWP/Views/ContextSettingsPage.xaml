@@ -154,6 +154,32 @@
                 </Border>
 
                 <Border Height="24" />
+
+                <!-- Long-Term Memory -->
+                <Border Background="{StaticResource BackgroundCardBrush}" CornerRadius="8" Padding="16">
+                    <controls:SpacedPanel Orientation="Vertical" Spacing="8">
+                        <TextBlock Text="Long-Term Memory"
+                                   Style="{StaticResource TitleTextStyle}" />
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                <TextBlock Text="Auto-summarize conversation history"
+                                           Foreground="{StaticResource TextPrimaryBrush}" />
+                                <TextBlock Text="When unsummarized text exceeds 12 000 chars, older turns are compressed into a memory block injected before the character description."
+                                           Style="{StaticResource SubtitleTextStyle}"
+                                           TextWrapping="Wrap" FontSize="11" Margin="0,2,0,0" />
+                            </StackPanel>
+                            <ToggleSwitch Grid.Column="1" x:Name="MemoryToggle"
+                                         Toggled="OnMemoryToggled"
+                                         MinWidth="0" Margin="8,0,0,0" />
+                        </Grid>
+                    </controls:SpacedPanel>
+                </Border>
+
+                <Border Height="24" />
             </StackPanel>
         </ScrollViewer>
     </Grid>

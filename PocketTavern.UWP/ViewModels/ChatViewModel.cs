@@ -13,6 +13,7 @@ using PocketTavern.UWP.Data;
 using PocketTavern.UWP.Models;
 using PocketTavern.UWP.Services;
 using Windows.Storage;
+using Windows.UI.Core;
 
 namespace PocketTavern.UWP.ViewModels
 {
@@ -61,6 +62,20 @@ namespace PocketTavern.UWP.ViewModels
         // Serialize concurrent save operations to prevent file-in-use errors
         private readonly SemaphoreSlim _saveLock = new SemaphoreSlim(1, 1);
 
+        // UI thread dispatcher — captured in InitializeAsync; used to marshal progress callbacks safely
+        private CoreDispatcher _dispatcher;
+
+        // Long-term memory
+        private string _memoryBlock = "";
+        private int _summarizedTurnCount = 0;
+
+        // Expression sprite
+        private string _currentSpriteName;
+        // Matches both ST-style <img src=(name)> and RisuRealm-style <img="name">
+        private static readonly Regex _spriteTagRegex =
+            new Regex(@"<img\s+src=\(?([^)>\s""]+)\)?>|<img=""([^""]+)"">",
+                RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
         // ── Properties ───────────────────────────────────────────────────────
 
         public string CurrentApiName   { get => _currentApiName;   set => Set(ref _currentApiName,   value); }
@@ -72,6 +87,12 @@ namespace PocketTavern.UWP.ViewModels
         public bool   ShowGreetingPicker { get => _showGreetingPicker; set => Set(ref _showGreetingPicker, value); }
         public bool   IsTtsSpeaking    { get => _isTtsSpeaking;   set => Set(ref _isTtsSpeaking,   value); }
         public bool   IsTtsEnabled     { get => _isTtsEnabled;    set => Set(ref _isTtsEnabled,    value); }
+
+        public string CurrentSpriteName
+        {
+            get => _currentSpriteName;
+            set => Set(ref _currentSpriteName, value);
+        }
 
         public Character Character
         {
@@ -119,6 +140,7 @@ namespace PocketTavern.UWP.ViewModels
 
         public async Task InitializeAsync(string characterAvatar)
         {
+            _dispatcher = Windows.UI.Xaml.Window.Current?.Dispatcher;
             _characterAvatar = characterAvatar;
             Character = await App.Characters.GetCharacterAsync(characterAvatar);
             if (Character == null) return;
@@ -149,9 +171,12 @@ namespace PocketTavern.UWP.ViewModels
             {
                 _chatFileName = chats[0].FileName;
                 var chat = await App.Chats.LoadChatAsync(Character.Name, _chatFileName);
+                NormalizeLoadedMessages(chat?.Messages);
                 Messages.Clear();
                 if (chat?.Messages != null)
                     foreach (var m in chat.Messages) Messages.Add(m);
+                _memoryBlock = chat?.MemoryBlock ?? "";
+                _summarizedTurnCount = chat?.SummarizedTurnCount ?? 0;
                 await PushExtensionContextAsync();
                 await App.Extensions.DispatchEventAsync("CHAT_CHANGED", JsonConvert.SerializeObject(_chatFileName));
             }
@@ -163,6 +188,11 @@ namespace PocketTavern.UWP.ViewModels
 
         public void Cleanup()
         {
+            _generationCts?.Cancel(); // V36: cancel in-flight generation before releasing VM
+            _generationCts = null;
+
+            _ttsManager?.Stop(); // V37: stop TTS playback on navigation away
+
             App.Extensions.MessageSendRequested    -= OnExtensionMessageSend;
             App.Extensions.ButtonSetsChanged       -= OnButtonSetsChanged;
             App.Extensions.HiddenGenerateRequested -= OnHiddenGenerateRequested;
@@ -221,8 +251,10 @@ namespace PocketTavern.UWP.ViewModels
             _currentUserName = App.Settings.GetUserPersonaName().Trim();
             if (string.IsNullOrEmpty(_currentUserName)) _currentUserName = "User";
 
-            // Apply native input regex rules
+            // Apply native input regex rules then substitute {{char}}/{{user}} in display text (V22)
             var message = ApplyNativeRegexRules(rawText, applyToInput: true);
+            message = Regex.Replace(message, @"\{\{char\}\}", Character?.Name ?? "", RegexOptions.IgnoreCase);
+            message = Regex.Replace(message, @"\{\{user\}\}", _currentUserName, RegexOptions.IgnoreCase);
 
             var userMsg = new ChatMessage { Content = message, IsUser = true };
             Messages.Add(userMsg);
@@ -325,9 +357,13 @@ namespace PocketTavern.UWP.ViewModels
             if (Character == null) return;
             _chatFileName = fileName;
             var chat = await App.Chats.LoadChatAsync(Character.Name, fileName);
+            NormalizeLoadedMessages(chat?.Messages);
             Messages.Clear();
             if (chat?.Messages != null)
                 foreach (var m in chat.Messages) Messages.Add(m);
+            _memoryBlock = chat?.MemoryBlock ?? "";
+            _summarizedTurnCount = chat?.SummarizedTurnCount ?? 0;
+            // CurrentSpriteName set by NormalizeLoadedMessages (null if no sprite tags in history)
             await PushExtensionContextAsync();
             await App.Extensions.DispatchEventAsync("CHAT_CHANGED",
                 JsonConvert.SerializeObject(fileName));
@@ -546,6 +582,36 @@ namespace PocketTavern.UWP.ViewModels
 
         private string _continuationPrefix = null;
 
+        /// <summary>
+        /// Strips sprite tags from all loaded AI messages (normalizes content for display),
+        /// preserves original in RawContent, and resolves CurrentSpriteName from the last tag found.
+        /// Covers charx import, chat restore, and extension injection paths in one pass.
+        /// </summary>
+        private void NormalizeLoadedMessages(System.Collections.Generic.List<ChatMessage> messages)
+        {
+            if (messages == null) return;
+            string lastSpriteName = null;
+            foreach (var msg in messages)
+            {
+                if (msg.IsUser) continue;
+                var match = _spriteTagRegex.Match(msg.Content ?? "");
+                if (!match.Success) continue;
+                if (msg.RawContent == null) msg.RawContent = msg.Content;
+                msg.Content = _spriteTagRegex.Replace(msg.Content, "").Trim();
+                lastSpriteName = match.Groups[1].Success && match.Groups[1].Length > 0
+                    ? match.Groups[1].Value
+                    : match.Groups[2].Value;
+            }
+            CurrentSpriteName = lastSpriteName;
+        }
+
+        private async Task AutoContinueAfterDelayAsync(string capturedFileName)
+        {
+            await Task.Delay(500);
+            if (_chatFileName != capturedFileName) return; // V35: abort if chat changed during delay
+            await ContinueAsync();
+        }
+
         private async Task GenerateResponseAsync(string userMessage, List<ChatMessage> history)
         {
             IsGenerating = true;
@@ -586,57 +652,88 @@ namespace PocketTavern.UWP.ViewModels
                 }
             }
 
+            var dispatcher = _dispatcher;
             var progress = new Progress<StreamEvent>(evt =>
             {
-                if (evt is StreamEvent.Token t)
+                void Apply()
                 {
-                    var displayed = continuationPrefix + t.Accumulated;
-                    CurrentStreamingText = displayed;
-                    aiMsg.Content = displayed;  // INPC fires; no collection replace needed
-                }
-                else if (evt is StreamEvent.Complete c)
-                {
-                    CurrentStreamingText = "";
-                    var rawText = continuationPrefix + c.FullText;
-
-                    // Apply native output regex + trim multi-turn
-                    var processed = TrimMultiTurn(ApplyNativeRegexRules(rawText, applyToInput: false));
-
-                    // Apply JS extension output filters (strips metadata tags)
-                    var displayText = App.Extensions.ApplyOutputFilters(processed);
-
-                    aiMsg.Content = displayText;
-                    aiMsg.RawContent = processed != displayText ? processed : null;
-
-                    var safeText = EscapeJson(displayText);
-                    var _ = App.Extensions.DispatchEventAsync("MESSAGE_RECEIVED",
-                        $"{{\"text\":\"{safeText}\",\"index\":{aiIdx},\"isUser\":false}}");
-                    var __ = PushExtensionContextAsync();
-                    var ___ = App.Extensions.DispatchEventAsync("GENERATION_STOPPED");
-
-                    // Auto-play TTS
-                    var ttsConfig = App.Settings.GetTtsConfig();
-                    if (ttsConfig.Enabled && ttsConfig.AutoPlay && !string.IsNullOrWhiteSpace(displayText))
+                    if (evt is StreamEvent.Token t)
                     {
-                        var charFile = _characterAvatar ?? $"{Character?.Name ?? "unknown"}.png";
-                        var ____ = _ttsManager.SpeakAsync(displayText, charFile);
+                        var displayed = continuationPrefix + t.Accumulated;
+                        CurrentStreamingText = displayed;
+                        aiMsg.Content = displayed;  // INPC fires; no collection replace needed
                     }
-
-                    // Auto-continue
-                    var estimatedTokens = EstimateTokens(processed);
-                    if (_autoContinueEnabled && _autoContinueCount < 3 && estimatedTokens < _autoContinueMinLength)
+                    else if (evt is StreamEvent.Complete c)
                     {
-                        _autoContinueCount++;
-                        var _____ = ContinueAsync();
+                        CurrentStreamingText = "";
+                        var rawText = continuationPrefix + c.FullText;
+
+                        // Apply native output regex + trim multi-turn
+                        var processed = TrimMultiTurn(ApplyNativeRegexRules(rawText, applyToInput: false));
+
+                        // Scan for sprite tags — clear first so a tagless message hides previous sprite
+                        // Group 1: <img src=name>, Group 2: <img="name"> (RisuRealm format)
+                        CurrentSpriteName = null;
+                        var spriteMatch = _spriteTagRegex.Match(processed);
+                        if (spriteMatch.Success)
+                            CurrentSpriteName = spriteMatch.Groups[1].Success && spriteMatch.Groups[1].Length > 0
+                                ? spriteMatch.Groups[1].Value
+                                : spriteMatch.Groups[2].Value;
+
+                        // Strip sprite tags before storing/displaying
+                        var stripped = _spriteTagRegex.Replace(processed, "").Trim();
+
+                        // Apply JS extension output filters (strips metadata tags)
+                        var displayText = App.Extensions.ApplyOutputFilters(stripped);
+
+                        aiMsg.Content = displayText;
+                        aiMsg.RawContent = processed != displayText ? processed : null;
+
+                        var safeText = EscapeJson(displayText);
+                        var _ = App.Extensions.DispatchEventAsync("MESSAGE_RECEIVED",
+                            $"{{\"text\":\"{safeText}\",\"index\":{aiIdx},\"isUser\":false}}");
+                        var __ = PushExtensionContextAsync();
+                        var ___ = App.Extensions.DispatchEventAsync("GENERATION_STOPPED");
+
+                        // Auto-play TTS
+                        var ttsConfig = App.Settings.GetTtsConfig();
+                        if (ttsConfig.Enabled && ttsConfig.AutoPlay && !string.IsNullOrWhiteSpace(displayText))
+                        {
+                            var charFile = _characterAvatar ?? $"{Character?.Name ?? "unknown"}.png";
+                            var ____ = _ttsManager.SpeakAsync(displayText, charFile);
+                        }
+
+                        // Auto-continue
+                        var estimatedTokens = EstimateTokens(processed);
+                        if (_autoContinueEnabled && _autoContinueCount < 3 && estimatedTokens < _autoContinueMinLength)
+                        {
+                            _autoContinueCount++;
+                            var capturedFileName = _chatFileName; // V35: capture before delay
+                            var _____ = AutoContinueAfterDelayAsync(capturedFileName);
+                        }
+
+                        // Long-term memory: check threshold and fire background summarization (T13)
+                        var memoryEnabled = App.Settings.GetMemoryEnabled();
+                        if (memoryEnabled)
+                        {
+                            var charCfg = App.Settings.GetLlmConfig();
+                            if (!string.IsNullOrWhiteSpace(charCfg.ApiServer) || charCfg.UsesChatCompletions)
+                                TryTriggerMemorySummarization();
+                        }
+                    }
+                    else if (evt is StreamEvent.Error e)
+                    {
+                        aiMsg.Content = "[Error: " + e.Message + "]";
+                        if (aiIdx < Messages.Count)
+                            Messages[aiIdx] = aiMsg;
+                        var _ = App.Extensions.DispatchEventAsync("GENERATION_STOPPED");
                     }
                 }
-                else if (evt is StreamEvent.Error e)
-                {
-                    aiMsg.Content = "[Error: " + e.Message + "]";
-                    if (aiIdx < Messages.Count)
-                        Messages[aiIdx] = aiMsg;
-                    var _ = App.Extensions.DispatchEventAsync("GENERATION_STOPPED");
-                }
+
+                if (dispatcher != null && !dispatcher.HasThreadAccess)
+                    _ = dispatcher.RunAsync(CoreDispatcherPriority.Normal, Apply);
+                else
+                    Apply();
             });
 
             ShowTokenCount = true;
@@ -648,7 +745,9 @@ namespace PocketTavern.UWP.ViewModels
                     var preset = presetName != null
                         ? await App.Presets.GetOaiPresetAsync(presetName) ?? new OaiPreset()
                         : new OaiPreset();
-                    var builtMessages = BuildChatCompletionMessages(history, preset, userMessage);
+                    var memBlock = App.Settings.GetMemoryEnabled() && !string.IsNullOrWhiteSpace(_memoryBlock)
+                        ? _memoryBlock : null;
+                    var builtMessages = BuildChatCompletionMessages(history, preset, userMessage, memBlock);
                     TokenCount = EstimateTokens(string.Join(" ", builtMessages.Select(m => m.Value<string>("content") ?? "")));
                     await _llm.GenerateChatCompletionAsync(config, preset, builtMessages, progress, _generationCts.Token);
                 }
@@ -1157,7 +1256,7 @@ namespace PocketTavern.UWP.ViewModels
 
         // ── Prompt building ───────────────────────────────────────────────────
 
-        private List<JObject> BuildChatCompletionMessages(List<ChatMessage> history, OaiPreset preset, string userMessage = null)
+        private List<JObject> BuildChatCompletionMessages(List<ChatMessage> history, OaiPreset preset, string userMessage = null, string memoryBlock = null)
         {
             var messages = new List<JObject>();
             var order = preset?.PromptOrder ?? OaiPromptOrderItem.DefaultOrder();
@@ -1193,6 +1292,12 @@ namespace PocketTavern.UWP.ViewModels
                         break;
 
                     case "char_description":
+                        // Inject long-term memory as system block before char_description (V11)
+                        if (!string.IsNullOrWhiteSpace(memoryBlock))
+                        {
+                            messages.Add(Msg("system", $"[Memory]\n{memoryBlock.Trim()}"));
+                            memoryBlock = null;
+                        }
                         if (!string.IsNullOrEmpty(Character?.Description))
                             messages.Add(Msg("system", ApplyMacros(Character.Description)));
                         break;
@@ -1459,6 +1564,43 @@ namespace PocketTavern.UWP.ViewModels
         }
 
         private static string JsonStr(string s) => "\"" + EscapeJson(s) + "\"";
+
+        // ── Long-term memory ──────────────────────────────────────────────────
+
+        private void TryTriggerMemorySummarization()
+        {
+            if (Character == null || string.IsNullOrEmpty(_chatFileName)) return;
+            var msgs = new List<ChatMessage>(Messages);
+            var unsummarized = msgs.Skip(_summarizedTurnCount).ToList();
+
+            int charCount = unsummarized.Sum(m => (m.Content ?? "").Length);
+            if (charCount < 12000) return;
+
+            var config = App.Settings.GetLlmConfig();
+            if (string.IsNullOrWhiteSpace(config.ApiServer) && !config.UsesChatCompletions) return;
+
+            var charName = Character.Name;
+            var chatFile = _chatFileName;
+            var batch = unsummarized;
+            var newCount = msgs.Count;
+
+            Task.Run(async () =>
+            {
+                try
+                {
+                    var summary = await SummarizeHistoryService.SummarizeAsync(batch, config);
+                    if (string.IsNullOrWhiteSpace(summary)) return;
+                    _memoryBlock = summary;
+                    _summarizedTurnCount = newCount;
+                    await App.Chats.SaveChatMemoryAsync(charName, chatFile, summary, newCount);
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[ChatViewModel] Memory summarization failed: {ex.Message}");
+                    // _memoryBlock and _summarizedTurnCount intentionally unchanged (V30)
+                }
+            });
+        }
 
         private async Task SaveChatAsync()
         {

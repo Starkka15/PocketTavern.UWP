@@ -61,9 +61,10 @@
                 <TextBlock Text="&#xE710;" FontFamily="Segoe MDL2 Assets" FontSize="22" />
             </Button>
             <Button Grid.Column="3" Background="Transparent" BorderThickness="0"
-                    Foreground="{StaticResource TextSecondaryBrush}" Click="OnRefreshClick"
-                    HorizontalAlignment="Center" VerticalAlignment="Center">
-                <TextBlock Text="&#xE72C;" FontFamily="Segoe MDL2 Assets" FontSize="18" />
+                    Foreground="{StaticResource TextSecondaryBrush}" Click="OnImportClick"
+                    HorizontalAlignment="Center" VerticalAlignment="Center"
+                    ToolTipService.ToolTip="Import character card (.png / .charx)">
+                <TextBlock Text="&#xE8E5;" FontFamily="Segoe MDL2 Assets" FontSize="18" />
             </Button>
         </Grid>
 
@@ -176,6 +177,40 @@
                        TextWrapping="Wrap" TextAlignment="Center"
                        Foreground="{StaticResource TextSecondaryBrush}" />
         </StackPanel>
+
+        <!-- Translate Dialog (shown when ShowTranslateDialog is true) -->
+        <ContentDialog x:Name="TranslateDialog"
+                       Title="Auto-Translate Card"
+                       PrimaryButtonText="Translate"
+                       CloseButtonText="Skip"
+                       DefaultButton="Primary"
+                       RequestedTheme="Dark">
+            <StackPanel>
+                <TextBlock TextWrapping="Wrap"
+                           Foreground="{StaticResource TextSecondaryBrush}"
+                           Margin="0,0,0,8"
+                           Text="This card appears to be in a non-English language. Select fields to translate:" />
+                <CheckBox x:Name="ChkDescription"        Content="Description"         IsChecked="True"  Margin="0,0,0,4" />
+                <CheckBox x:Name="ChkPersonality"        Content="Personality"         IsChecked="True"  Margin="0,0,0,4" />
+                <CheckBox x:Name="ChkScenario"           Content="Scenario"            IsChecked="True"  Margin="0,0,0,4" />
+                <CheckBox x:Name="ChkFirstMessage"       Content="First Message"       IsChecked="True"  Margin="0,0,0,4" />
+                <CheckBox x:Name="ChkAlternateGreetings" Content="Alternate Greetings" IsChecked="False" Margin="0,0,0,4" />
+                <CheckBox x:Name="ChkMesExample"         Content="Message Examples"    IsChecked="False" Margin="0,0,0,4" />
+                <CheckBox x:Name="ChkSystemPrompt"       Content="System Prompt"       IsChecked="False" Margin="0,0,0,4" />
+                <CheckBox x:Name="ChkCreatorNotes"       Content="Creator Notes"       IsChecked="False" />
+            </StackPanel>
+        </ContentDialog>
+
+        <!-- Translation progress overlay -->
+        <Grid Grid.RowSpan="4" x:Name="TranslatingOverlay" Visibility="Collapsed"
+              Background="#88000000">
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                <ProgressRing IsActive="True" Width="48" Height="48"
+                              Foreground="{StaticResource AccentPrimaryBrush}" Margin="0,0,0,12" />
+                <TextBlock Text="Translating..." Foreground="White"
+                           HorizontalAlignment="Center" FontSize="16" />
+            </StackPanel>
+        </Grid>
 
         <!-- Bottom divider line -->
         <Rectangle Grid.Row="3" Height="1" Fill="{StaticResource BackgroundCardBrush}" />

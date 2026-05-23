@@ -25,5 +25,6 @@ namespace PocketTavern.UWP.Models
         public float Talkativeness { get; set; } = 0.5f;
         public bool IsFavorite { get; set; } = false;
         public bool UseAvatarForImageGen { get; set; } = true;
+        public string Notes { get; set; } = "";          // per-user notes, not embedded in card PNG
     }
 }

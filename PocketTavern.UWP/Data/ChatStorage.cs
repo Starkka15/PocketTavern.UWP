@@ -62,13 +62,44 @@ namespace PocketTavern.UWP.Data
             if (path == null) return null;
 
             var messages = await LoadMessagesAsync(path);
-            return new Chat
+            var chat = new Chat
             {
                 FileName = fileName,
                 CharacterName = characterName,
                 Messages = messages,
                 CreateDate = DateTimeOffset.FromFileTime(new FileInfo(path).CreationTimeUtc.ToFileTimeUtc())
             };
+
+            // Load companion memory file if present
+            var memPath = Path.Combine(dir, fileName + ".memory.json");
+            if (File.Exists(memPath))
+            {
+                try
+                {
+                    var memFile = await StorageFile.GetFileFromPathAsync(memPath);
+                    var json = await FileIO.ReadTextAsync(memFile);
+                    var obj = JObject.Parse(json);
+                    chat.MemoryBlock = (string)obj["memory_block"] ?? "";
+                    chat.SummarizedTurnCount = (int?)obj["summarized_turn_count"] ?? 0;
+                }
+                catch { }
+            }
+
+            return chat;
+        }
+
+        public async Task SaveChatMemoryAsync(string characterName, string fileName, string memoryBlock, int summarizedTurnCount)
+        {
+            var dir = GetChatDir(characterName);
+            var memPath = Path.Combine(dir, fileName + ".memory.json");
+            var obj = new JObject
+            {
+                ["memory_block"] = memoryBlock ?? "",
+                ["summarized_turn_count"] = summarizedTurnCount
+            };
+            var folder = await StorageFolder.GetFolderFromPathAsync(dir);
+            var file = await folder.CreateFileAsync(Path.GetFileName(memPath), CreationCollisionOption.ReplaceExisting);
+            await FileIO.WriteTextAsync(file, obj.ToString());
         }
 
         public async Task SaveChatAsync(string characterName, string fileName, List<ChatMessage> messages)
@@ -132,6 +163,8 @@ namespace PocketTavern.UWP.Data
                 try
                 {
                     var obj = JObject.Parse(line);
+                    // Skip ST-format header line (has user_name/character_name, no message content)
+                    if (obj["user_name"] != null || obj["character_name"] != null) continue;
                     messages.Add(ParseMessageJObject(obj));
                 }
                 catch { }
@@ -141,16 +174,30 @@ namespace PocketTavern.UWP.Data
 
         private ChatMessage ParseMessageJObject(JObject obj)
         {
+            // ST compat: "mes" is the Android/SillyTavern field; "content" is native UWP
+            var content = (string)obj["content"] ?? (string)obj["mes"] ?? "";
+
+            // ST compat: "send_date" is Android format ("yyyy-MM-dd HH:mm:ss"); "timestamp" is native ISO 8601
+            DateTimeOffset timestamp;
+            if (obj["timestamp"] != null)
+                timestamp = DateTimeOffset.Parse((string)obj["timestamp"]);
+            else if (obj["send_date"] != null && DateTimeOffset.TryParse((string)obj["send_date"], out var sd))
+                timestamp = sd;
+            else
+                timestamp = DateTimeOffset.Now;
+
+            var isUser = (bool?)obj["is_user"] ?? false;
+
             return new ChatMessage
             {
                 Id = (string)obj["id"] ?? Guid.NewGuid().ToString(),
-                Content = (string)obj["content"] ?? "",
-                IsUser = (bool?)obj["is_user"] ?? false,
-                IsNarrator = (bool?)obj["is_narrator"] ?? false,
-                Timestamp = obj["timestamp"] != null
-                    ? DateTimeOffset.Parse((string)obj["timestamp"])
-                    : DateTimeOffset.Now,
-                SenderName = (string)obj["sender_name"],
+                Content = content,
+                IsUser = isUser,
+                // ST compat: Android writes "is_system" for narrator lines
+                IsNarrator = (bool?)obj["is_narrator"] ?? (bool?)obj["is_system"] ?? false,
+                Timestamp = timestamp,
+                // ST compat: "name" is the Android sender field; only use for AI messages
+                SenderName = (string)obj["sender_name"] ?? (!isUser ? (string)obj["name"] : null),
                 ImagePath = (string)obj["image_path"]
             };
         }

@@ -14,7 +14,9 @@ namespace PocketTavern.UWP.Services
         private const int MaxEntries = 200;
         private static readonly List<LogEntry> _entries = new List<LogEntry>();
         private static readonly object _lock = new object();
+#pragma warning disable CS0649 // assigned only in DEBUG builds; null-checks throughout are intentional
         private static string _logFilePath;
+#pragma warning restore CS0649
         private static bool _enabled = true;
 
         public static event EventHandler EntryAdded;
@@ -25,6 +27,7 @@ namespace PocketTavern.UWP.Services
         /// </summary>
         public static void Init(string logFolder)
         {
+#if DEBUG
             try
             {
                 _logFilePath = Path.Combine(logFolder, "debug_log.txt");
@@ -34,6 +37,7 @@ namespace PocketTavern.UWP.Services
                 Log($"Log file: {_logFilePath}");
             }
             catch { _logFilePath = null; }
+#endif
         }
 
         public static void SetEnabled(bool enabled) => _enabled = enabled;

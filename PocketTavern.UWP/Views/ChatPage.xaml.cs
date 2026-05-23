@@ -111,6 +111,43 @@ namespace PocketTavern.UWP.Views
                 RebuildQuickReplyBar();
             if (e.PropertyName == nameof(ChatViewModel.BackgroundPath))
                 RefreshBackground();
+            if (e.PropertyName == nameof(ChatViewModel.CurrentSpriteName))
+                RefreshSpriteOverlay();
+        }
+
+        private void RefreshSpriteOverlay()
+        {
+            var spriteName = _vm.CurrentSpriteName;
+            if (string.IsNullOrWhiteSpace(spriteName))
+            {
+                SpriteOverlayBorder.Visibility = Visibility.Collapsed;
+                SpriteImage.Source = null;
+                return;
+            }
+
+            var charAvatar = _vm.Character?.Avatar ?? _vm.Character?.Name ?? "";
+            var spriteFile = App.Sprites.GetFile(charAvatar, spriteName);
+            if (spriteFile == null)
+            {
+                SpriteOverlayBorder.Visibility = Visibility.Collapsed;
+                return;
+            }
+
+            try
+            {
+                SpriteImage.Source = new Windows.UI.Xaml.Media.Imaging.BitmapImage(
+                    new Uri(spriteFile.Path));
+                SpriteOverlayBorder.Visibility = Visibility.Visible;
+            }
+            catch
+            {
+                SpriteOverlayBorder.Visibility = Visibility.Collapsed;
+            }
+        }
+
+        private void OnSpriteOverlayTapped(object sender, TappedRoutedEventArgs e)
+        {
+            _vm.CurrentSpriteName = null;
         }
 
         private void RefreshTypingIndicator()

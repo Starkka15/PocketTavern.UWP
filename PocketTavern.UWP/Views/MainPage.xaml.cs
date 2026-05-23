@@ -211,8 +211,13 @@ namespace PocketTavern.UWP.Views
         private void OnCreateCharacterClick(object sender, RoutedEventArgs e)
             => App.Navigation.NavigateToCreateCharacter();
 
-        private void OnCharaVaultClick(object sender, RoutedEventArgs e)
-            => App.Navigation.NavigateToCharaVault();
+        private void OnCardSearchClick(object sender, RoutedEventArgs e)
+        {
+            if (CardSourceCombo.SelectedIndex == 1)
+                App.Navigation.NavigateTo(typeof(RisuRealmPage));
+            else
+                App.Navigation.NavigateToCharaVault();
+        }
 
         private void OnSettingsClick(object sender, RoutedEventArgs e)
             => App.Navigation.NavigateToSettings();

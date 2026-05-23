@@ -9,6 +9,8 @@ namespace PocketTavern.UWP.Models
         public string CharacterName { get; set; } = "";
         public List<ChatMessage> Messages { get; set; } = new List<ChatMessage>();
         public DateTimeOffset CreateDate { get; set; } = DateTimeOffset.Now;
+        public string MemoryBlock { get; set; } = "";
+        public int SummarizedTurnCount { get; set; } = 0;
     }
 
     public class ChatInfo

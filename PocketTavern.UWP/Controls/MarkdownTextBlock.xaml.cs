@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 using Windows.UI;
 using Windows.UI.Text;
 using Windows.UI.Xaml;
@@ -35,12 +36,18 @@ namespace PocketTavern.UWP.Controls
         private static void OnTextChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
             => ((MarkdownTextBlock)d).Rebuild();
 
+        private static readonly Regex _imgTagRegex =
+            new Regex(@"<img\s+src=\(?[^)>\s]+\)?>", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
         private void Rebuild()
         {
             Rich.Blocks.Clear();
             var para = new Paragraph { FontSize = TextFontSize };
 
-            foreach (var seg in ParseMarkdown(Text ?? ""))
+            // Strip <img src=(name)> sprite tags before rendering (V6)
+            var displayText = _imgTagRegex.Replace(Text ?? "", "");
+
+            foreach (var seg in ParseMarkdown(displayText))
             {
                 Inline inline;
 

@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using Windows.Storage.Pickers;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Navigation;
@@ -73,6 +75,78 @@ namespace PocketTavern.UWP.Views
                 await _vm.LoadAsync();
                 CharactersList.ItemsSource = _vm.Characters;
                 UpdateTabVisibility();
+            }
+        }
+
+        private async void OnImportClick(object sender, RoutedEventArgs e)
+        {
+            var picker = new FileOpenPicker
+            {
+                ViewMode = PickerViewMode.List,
+                SuggestedStartLocation = PickerLocationId.Downloads
+            };
+            picker.FileTypeFilter.Add("*");
+
+            var file = await picker.PickSingleFileAsync();
+            if (file == null) return;
+
+            await _vm.ImportLocalCharacterAsync(file);
+            CharactersList.ItemsSource = _vm.Characters;
+            UpdateTabVisibility();
+
+            if (_vm.ShowTranslateDialog)
+                await ShowTranslateDialogAsync();
+
+            if (!string.IsNullOrEmpty(_vm.TranslateError))
+            {
+                var err = new ContentDialog
+                {
+                    Title = "Import Error",
+                    Content = _vm.TranslateError,
+                    CloseButtonText = "OK",
+                    RequestedTheme = Windows.UI.Xaml.ElementTheme.Dark
+                };
+                await err.ShowAsync();
+            }
+        }
+
+        private async System.Threading.Tasks.Task ShowTranslateDialogAsync()
+        {
+            var result = await TranslateDialog.ShowAsync();
+            if (result == ContentDialogResult.Primary)
+            {
+                var fields = new List<string>();
+                if (ChkDescription.IsChecked == true)        fields.Add("description");
+                if (ChkPersonality.IsChecked == true)        fields.Add("personality");
+                if (ChkScenario.IsChecked == true)           fields.Add("scenario");
+                if (ChkFirstMessage.IsChecked == true)       fields.Add("first_mes");
+                if (ChkAlternateGreetings.IsChecked == true) fields.Add("alternate_greetings");
+                if (ChkMesExample.IsChecked == true)         fields.Add("mes_example");
+                if (ChkSystemPrompt.IsChecked == true)       fields.Add("system_prompt");
+                if (ChkCreatorNotes.IsChecked == true)       fields.Add("creator_notes");
+
+                TranslatingOverlay.Visibility = Visibility.Visible;
+                await _vm.TranslateAsync(fields);
+                TranslatingOverlay.Visibility = Visibility.Collapsed;
+
+                CharactersList.ItemsSource = _vm.Characters;
+                UpdateTabVisibility();
+
+                if (!string.IsNullOrEmpty(_vm.TranslateError))
+                {
+                    var err = new ContentDialog
+                    {
+                        Title = "Translation Error",
+                        Content = _vm.TranslateError,
+                        CloseButtonText = "OK",
+                        RequestedTheme = Windows.UI.Xaml.ElementTheme.Dark
+                    };
+                    await err.ShowAsync();
+                }
+            }
+            else
+            {
+                _vm.SkipTranslation();
             }
         }
 

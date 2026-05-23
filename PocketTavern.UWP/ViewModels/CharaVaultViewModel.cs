@@ -76,7 +76,7 @@ namespace PocketTavern.UWP.ViewModels
             set => Set(ref _showNsfw, value);
         }
 
-        private string GetBaseUrl()
+        public string GetBaseUrl()
         {
             var custom = App.Settings.GetCharaVaultUrl();
             return !string.IsNullOrWhiteSpace(custom) ? custom.TrimEnd('/') : DefaultBaseUrl;

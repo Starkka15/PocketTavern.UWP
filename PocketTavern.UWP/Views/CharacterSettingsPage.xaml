@@ -196,6 +196,22 @@
                     </controls:SpacedPanel>
                 </Border>
 
+                <!-- Personal Notes -->
+                <Border Margin="0,8,0,0" Background="{StaticResource BackgroundCardBrush}"
+                        CornerRadius="12" Padding="16,12">
+                    <controls:SpacedPanel Spacing="8">
+                        <TextBlock Text="Personal Notes"
+                                   Foreground="{StaticResource TextPrimaryBrush}"
+                                   FontSize="14" FontWeight="SemiBold" />
+                        <TextBlock Text="Private notes about this character — not sent to the AI, not embedded in the card."
+                                   Foreground="{StaticResource TextSecondaryBrush}"
+                                   FontSize="12" TextWrapping="Wrap" />
+                        <TextBox x:Name="NotesBox" Style="{StaticResource DarkTextBoxStyle}"
+                                 PlaceholderText="Your notes..." TextWrapping="Wrap"
+                                 AcceptsReturn="True" MinHeight="80" />
+                    </controls:SpacedPanel>
+                </Border>
+
                 <!-- Delete button -->
                 <Button HorizontalAlignment="Stretch" Margin="0,12,0,0"
                         Background="Transparent" BorderThickness="0"

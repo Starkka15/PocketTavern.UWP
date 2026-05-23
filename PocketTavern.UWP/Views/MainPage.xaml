@@ -149,10 +149,10 @@
                     </Border>
                 </Button>
 
-                <!-- Card Search (CharaVault) -->
+                <!-- Card Search (unified: CharaVault + RisuRealm, source selector like Android) -->
                 <Button HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
                         Background="Transparent" BorderThickness="0" Padding="0"
-                        Click="OnCharaVaultClick">
+                        Click="OnCardSearchClick">
                     <Border Background="{StaticResource BackgroundCardBrush}" Opacity="0.85"
                             CornerRadius="16"
                             BorderBrush="{StaticResource AccentPrimaryBrush}" BorderThickness="1.5">
@@ -169,10 +169,15 @@
                                            Foreground="{StaticResource AccentPrimaryBrush}" />
                             </Grid>
                             <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="4,0,0,0">
-                                <TextBlock Text="Card Search" Style="{StaticResource TitleTextStyle}" FontSize="18" />
-                                <TextBlock Text="Browse characters from CharaVault and Chub.ai"
-                                           Style="{StaticResource SubtitleTextStyle}"
-                                           MaxLines="1" TextTrimming="CharacterEllipsis" Margin="0,3,0,0" />
+                                <TextBlock Text="Search Cards" Style="{StaticResource TitleTextStyle}" FontSize="18" />
+                                <ComboBox x:Name="CardSourceCombo"
+                                          Background="Transparent" BorderThickness="0"
+                                          Padding="0,2" Margin="0,4,0,0"
+                                          FontSize="13"
+                                          Foreground="{StaticResource TextSecondaryBrush}">
+                                    <ComboBoxItem Content="CharaVault" IsSelected="True" />
+                                    <ComboBoxItem Content="RisuRealm" />
+                                </ComboBox>
                             </StackPanel>
                         </Grid>
                     </Border>

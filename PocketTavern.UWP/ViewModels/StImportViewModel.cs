@@ -74,7 +74,6 @@ namespace PocketTavern.UWP.ViewModels
             [JsonProperty("sourceType")]  public string SourceType { get; set; } = ""; // "folder" or "server"
             [JsonProperty("serverUrl")]   public string ServerUrl { get; set; } = "";
             [JsonProperty("username")]    public string Username { get; set; } = "";
-            [JsonProperty("password")]    public string Password { get; set; } = "";
             [JsonProperty("folderToken")] public string FolderToken { get; set; } = "";
             [JsonProperty("chars")]       public HashSet<string> ImportedChars { get; set; } = new HashSet<string>();
             [JsonProperty("lorebooks")]   public HashSet<string> ImportedLorebooks { get; set; } = new HashSet<string>();
@@ -117,6 +116,15 @@ namespace PocketTavern.UWP.ViewModels
 
         public void ClearCheckpoint()
         {
+            if (_checkpoint != null && !string.IsNullOrEmpty(_checkpoint.ServerUrl))
+            {
+                try
+                {
+                    var vault = new Windows.Security.Credentials.PasswordVault();
+                    vault.Remove(vault.Retrieve("PocketTavernSTImport", _checkpoint.ServerUrl));
+                }
+                catch { }
+            }
             _checkpoint = new ImportCheckpoint();
             try { if (File.Exists(CheckpointPath)) File.Delete(CheckpointPath); }
             catch { }
@@ -336,13 +344,37 @@ namespace PocketTavern.UWP.ViewModels
                 return;
             }
 
+            if (!Uri.TryCreate(baseUrl, UriKind.Absolute, out var parsedUrl) ||
+                (parsedUrl.Scheme != "http" && parsedUrl.Scheme != "https"))
+            {
+                AddLog("ERROR: Server URL must start with http:// or https://");
+                return;
+            }
+            var importHost = parsedUrl.Host.ToLowerInvariant().TrimEnd('.');
+            if (importHost == "localhost" || importHost == "::1" || importHost.StartsWith("127."))
+            {
+                AddLog("ERROR: Loopback addresses are not supported for server import");
+                return;
+            }
+
             if (!isResume) ClearCheckpoint();
             LoadCheckpoint();
             _checkpoint.SourceType = "server";
             _checkpoint.ServerUrl  = ServerUrl ?? "";
             _checkpoint.Username   = Username ?? "";
-            _checkpoint.Password   = Password ?? "";
             SaveCheckpoint();
+
+            if (!string.IsNullOrEmpty(Password))
+            {
+                try
+                {
+                    var vault = new Windows.Security.Credentials.PasswordVault();
+                    try { vault.Remove(vault.Retrieve("PocketTavernSTImport", _checkpoint.ServerUrl)); } catch { }
+                    vault.Add(new Windows.Security.Credentials.PasswordCredential(
+                        "PocketTavernSTImport", _checkpoint.ServerUrl, Password));
+                }
+                catch { }
+            }
 
             IsImporting = true;
             IsComplete = false;
@@ -462,7 +494,14 @@ namespace PocketTavern.UWP.ViewModels
             {
                 ServerUrl = _checkpoint.ServerUrl;
                 Username  = _checkpoint.Username;
-                Password  = _checkpoint.Password;
+                try
+                {
+                    var vault = new Windows.Security.Credentials.PasswordVault();
+                    var cred = vault.Retrieve("PocketTavernSTImport", _checkpoint.ServerUrl);
+                    cred.RetrievePassword();
+                    Password = cred.Password;
+                }
+                catch { Password = ""; }
                 await ImportFromServerAsync(isResume: true);
             }
             else

@@ -28,6 +28,7 @@ namespace PocketTavern.UWP.Services
     public class PromptBuilder
     {
         private static readonly Random _rng = new Random();
+        private static readonly TimeSpan _regexTimeout = TimeSpan.FromMilliseconds(2000);
 
         private readonly Character _character;
         private readonly ChatContext _chatContext;
@@ -102,7 +103,8 @@ namespace PocketTavern.UWP.Services
         public List<PromptMessage> BuildChatCompletionMessages(
             List<ChatMessage> chatHistory,
             string newMessage,
-            List<OaiPromptOrderItem> promptOrder = null)
+            List<OaiPromptOrderItem> promptOrder = null,
+            string memoryBlock = null)
         {
             if (promptOrder == null)
                 promptOrder = OaiPromptOrderItem.DefaultOrder();
@@ -145,6 +147,12 @@ namespace PocketTavern.UWP.Services
                         return prefix + SubstituteMacros(persona.Description) + "]";
                     }
                     case "char_description":
+                        // Inject long-term memory as system block immediately before char_description (V11)
+                        if (!string.IsNullOrWhiteSpace(memoryBlock))
+                        {
+                            messages.Add(new PromptMessage("system", $"[Memory]\n{memoryBlock.Trim()}"));
+                            memoryBlock = null; // inject once only
+                        }
                         return !string.IsNullOrWhiteSpace(_character.Description) ? SubstituteMacros(_character.Description) : "";
                     case "char_personality":
                         return !string.IsNullOrWhiteSpace(_character.Personality)
@@ -788,23 +796,15 @@ namespace PocketTavern.UWP.Services
                 {
                     var pattern = key.Substring(1, lastSlash - 1);
                     var flags = key.Substring(lastSlash + 1);
-                    try
-                    {
-                        var options = flags.Contains("i") ? RegexOptions.IgnoreCase : RegexOptions.None;
-                        return Regex.IsMatch(scanText, pattern, options);
-                    }
-                    catch { return false; }
+                    var regexOpts = flags.Contains("i") ? RegexOptions.IgnoreCase : RegexOptions.None;
+                    return SafeIsMatch(scanText, pattern, regexOpts);
                 }
             }
 
             var escapedKey = Regex.Escape(key);
             var regexPattern = wholeWords ? $@"\b{escapedKey}\b" : escapedKey;
-            try
-            {
-                var options = caseSensitive ? RegexOptions.None : RegexOptions.IgnoreCase;
-                return Regex.IsMatch(caseSensitive ? scanText : scanLower, regexPattern, options);
-            }
-            catch { return false; }
+            var matchOpts = caseSensitive ? RegexOptions.None : RegexOptions.IgnoreCase;
+            return SafeIsMatch(caseSensitive ? scanText : scanLower, regexPattern, matchOpts);
         }
 
         private List<WorldInfoEntry> ApplyTokenBudget(List<WorldInfoEntry> entries, WorldInfoSettings settings)
@@ -859,30 +859,144 @@ namespace PocketTavern.UWP.Services
 
         private string CleanMessageContent(string text)
         {
-            return Regex.Replace(text, @"\[\]\(#['""][^'""]*['""]\)", "")
+            return SafeReplace(text, @"\[\]\(#['""][^'""]*['""]\)", "", RegexOptions.None)
                 .Replace("\r\n", "\n")
                 .Trim();
         }
 
         private string StripCommentMacros(string text) =>
-            Regex.Replace(text, @"\{\{//.*?\}\}", "", RegexOptions.Singleline);
+            SafeReplace(text, @"\{\{//.*?\}\}", "", RegexOptions.Singleline);
 
-        private string SubstituteMacros(string text)
+        private string SubstituteMacros(
+            string text,
+            IList<ChatMessage> history = null,
+            string newMessage = "")
         {
             if (string.IsNullOrWhiteSpace(text)) return text;
 
             var result = StripCommentMacros(text);
+            var now = DateTime.Now;
 
-            result = Regex.Replace(result, @"\{\{random:(.*?)\}\}", match =>
+            // ── {{random::a::b::c}} double-colon variant (V17) ────────────────────
+            result = SafeReplace(result, @"\{\{random::(.*?)\}\}", match =>
             {
-                var options = match.Groups[1].Value.Split(',')
+                var opts = match.Groups[1].Value.Split(new[] { "::" }, StringSplitOptions.None)
                     .Select(o => o.Trim())
                     .Where(o => o.Length > 0)
                     .ToArray();
-                return options.Length == 0 ? "" : options[_rng.Next(options.Length)];
+                return opts.Length == 0 ? "" : opts[_rng.Next(opts.Length)];
+            }, RegexOptions.IgnoreCase | RegexOptions.Singleline);
+
+            // ── {{random:a,b,c}} comma variant (legacy) ───────────────────────────
+            result = SafeReplace(result, @"\{\{random:(.*?)\}\}", match =>
+            {
+                var opts = match.Groups[1].Value.Split(',')
+                    .Select(o => o.Trim())
+                    .Where(o => o.Length > 0)
+                    .ToArray();
+                return opts.Length == 0 ? "" : opts[_rng.Next(opts.Length)];
             }, RegexOptions.IgnoreCase);
 
-            var now = DateTime.Now;
+            // ── {{roll:NdN}} / {{roll::NdN}} (V17, V18) ──────────────────────────
+            result = SafeReplace(result, @"\{\{roll::?(\d+)d(\d+)\}\}", match =>
+            {
+                int dice  = Math.Max(1, Math.Min(100,  int.Parse(match.Groups[1].Value)));
+                int sides = Math.Max(1, Math.Min(1000, int.Parse(match.Groups[2].Value)));
+                int total = 0;
+                for (int i = 0; i < dice; i++) total += _rng.Next(1, sides + 1);
+                return total.ToString();
+            }, RegexOptions.IgnoreCase);
+
+            // ── {{newline}} / {{newline::N}} ──────────────────────────────────────
+            result = SafeReplace(result, @"\{\{newline::(\d+)\}\}", match =>
+            {
+                int n = Math.Max(1, int.Parse(match.Groups[1].Value));
+                return new string('\n', n);
+            }, RegexOptions.IgnoreCase);
+            result = ReplaceMacro(result, "{{newline}}", "\n");
+
+            // ── {{space}} / {{space::N}} ──────────────────────────────────────────
+            result = SafeReplace(result, @"\{\{space::(\d+)\}\}", match =>
+            {
+                int n = Math.Max(1, int.Parse(match.Groups[1].Value));
+                return new string(' ', n);
+            }, RegexOptions.IgnoreCase);
+            result = ReplaceMacro(result, "{{space}}", " ");
+
+            // ── {{noop}} ──────────────────────────────────────────────────────────
+            result = ReplaceMacro(result, "{{noop}}", "");
+
+            // ── Time/date macros ──────────────────────────────────────────────────
+            result = ReplaceMacro(result, "{{isotime}}", now.ToString("HH:mm:ss"));
+            result = ReplaceMacro(result, "{{isodate}}", now.ToString("yyyy-MM-dd"));
+
+            // {{time_UTC±N}} and {{time::UTC±N}}
+            result = SafeReplace(result, @"\{\{time(?:::)?_?(UTC[+-]\d+)\}\}", match =>
+            {
+                var spec = match.Groups[1].Value; // e.g. "UTC+2" or "UTC-5"
+                var sign = spec.Contains('+') ? 1 : -1;
+                var parts = spec.TrimStart('U', 'T', 'C', '+', '-');
+                if (!int.TryParse(parts, out int offset)) offset = 0;
+                var utcTime = now.ToUniversalTime().AddHours(sign * offset);
+                return utcTime.ToString("HH:mm");
+            }, RegexOptions.IgnoreCase);
+
+            // ── {{idle_duration}} / {{idleDuration}} (V17, V19) ──────────────────
+            string idleDuration;
+            if (history == null || history.Count == 0)
+            {
+                idleDuration = "just now";
+            }
+            else
+            {
+                var last = history[history.Count - 1];
+                var elapsed = DateTimeOffset.Now - (last.Timestamp != default ? last.Timestamp : DateTimeOffset.Now);
+                if (elapsed.TotalSeconds < 60)
+                    idleDuration = "just now";
+                else if (elapsed.TotalMinutes < 60)
+                    idleDuration = $"{(int)elapsed.TotalMinutes} minutes";
+                else if (elapsed.TotalHours < 24)
+                    idleDuration = $"{(int)elapsed.TotalHours} hours";
+                else
+                    idleDuration = $"{(int)elapsed.TotalDays} days";
+            }
+            result = ReplaceMacro(result, "{{idle_duration}}", idleDuration);
+            result = ReplaceMacro(result, "{{idleDuration}}", idleDuration);
+
+            // ── History lookup macros (V17, V20) ─────────────────────────────────
+            string lastMsg      = "";
+            string lastUserMsg  = "";
+            string lastCharMsg  = "";
+            if (history != null)
+            {
+                for (int i = history.Count - 1; i >= 0; i--)
+                {
+                    var m = history[i];
+                    if (string.IsNullOrEmpty(lastMsg))       lastMsg = m.Content ?? "";
+                    if (string.IsNullOrEmpty(lastUserMsg) && m.IsUser)   lastUserMsg = m.Content ?? "";
+                    if (string.IsNullOrEmpty(lastCharMsg) && !m.IsUser)  lastCharMsg = m.Content ?? "";
+                    if (!string.IsNullOrEmpty(lastMsg) && !string.IsNullOrEmpty(lastUserMsg) && !string.IsNullOrEmpty(lastCharMsg))
+                        break;
+                }
+            }
+            result = ReplaceMacro(result, "{{lastMessage}}",     lastMsg);
+            result = ReplaceMacro(result, "{{lastUserMessage}}", lastUserMsg);
+            result = ReplaceMacro(result, "{{lastCharMessage}}", lastCharMsg);
+
+            // ── {{input}} ─────────────────────────────────────────────────────────
+            result = ReplaceMacro(result, "{{input}}", newMessage ?? "");
+
+            // ── Character field macros ────────────────────────────────────────────
+            result = ReplaceMacro(result, "{{charDescription}}",  _character.Description);
+            result = ReplaceMacro(result, "{{charPersonality}}",  _character.Personality);
+            result = ReplaceMacro(result, "{{charScenario}}",     _character.Scenario);
+            result = ReplaceMacro(result, "{{charPrompt}}",       _character.SystemPrompt);
+            result = ReplaceMacro(result, "{{charInstruction}}", _character.PostHistoryInstructions);
+            result = ReplaceMacro(result, "{{charJailbreak}}",   _character.PostHistoryInstructions);
+            result = ReplaceMacro(result, "{{creatorNotes}}",     _character.CreatorNotes);
+            result = ReplaceMacro(result, "{{charCreatorNotes}}", _character.CreatorNotes);
+
+            // ── Core macros ───────────────────────────────────────────────────────
             result = ReplaceMacro(result, "{{char}}", _character.Name);
             result = ReplaceMacro(result, "{{user}}", _userName);
             result = ReplaceMacro(result, "{{charname}}", _character.Name);
@@ -893,12 +1007,32 @@ namespace PocketTavern.UWP.Services
             result = ReplaceMacro(result, "{{persona}}", _chatContext.UserPersona.Description);
             result = ReplaceMacro(result, "{{mesexample}}", _character.MessageExample);
             result = ReplaceMacro(result, "{{mes_example}}", _character.MessageExample);
+            result = ReplaceMacro(result, "{{mesExamples}}", _character.MessageExample);
+            result = ReplaceMacro(result, "{{mesExamplesRaw}}", _character.MessageExample);
             result = ReplaceMacro(result, "{{time}}", now.ToString("HH:mm"));
             result = ReplaceMacro(result, "{{date}}", now.ToString("yyyy-MM-dd"));
             result = ReplaceMacro(result, "{{weekday}}", now.DayOfWeek.ToString());
             result = ReplaceMacro(result, "{{trim}}", "");
             result = ReplaceMacro(result, "{{original}}", "");
             return result;
+        }
+
+        private static string SafeReplace(string input, string pattern, string replacement, RegexOptions options)
+        {
+            try { return Regex.Replace(input, pattern, replacement, options, _regexTimeout); }
+            catch (RegexMatchTimeoutException) { return input; }
+        }
+
+        private static string SafeReplace(string input, string pattern, MatchEvaluator evaluator, RegexOptions options)
+        {
+            try { return Regex.Replace(input, pattern, evaluator, options, _regexTimeout); }
+            catch (RegexMatchTimeoutException) { return input; }
+        }
+
+        private static bool SafeIsMatch(string input, string pattern, RegexOptions options)
+        {
+            try { return Regex.IsMatch(input, pattern, options, _regexTimeout); }
+            catch { return false; }
         }
 
         /// <summary>Case-insensitive string replacement safe for UWP .NET Native.</summary>

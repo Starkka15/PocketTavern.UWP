@@ -49,6 +49,9 @@ namespace PocketTavern.UWP.Views
                 LorebookCombo.Items.Add(new ComboBoxItem { Content = lb, Tag = lb });
             SelectLorebookCombo(_vm.AttachedWorldInfo);
 
+            // Load personal notes
+            NotesBox.Text = _vm.Notes;
+
             // Load TTS voices
             await LoadTtsVoicesAsync();
         }
@@ -152,6 +155,8 @@ namespace PocketTavern.UWP.Views
                 TtsVoiceStorage.ClearVoice(_avatarFileName);
             else
                 TtsVoiceStorage.SetVoiceId(_avatarFileName, selectedVoiceId);
+
+            _vm.Notes = NotesBox.Text;
 
             await _vm.SaveAsync();
         }

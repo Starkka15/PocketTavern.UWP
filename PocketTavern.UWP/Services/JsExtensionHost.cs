@@ -71,9 +71,20 @@ namespace PocketTavern.UWP.Services
         public void Initialize(WebView webView)
         {
             if (_webView == webView) return; // already initialized with this instance
-            if (_webView != null) _webView.ScriptNotify -= OnScriptNotify;
+            if (_webView != null)
+            {
+                _webView.ScriptNotify -= OnScriptNotify;
+                _webView.NavigationFailed -= OnNavigationFailed;
+            }
             _webView = webView;
             _webView.ScriptNotify += OnScriptNotify;
+            _webView.NavigationFailed += OnNavigationFailed;
+        }
+
+        private void OnNavigationFailed(object sender, WebViewNavigationFailedEventArgs e)
+        {
+            _loaded = false;
+            System.Diagnostics.Debug.WriteLine($"[JsExtensionHost] Navigation failed: {e.WebErrorStatus} — {e.Uri}");
         }
 
         public async Task LoadAsync()
@@ -100,11 +111,12 @@ namespace PocketTavern.UWP.Services
         public async Task DispatchEventAsync(string eventName, string dataJson = null)
         {
             if (!_loaded || _webView == null) return;
-            var evtEscaped = EscapeJs(eventName);
+            // Use JsonConvert for both args — handles all special chars including Unicode line terminators (V34)
+            var eventNameJson = JsonConvert.SerializeObject(eventName);
             var dataArg = dataJson != null
                 ? $"JSON.parse({JsonConvert.SerializeObject(dataJson)})"
                 : "null";
-            await EvalAsync($"window.__ptDispatchEvent('{evtEscaped}', {dataArg});");
+            await EvalAsync($"window.__ptDispatchEvent({eventNameJson}, {dataArg});");
         }
 
         public async Task UpdateContextAsync(string contextJson)
@@ -371,7 +383,7 @@ namespace PocketTavern.UWP.Services
         private string BuildSandboxHtml()
         {
             var sb = new StringBuilder();
-            sb.AppendLine("<!DOCTYPE html><html><head><meta charset='utf-8'></head><body><script>");
+            sb.AppendLine("<!DOCTYPE html><html><head><meta charset='utf-8'><meta http-equiv='Content-Security-Policy' content=\"default-src 'none'; script-src 'unsafe-inline';\"></head><body><script>");
 
             // 1. UWP bridge shim
             sb.AppendLine(ReadAsset("uwp_bridge_shim.js"));

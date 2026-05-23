@@ -63,20 +63,20 @@ namespace PocketTavern.UWP.Services
                     _speaking = true;
                     _player = new MediaPlayer();
                     _player.Source = Windows.Media.Core.MediaSource.CreateFromStorageFile(tempFile);
-                    _player.MediaEnded += (s, e) =>
+                    _player.MediaEnded += async (s, e) =>
                     {
                         _speaking = false;
                         _player.Dispose();
                         _player = null;
-                        try { tempFile.DeleteAsync().AsTask().Wait(); } catch { }
+                        try { await tempFile.DeleteAsync(); } catch { }
                     };
-                    _player.MediaFailed += (s, e) =>
+                    _player.MediaFailed += async (s, e) =>
                     {
                         DebugLogger.Log($"[OpenAiTTS] MediaPlayer error: {e.ErrorMessage}");
                         _speaking = false;
                         _player.Dispose();
                         _player = null;
-                        try { tempFile.DeleteAsync().AsTask().Wait(); } catch { }
+                        try { await tempFile.DeleteAsync(); } catch { }
                     };
                     _player.Play();
 
