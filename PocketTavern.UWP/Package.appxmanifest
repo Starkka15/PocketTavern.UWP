@@ -3,7 +3,7 @@
          xmlns:mp="http://schemas.microsoft.com/appx/2014/phone/manifest"
          xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
          IgnorableNamespaces="uap mp">
-  <Identity Name="PocketTavern.UWP" Publisher="CN=Developer" Version="1.0.0.0" />
+  <Identity Name="PocketTavern.UWP" Publisher="CN=Developer" Version="1.1.3.0" />
   <mp:PhoneIdentity PhoneProductId="C9D0E1F2-A3B4-5678-90AB-CDEF01234567" PhonePublisherId="00000000-0000-0000-0000-000000000000" />
   <Properties>
     <DisplayName>PocketTavern</DisplayName>
