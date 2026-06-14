@@ -83,5 +83,8 @@ namespace PocketTavern.UWP.Views
 
         private void OnBackClick(object sender, RoutedEventArgs e)
             => App.Navigation.GoBack();
+
+        private void OnCreateThemeClick(object sender, RoutedEventArgs e)
+            => App.Navigation.NavigateToThemeBuilder();
     }
 }

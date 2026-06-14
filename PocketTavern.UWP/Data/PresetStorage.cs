@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Windows.ApplicationModel;
 using Windows.Storage;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using PocketTavern.UWP.Models;
 
 namespace PocketTavern.UWP.Data
@@ -117,6 +118,77 @@ namespace PocketTavern.UWP.Data
                 }
                 catch { continue; }
             }
+        }
+
+        // ── Import from file ─────────────────────────────────────────────────────
+
+        /// <summary>
+        /// Imports a preset JSON file (OAI, TextGen, Instruct, Context, or SysPrompt)
+        /// by auto-detecting its type from JSON fields and saving to the correct directory.
+        /// </summary>
+        public async Task<string> ImportPresetFromFileAsync(StorageFile file)
+        {
+            var json = await FileIO.ReadTextAsync(file);
+            if (string.IsNullOrWhiteSpace(json)) return null;
+
+            var obj = JObject.Parse(json);
+
+            // Detect type by checking for discriminating fields
+            if (obj["temperature"] != null && obj["prompt_order"] != null)
+            {
+                var preset = JsonConvert.DeserializeObject<OaiPreset>(json);
+                if (preset == null) return null;
+                if (string.IsNullOrWhiteSpace(preset.Name))
+                    preset.Name = Path.GetFileNameWithoutExtension(file.Name);
+                await SaveOaiPresetAsync(preset);
+                return "oai";
+            }
+
+            if (obj["truncation_length"] != null)
+            {
+                var preset = JsonConvert.DeserializeObject<TextGenPreset>(json);
+                if (preset == null) return null;
+                if (string.IsNullOrWhiteSpace(preset.Name))
+                    preset.Name = Path.GetFileNameWithoutExtension(file.Name);
+                await SaveTextGenPresetAsync(preset);
+                return "textgen";
+            }
+
+            if (obj["input_sequence"] != null)
+            {
+                var template = JsonConvert.DeserializeObject<InstructTemplate>(json);
+                if (template == null) return null;
+                if (string.IsNullOrWhiteSpace(template.Name))
+                    template.Name = Path.GetFileNameWithoutExtension(file.Name);
+                await SaveInstructTemplateAsync(template);
+                return "instruct";
+            }
+
+            if (obj["story_string"] != null)
+            {
+                var template = JsonConvert.DeserializeObject<ContextTemplate>(json);
+                if (template == null) return null;
+                if (string.IsNullOrWhiteSpace(template.Name))
+                    template.Name = Path.GetFileNameWithoutExtension(file.Name);
+                var folder = await StorageFolder.GetFolderFromPathAsync(_contextDir);
+                var outFile = await folder.CreateFileAsync(template.Name + ".json", CreationCollisionOption.ReplaceExisting);
+                await FileIO.WriteTextAsync(outFile, json);
+                return "context";
+            }
+
+            if (obj["content"] is JValue val && val.Type == JTokenType.String)
+            {
+                var preset = JsonConvert.DeserializeObject<SystemPromptPreset>(json);
+                if (preset == null) return null;
+                if (string.IsNullOrWhiteSpace(preset.Name))
+                    preset.Name = Path.GetFileNameWithoutExtension(file.Name);
+                var folder = await StorageFolder.GetFolderFromPathAsync(_syspromptDir);
+                var outFile = await folder.CreateFileAsync(preset.Name + ".json", CreationCollisionOption.ReplaceExisting);
+                await FileIO.WriteTextAsync(outFile, json);
+                return "sysprompt";
+            }
+
+            return null;
         }
 
         // ── Generic helpers ──────────────────────────────────────────────────────

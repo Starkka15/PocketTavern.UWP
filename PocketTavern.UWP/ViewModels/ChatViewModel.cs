@@ -24,6 +24,7 @@ namespace PocketTavern.UWP.ViewModels
         private readonly RegexStorage _regexStorage = new RegexStorage();
         private readonly BackgroundStorage _backgroundStorage = new BackgroundStorage();
         private readonly TtsManager _ttsManager = new TtsManager();
+        private readonly GenerationKeepAliveService _keepAlive = new GenerationKeepAliveService();
 
         // ── State ─────────────────────────────────────────────────────────────
 
@@ -188,6 +189,7 @@ namespace PocketTavern.UWP.ViewModels
 
         public void Cleanup()
         {
+            _keepAlive.Dispose();
             _generationCts?.Cancel(); // V36: cancel in-flight generation before releasing VM
             _generationCts = null;
 
@@ -256,15 +258,17 @@ namespace PocketTavern.UWP.ViewModels
             message = Regex.Replace(message, @"\{\{char\}\}", Character?.Name ?? "", RegexOptions.IgnoreCase);
             message = Regex.Replace(message, @"\{\{user\}\}", _currentUserName, RegexOptions.IgnoreCase);
 
+            if (_chatFileName == null)
+                _chatFileName = App.Chats.CreateChatFileName(Character?.Name ?? "chat");
+
             var userMsg = new ChatMessage { Content = message, IsUser = true };
             Messages.Add(userMsg);
+
+            await App.Chats.AppendMessageAsync(Character?.Name ?? "", _chatFileName, userMsg);
 
             await PushExtensionContextAsync();
             await App.Extensions.DispatchEventAsync("MESSAGE_SENT",
                 JsonConvert.SerializeObject(message));
-
-            if (_chatFileName == null)
-                _chatFileName = App.Chats.CreateChatFileName(Character?.Name ?? "chat");
 
             await GenerateResponseAsync(message, new List<ChatMessage>(Messages).Take(Messages.Count - 1).ToList());
         }
@@ -291,23 +295,29 @@ namespace PocketTavern.UWP.ViewModels
         {
             var msg = new ChatMessage { Content = text, IsUser = false, IsNarrator = true };
             Messages.Add(msg);
-            await SaveChatAsync();
+            if (_chatFileName != null)
+                await App.Chats.AppendMessageAsync(Character?.Name ?? "", _chatFileName, msg);
         }
 
         public void StopGeneration()
         {
+            _keepAlive.Release();
             _generationCts?.Cancel();
             _generationCts = null;
 
             if (!string.IsNullOrEmpty(CurrentStreamingText))
             {
-                Messages.Add(new ChatMessage
+                var msg = new ChatMessage
                 {
                     Content = CurrentStreamingText,
                     IsUser = false,
                     SenderName = Character?.Name ?? ""
-                });
-                var _ = SaveChatAsync();
+                };
+                Messages.Add(msg);
+                if (_chatFileName != null)
+                {
+                    var _ = App.Chats.AppendMessageAsync(Character?.Name ?? "", _chatFileName, msg);
+                }
             }
 
             IsGenerating = false;
@@ -736,6 +746,7 @@ namespace PocketTavern.UWP.ViewModels
                     Apply();
             });
 
+            var keepAliveAcquired = await _keepAlive.RequestAsync();
             ShowTokenCount = true;
             try
             {
@@ -772,6 +783,7 @@ namespace PocketTavern.UWP.ViewModels
             }
             finally
             {
+                _keepAlive.Release();
                 IsGenerating = false;
                 await SaveChatAsync();
                 OnPropertyChanged(nameof(QuickReplyButtons));
@@ -1069,14 +1081,18 @@ namespace PocketTavern.UWP.ViewModels
 
                 var width  = options.Value<int?>("width")  ?? imageConfig.Width;
                 var height = options.Value<int?>("height") ?? imageConfig.Height;
-                var negPr  = options.Value<string>("negativePrompt") ?? imageConfig.NegativePrompt;
+                var userNeg = options.Value<string>("negativePrompt") ?? imageConfig.NegativePrompt ?? "";
                 var seed   = options.Value<int?>("seed") ?? imageConfig.Seed;
+
+                var combinedNeg = string.IsNullOrWhiteSpace(userNeg)
+                    ? ImageGenService.BaseNegativePrompt
+                    : ImageGenService.BaseNegativePrompt + ", " + userNeg;
 
                 var imgSvc = new ImageGenService(App.Settings);
                 var @params = new ForgeGenerationParams
                 {
                     Prompt         = prompt,
-                    NegativePrompt = negPr,
+                    NegativePrompt = combinedNeg,
                     Width          = width,
                     Height         = height,
                     Steps          = imageConfig.Steps,
@@ -1202,17 +1218,7 @@ namespace PocketTavern.UWP.ViewModels
             try
             {
                 var imgSvc = new ImageGenService(App.Settings);
-                var @params = new ForgeGenerationParams
-                {
-                    Prompt         = prompt,
-                    NegativePrompt = imageConfig.NegativePrompt,
-                    Width          = imageConfig.Width,
-                    Height         = imageConfig.Height,
-                    Steps          = imageConfig.Steps,
-                    CfgScale       = imageConfig.CfgScale,
-                    Sampler        = imageConfig.Sampler,
-                    Seed           = imageConfig.Seed
-                };
+                var @params = imgSvc.BuildParams(prompt);
 
                 string resultBase64 = null;
                 var progress = new Progress<GenerationState>(s =>

@@ -90,6 +90,7 @@
     <UseVSHostingProcess>false</UseVSHostingProcess>
     <Optimize>true</Optimize>
     <UseDotNetNativeToolchain>true</UseDotNetNativeToolchain>
+    <IlcVerbosity>4</IlcVerbosity>
   </PropertyGroup>
 
   <!-- Source files -->
@@ -109,8 +110,8 @@
     </Page>
   </ItemGroup>
 
-  <!-- CoreRuntime DLLs - System.Private.CoreLib probe path doesn't work via framework package on Win10 19041 -->
-  <ItemGroup>
+  <!-- CoreRuntime DLLs - only for Debug (no .NET Native). In Release, .NET Native provides its own runtime. -->
+  <ItemGroup Condition="'$(Configuration)' == 'Debug'">
     <Content Include="RuntimeDlls\System.Private.CoreLib.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
@@ -133,6 +134,11 @@
     <AppxManifest Include="Package.appxmanifest">
       <SubType>Designer</SubType>
     </AppxManifest>
+  </ItemGroup>
+
+  <!-- Runtime Directives (.NET Native) -->
+  <ItemGroup>
+    <Content Include="default.rd.xml" />
   </ItemGroup>
 
   <!-- Theme, Preset, Extension assets -->

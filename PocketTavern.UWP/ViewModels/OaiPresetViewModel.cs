@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
+using Windows.Storage;
 using PocketTavern.UWP.Models;
 
 namespace PocketTavern.UWP.ViewModels
@@ -154,6 +155,22 @@ namespace PocketTavern.UWP.ViewModels
             var presets = await App.Presets.GetAllOaiPresetsAsync();
             _presetNames.Clear();
             foreach (var p in presets) _presetNames.Add(p.Name);
+        }
+
+        public async Task<string> ImportPresetAsync(StorageFile file)
+        {
+            var type = await App.Presets.ImportPresetFromFileAsync(file);
+            if (type == null) return null;
+
+            if (type == "oai")
+            {
+                var presets = await App.Presets.GetAllOaiPresetsAsync();
+                _presetNames.Clear();
+                foreach (var p in presets) _presetNames.Add(p.Name);
+                _selectedPreset = _presetNames.Count > 0 ? _presetNames[0] : "";
+                if (_selectedPreset != "") await LoadPresetAsync(_selectedPreset);
+            }
+            return type;
         }
 
         public async Task DeleteAsync()

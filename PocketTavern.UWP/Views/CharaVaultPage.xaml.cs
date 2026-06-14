@@ -111,22 +111,23 @@ namespace PocketTavern.UWP.Views
 
             var panel = new StackPanel { MinWidth = 260 };
 
-            // Avatar image
-            if (!string.IsNullOrEmpty(item.AvatarUrl))
+            // Avatar image — use pre-loaded image with auth, or try URL directly
+            var source = item.AvatarImage;
+            if (source == null && !string.IsNullOrEmpty(item.AvatarUrl))
             {
-                try
-                {
-                    var img = new Windows.UI.Xaml.Controls.Image
-                    {
-                        Source = new Windows.UI.Xaml.Media.Imaging.BitmapImage(new Uri(item.AvatarUrl)),
-                        Width = 80, Height = 80,
-                        Stretch = Windows.UI.Xaml.Media.Stretch.UniformToFill,
-                        HorizontalAlignment = HorizontalAlignment.Center,
-                        Margin = new Thickness(0, 0, 0, 8)
-                    };
-                    panel.Children.Add(img);
-                }
+                try { source = new Windows.UI.Xaml.Media.Imaging.BitmapImage(new Uri(item.AvatarUrl)); }
                 catch { }
+            }
+            if (source != null)
+            {
+                panel.Children.Add(new Windows.UI.Xaml.Controls.Image
+                {
+                    Source = source,
+                    Width = 80, Height = 80,
+                    Stretch = Windows.UI.Xaml.Media.Stretch.UniformToFill,
+                    HorizontalAlignment = HorizontalAlignment.Center,
+                    Margin = new Thickness(0, 0, 0, 8)
+                });
             }
 
             panel.Children.Add(new TextBlock
@@ -218,6 +219,13 @@ namespace PocketTavern.UWP.Views
             => App.Navigation.GoBack();
 
         private static readonly HttpClient _http = new HttpClient { Timeout = TimeSpan.FromSeconds(20) };
+
+        static CharaVaultPage()
+        {
+            _http.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent",
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 " +
+                "(KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36");
+        }
 
         private async void OnLoginClick(object sender, RoutedEventArgs e)
         {

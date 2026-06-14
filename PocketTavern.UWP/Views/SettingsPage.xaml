@@ -490,6 +490,33 @@
 
                 <Button HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
                         Background="Transparent" BorderThickness="0" Padding="0"
+                        Click="OnStorageBrowserClick">
+                    <Grid Padding="16,14">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="24" />
+                        </Grid.ColumnDefinitions>
+                        <Border Width="36" Height="36" CornerRadius="18" Background="#33E9A456">
+                            <TextBlock Text="&#xE8A5;" FontFamily="Segoe MDL2 Assets" FontSize="18"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center"
+                                       Foreground="#E9A456" />
+                        </Border>
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="12,0">
+                            <TextBlock Text="Storage Browser" Foreground="{StaticResource TextPrimaryBrush}"
+                                       FontSize="16" FontWeight="SemiBold" />
+                            <TextBlock Text="Browse app files and folders"
+                                       Style="{StaticResource SubtitleTextStyle}" Margin="0,1,0,0" />
+                        </StackPanel>
+                        <TextBlock Grid.Column="2" Text="&#xE76C;" FontFamily="Segoe MDL2 Assets"
+                                   FontSize="14" Foreground="{StaticResource TextSecondaryBrush}"
+                                   VerticalAlignment="Center" />
+                    </Grid>
+                </Button>
+                <Rectangle Height="1" Fill="{StaticResource BackgroundCardBrush}" Margin="68,0,0,0" />
+
+                <Button HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
+                        Background="Transparent" BorderThickness="0" Padding="0"
                         Click="OnHelpClick">
                     <Grid Padding="16,14">
                         <Grid.ColumnDefinitions>

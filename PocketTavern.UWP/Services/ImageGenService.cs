@@ -12,6 +12,14 @@ namespace PocketTavern.UWP.Services
     /// </summary>
     public class ImageGenService
     {
+        public const string BaseNegativePrompt =
+            "worst quality, low quality, bad anatomy, bad hands, " +
+            "missing fingers, extra digit, fewer digits, cropped, " +
+            "normal quality, jpeg artifacts, signature, watermark, " +
+            "username, blurry, ugly, deformed, long neck, mutation, " +
+            "mutated, extra limbs, fused body, gross proportions, " +
+            "disfigured, malformed limbs, text, error, extra arms";
+
         private readonly SettingsStorage _settings;
         private readonly Dictionary<ImageGenBackendType, IImageGenBackend> _backends;
 
@@ -81,10 +89,14 @@ namespace PocketTavern.UWP.Services
         public ForgeGenerationParams BuildParams(string prompt, string sourceImageBase64 = null)
         {
             var config = _settings.GetImageGenConfig();
+            var userNegative = config.NegativePrompt ?? "";
+            var combinedNegative = string.IsNullOrWhiteSpace(userNegative)
+                ? BaseNegativePrompt
+                : BaseNegativePrompt + ", " + userNegative;
             return new ForgeGenerationParams
             {
                 Prompt = prompt,
-                NegativePrompt = config.NegativePrompt,
+                NegativePrompt = combinedNegative,
                 Width = config.Width,
                 Height = config.Height,
                 Steps = config.Steps,

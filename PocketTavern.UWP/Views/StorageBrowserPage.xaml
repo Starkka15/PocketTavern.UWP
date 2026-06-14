@@ -1,0 +1,115 @@
+<Page
+    x:Class="PocketTavern.UWP.Views.StorageBrowserPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Background="{StaticResource BackgroundDeepBrush}">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Grid Grid.Row="0" Background="{StaticResource BackgroundSurfaceBrush}" Padding="4,8">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="48" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <Button Grid.Column="0" Background="Transparent" BorderThickness="0"
+                    Foreground="{StaticResource TextPrimaryBrush}" Click="OnBackClick"
+                    HorizontalAlignment="Center" VerticalAlignment="Center">
+                <TextBlock Text="&#xE72B;" FontFamily="Segoe MDL2 Assets" FontSize="18" />
+            </Button>
+            <TextBlock Grid.Column="1" Text="Storage Browser"
+                       Style="{StaticResource TitleTextStyle}"
+                       VerticalAlignment="Center" Margin="4,0" />
+            <Button Grid.Column="2" Background="Transparent" BorderThickness="0"
+                    Foreground="{StaticResource AccentPrimaryBrush}"
+                    Click="OnRefreshClick" Padding="8,4"
+                    ToolTipService.ToolTip="Refresh">
+                <TextBlock Text="&#xE72C;" FontFamily="Segoe MDL2 Assets" FontSize="18" />
+            </Button>
+        </Grid>
+
+        <!-- Current path -->
+        <Border Grid.Row="1" Background="{StaticResource BackgroundSurfaceBrush}" Padding="16,6">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock x:Name="PathLabel" Text="LocalFolder"
+                           Foreground="{StaticResource TextPrimaryBrush}"
+                           FontSize="12" FontFamily="Consolas"
+                           VerticalAlignment="Center"
+                           TextTrimming="CharacterEllipsis" />
+                <Button Grid.Column="1" x:Name="UpButton" Background="Transparent" BorderThickness="0"
+                        Foreground="{StaticResource AccentPrimaryBrush}"
+                        Click="OnUpClick" Padding="8,2"
+                        ToolTipService.ToolTip="Go up"
+                        Visibility="Collapsed">
+                    <TextBlock Text="&#xE74A;" FontFamily="Segoe MDL2 Assets" FontSize="14" />
+                </Button>
+            </Grid>
+        </Border>
+
+        <!-- File list -->
+        <ListView Grid.Row="2" x:Name="FileList"
+                  SelectionMode="None" IsItemClickEnabled="True"
+                  ItemClick="OnFileItemClick"
+                  Background="Transparent"
+                  Padding="4,4,4,8">
+            <ListView.ItemContainerStyle>
+                <Style TargetType="ListViewItem">
+                    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                    <Setter Property="Padding" Value="0" />
+                </Style>
+            </ListView.ItemContainerStyle>
+            <ListView.ItemTemplate>
+                <DataTemplate>
+                    <Border Margin="8,2" Padding="12,8" CornerRadius="6"
+                            Background="{StaticResource BackgroundCardBrush}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="{Binding Icon}"
+                                       FontFamily="Segoe MDL2 Assets" FontSize="16"
+                                       Foreground="{StaticResource AccentPrimaryBrush}"
+                                       VerticalAlignment="Center" Margin="0,0,8,0" />
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                <TextBlock Text="{Binding Name}"
+                                           Foreground="{StaticResource TextPrimaryBrush}"
+                                           FontSize="13" FontWeight="SemiBold"
+                                           TextTrimming="CharacterEllipsis" />
+                                <TextBlock Text="{Binding Detail}"
+                                           Style="{StaticResource SubtitleTextStyle}"
+                                           FontSize="11"
+                                           TextTrimming="CharacterEllipsis" />
+                            </StackPanel>
+                            <TextBlock Grid.Column="2" Text="{Binding Size}"
+                                       Foreground="{StaticResource TextSecondaryBrush}"
+                                       FontSize="11" FontFamily="Consolas"
+                                       VerticalAlignment="Center" Margin="0,0,8,0" />
+                            <Button Grid.Column="3" Background="Transparent" BorderThickness="0"
+                                    Foreground="{StaticResource TextSecondaryBrush}"
+                                    Click="OnDeleteItemClick"
+                                    CommandParameter="{Binding FullPath}"
+                                    ToolTipService.ToolTip="Delete"
+                                    Width="32" Height="32" Padding="0"
+                                    VerticalAlignment="Center">
+                                <TextBlock Text="&#xE74D;" FontFamily="Segoe MDL2 Assets" FontSize="14" />
+                            </Button>
+                        </Grid>
+                    </Border>
+                </DataTemplate>
+            </ListView.ItemTemplate>
+        </ListView>
+    </Grid>
+</Page>

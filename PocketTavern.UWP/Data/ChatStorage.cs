@@ -126,6 +126,53 @@ namespace PocketTavern.UWP.Data
             catch { }
         }
 
+        public async Task AppendMessageAsync(string characterName, string fileName, ChatMessage message)
+        {
+            var dir = GetChatDir(characterName);
+            var path = FindChatFile(dir, fileName);
+            if (path == null)
+                path = Path.Combine(dir, fileName + ".jsonl");
+
+            var line = JsonConvert.SerializeObject(MessageToJObject(message));
+            var isNew = !File.Exists(path);
+
+            if (isNew)
+            {
+                var folder = await StorageFolder.GetFolderFromPathAsync(dir);
+                var file = await folder.CreateFileAsync(fileName + ".jsonl", CreationCollisionOption.ReplaceExisting);
+                await FileIO.WriteTextAsync(file, line + "\n");
+            }
+            else
+            {
+                var folder = await StorageFolder.GetFolderFromPathAsync(dir);
+                var file = await folder.GetFileAsync(Path.GetFileName(path));
+                await FileIO.AppendTextAsync(file, line + "\n");
+            }
+
+            try
+            {
+                var existing = DatabaseHelper.Db.Get<ChatEntity>(fileName);
+                if (existing != null)
+                {
+                    existing.MessageCount++;
+                    existing.ModifyDate = DateTimeOffset.Now.ToUnixTimeSeconds();
+                    DatabaseHelper.Db.Update(existing);
+                }
+                else if (isNew)
+                {
+                    DatabaseHelper.Db.InsertOrReplace(new ChatEntity
+                    {
+                        FileName = fileName,
+                        CharacterName = characterName,
+                        CreateDate = DateTimeOffset.Now.ToUnixTimeSeconds(),
+                        ModifyDate = DateTimeOffset.Now.ToUnixTimeSeconds(),
+                        MessageCount = 1
+                    });
+                }
+            }
+            catch { }
+        }
+
         public async Task DeleteChatAsync(string characterName, string fileName)
         {
             var dir = GetChatDir(characterName);

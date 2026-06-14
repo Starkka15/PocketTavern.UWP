@@ -182,6 +182,29 @@ namespace PocketTavern.UWP.Services
             return cfg;
         }
 
+        // ── User-created themes ──────────────────────────────────────────────
+
+        /// <summary>
+        /// Loads a user-created theme from a StorageFolder (e.g. LocalFolder/themes/{key}/).
+        /// Expects a theme.json file inside the folder.
+        /// </summary>
+        public async Task<PocketTavernTheme> LoadUserThemeAsync(string key, StorageFolder themeFolder)
+        {
+            try
+            {
+                var file = await themeFolder.GetFileAsync("theme.json");
+                var json = await FileIO.ReadTextAsync(file);
+                var theme = ParseThemeJson(json, key, null);
+                if (theme != null)
+                {
+                    _available.Add(theme);
+                    return theme;
+                }
+            }
+            catch { }
+            return null;
+        }
+
         // ── Application ───────────────────────────────────────────────────────
 
         public void Apply(string key)
@@ -233,6 +256,12 @@ namespace PocketTavern.UWP.Services
                 _audioPlayer = null;
             }
         }
+
+        /// <summary>
+        /// Applies theme colors to app resources without saving to settings (for live preview).
+        /// </summary>
+        public static void ApplyPreview(PocketTavernTheme theme)
+            => ApplyToResources(theme);
 
         private static void ApplyToResources(PocketTavernTheme theme)
         {

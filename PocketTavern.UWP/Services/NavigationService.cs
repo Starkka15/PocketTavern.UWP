@@ -46,5 +46,9 @@ namespace PocketTavern.UWP.Services
         public void NavigateToBackupExport()          => NavigateTo(typeof(BackupExportPage));
         public void NavigateToSetupGuide()            => NavigateTo(typeof(SetupGuidePage));
         public void NavigateToLorebookEntries(string name) => NavigateTo(typeof(LorebookEntriesPage), name);
+        public void NavigateToExtensionPanel(string extensionId) => NavigateTo(typeof(ExtensionPanelPage), extensionId);
+        public void NavigateToCharacterBook(string avatar) => NavigateTo(typeof(CharacterBookPage), avatar);
+        public void NavigateToStorageBrowser() => NavigateTo(typeof(StorageBrowserPage));
+        public void NavigateToThemeBuilder() => NavigateTo(typeof(ThemeBuilderPage));
     }
 }

@@ -18,6 +18,8 @@ namespace PocketTavern.UWP.Models
         public string AttachedWorldInfo { get; set; }
         public bool HasCharacterBook { get; set; } = false;
         public int CharacterBookEntryCount { get; set; } = 0;
+        public string CharacterBookJson { get; set; } = "";
+        public string LoreHints { get; set; } = "";
         public string PostHistoryInstructions { get; set; } = "";
         public string DepthPrompt { get; set; } = "";
         public int DepthPromptDepth { get; set; } = 4;

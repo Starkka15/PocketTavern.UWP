@@ -36,6 +36,12 @@ namespace PocketTavern.UWP.ViewModels
         private string _notes = "";
         public string Notes { get => _notes; set => Set(ref _notes, value); }
 
+        private string _loreHints = "";
+        public string LoreHints { get => _loreHints; set => Set(ref _loreHints, value); }
+
+        public bool HasCharacterBook => _character?.HasCharacterBook ?? false;
+        public int CharacterBookEntryCount => _character?.CharacterBookEntryCount ?? 0;
+
         public Task<List<string>> GetLorebooksAsync()
             => new LoreBookStorage().ListLorebooksAsync();
 
@@ -54,6 +60,7 @@ namespace PocketTavern.UWP.ViewModels
             IsFavorite              = _character.IsFavorite;
             Talkativeness           = _character.Talkativeness;
             AttachedWorldInfo       = _character.AttachedWorldInfo ?? "";
+            LoreHints               = _character.LoreHints ?? "";
             Notes                   = _character.Notes ?? "";
         }
 
@@ -69,6 +76,7 @@ namespace PocketTavern.UWP.ViewModels
             _character.IsFavorite              = IsFavorite;
             _character.Talkativeness           = Talkativeness;
             _character.AttachedWorldInfo       = string.IsNullOrEmpty(AttachedWorldInfo) ? null : AttachedWorldInfo;
+            _character.LoreHints               = LoreHints ?? "";
             _character.Notes                   = Notes ?? "";
 
             await App.Characters.SaveCharacterAsync(_avatarFileName, _character);

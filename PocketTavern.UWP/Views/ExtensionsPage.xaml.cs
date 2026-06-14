@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using Windows.UI;
 using Windows.UI.Text;
 using Windows.UI.Xaml;
@@ -7,6 +8,7 @@ using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Navigation;
 using Windows.UI.Xaml.Shapes;
+using Windows.Storage;
 using Windows.Storage.Pickers;
 using PocketTavern.UWP.Controls;
 using PocketTavern.UWP.Models;
@@ -297,7 +299,8 @@ namespace PocketTavern.UWP.Views
             bottomRow.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
             bottomRow.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
 
-            if (!string.IsNullOrEmpty(ext.SourceUrl))
+            var hasPanel = HasPanelFile(ext);
+            if (!hasPanel && !string.IsNullOrEmpty(ext.SourceUrl))
             {
                 var sourceText = ext.SourceUrl
                     .Replace("https://", "").Replace("http://", "");
@@ -308,6 +311,28 @@ namespace PocketTavern.UWP.Views
                     VerticalAlignment = VerticalAlignment.Center,
                     FontFamily = new FontFamily("Consolas")
                 });
+            }
+
+            if (hasPanel)
+            {
+                var panelBtn = new Button
+                {
+                    Background = new SolidColorBrush(Colors.Transparent),
+                    BorderThickness = new Thickness(0),
+                    Padding = new Thickness(0),
+                    Margin = new Thickness(0, 0, 12, 0),
+                    Tag = ext
+                };
+                var panelContent = new SpacedPanel { Orientation = Orientation.Horizontal, Spacing = 4 };
+                panelContent.Children.Add(new TextBlock { Text = "\uE74C", FontFamily = new FontFamily("Segoe MDL2 Assets"), FontSize = 14, Foreground = accent });
+                panelContent.Children.Add(new TextBlock { Text = "Open Panel", FontSize = 13, Foreground = accent });
+                panelBtn.Content = panelContent;
+                panelBtn.Click += (s, e) =>
+                {
+                    App.Navigation.NavigateToExtensionPanel(ext.Id);
+                };
+                Grid.SetColumn(panelBtn, 0);
+                bottomRow.Children.Add(panelBtn);
             }
 
             if (!ext.Bundled)
@@ -348,6 +373,15 @@ namespace PocketTavern.UWP.Views
             stack.Children.Add(bottomRow);
             card.Child = stack;
             return card;
+        }
+
+        private static bool HasPanelFile(JsExtensionItem ext)
+        {
+            var dir = ext.Bundled
+                ? System.IO.Path.Combine(Windows.ApplicationModel.Package.Current.InstalledLocation.Path, "Assets", "Extensions", ext.Id)
+                : System.IO.Path.Combine(ApplicationData.Current.LocalFolder.Path, "js_extensions", ext.Id);
+            return System.IO.File.Exists(System.IO.Path.Combine(dir, "browser.html"))
+                || System.IO.File.Exists(System.IO.Path.Combine(dir, "panel.html"));
         }
 
         private static string CamelCaseToLabel(string key)

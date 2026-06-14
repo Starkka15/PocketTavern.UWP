@@ -174,6 +174,40 @@ namespace PocketTavern.UWP.Services
         public IReadOnlyList<string> GetActiveHooksForExtension(string extId)
             => _extensionHooks.TryGetValue(extId, out var h) ? h.ToList() : new List<string>();
 
+        // ── Public fire methods for external callers (e.g. ExtensionPanelPage) ──
+
+        public void FireMessageSendRequest(string text)
+            => MessageSendRequested?.Invoke(this, text);
+
+        public void FireImageGenerateRequest(string prompt, string optionsJson, string cbId)
+            => ImageGenerateRequested?.Invoke(this, new ImageGenerateRequest { Prompt = prompt, OptionsJson = optionsJson, CbId = cbId });
+
+        public void FireInsertMessageRequest(string content, string optionsJson)
+            => InsertMessageRequested?.Invoke(this, new InsertMessageRequest { Content = content, OptionsJson = optionsJson });
+
+        public void FireEditDialogRequest(string title, string fieldsJson, string cbId)
+            => EditDialogRequested?.Invoke(this, new EditDialogRequest { Title = title, FieldsJson = fieldsJson, CbId = cbId });
+
+        public void FireHiddenGenerateRequest(string prompt, string cbId)
+            => HiddenGenerateRequested?.Invoke(this, new HiddenGenerateRequest { Prompt = prompt, CbId = cbId });
+
+        public void HandleRegisterButtons(string id, string json)
+        {
+            try
+            {
+                var buttons = JsonConvert.DeserializeObject<List<object>>(json ?? "[]");
+                _buttonSets[id] = buttons ?? new List<object>();
+            }
+            catch { }
+            ButtonSetsChanged?.Invoke(this, EventArgs.Empty);
+        }
+
+        public void HandleClearButtons(string id)
+        {
+            _buttonSets.Remove(id);
+            ButtonSetsChanged?.Invoke(this, EventArgs.Empty);
+        }
+
         // ── Callback completions (C# → JS resolve) ───────────────────────────
 
         public async Task ResolveEditDialogAsync(string cbId, string resultJson)

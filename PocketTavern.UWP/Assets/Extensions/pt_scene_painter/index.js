@@ -20,7 +20,7 @@
 (function () {
     'use strict';
 
-    var EXT_ID = 'pt-scene-painter';
+    var EXT_ID = 'pt_scene_painter';
 
     // ── Settings ──────────────────────────────────────────────────────────────
 

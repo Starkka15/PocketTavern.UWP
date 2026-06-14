@@ -57,7 +57,7 @@ namespace PocketTavern.UWP.Models
 
         public bool HasImage => !string.IsNullOrEmpty(ImagePath);
         public Uri ImageUri => HasImage
-            ? new Uri(System.IO.Path.Combine(Windows.Storage.ApplicationData.Current.LocalFolder.Path, ImagePath))
+            ? new Uri("file:///" + System.IO.Path.Combine(Windows.Storage.ApplicationData.Current.LocalFolder.Path, ImagePath).Replace('\\', '/'))
             : null;
 
         public void AddAlternate(string text)

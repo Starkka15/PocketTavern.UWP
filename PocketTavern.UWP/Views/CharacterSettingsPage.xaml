@@ -85,6 +85,42 @@
                     </controls:SpacedPanel>
                 </Border>
 
+                <!-- Embedded Character Book -->
+                <Border Margin="0,8,0,0" Background="{StaticResource BackgroundCardBrush}"
+                        CornerRadius="12" Padding="16,12">
+                    <controls:SpacedPanel Spacing="8">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <controls:SpacedPanel Spacing="4" VerticalAlignment="Center">
+                                <TextBlock Text="Embedded Lorebook"
+                                           Foreground="{StaticResource TextPrimaryBrush}"
+                                           FontSize="14" FontWeight="SemiBold" />
+                                <TextBlock x:Name="CharBookInfo" Text="None"
+                                           Style="{StaticResource SubtitleTextStyle}"
+                                           Foreground="{StaticResource TextSecondaryBrush}" />
+                            </controls:SpacedPanel>
+                            <Button x:Name="CharBookBtn" Grid.Column="1"
+                                    Background="Transparent" BorderThickness="0"
+                                    Foreground="{StaticResource AccentPrimaryBrush}"
+                                    Click="OnCharBookClick" Padding="0"
+                                    ToolTipService.ToolTip="Edit embedded lorebook">
+                                <controls:SpacedPanel Orientation="Horizontal" Spacing="4">
+                                    <TextBlock Text="&#xE70F;" FontFamily="Segoe MDL2 Assets" FontSize="16" />
+                                    <TextBlock Text="Edit" FontSize="13" />
+                                </controls:SpacedPanel>
+                            </Button>
+                        </Grid>
+                        <TextBox x:Name="LoreHintsBox"
+                                 Header="Lore hints (used by /scanlore)"
+                                 PlaceholderText="Keywords to find this character's lore"
+                                 Style="{StaticResource DarkTextBoxStyle}"
+                                 AcceptsReturn="False" />
+                    </controls:SpacedPanel>
+                </Border>
+
                 <!-- System Prompt -->
                 <TextBlock Text="System Prompt" Style="{StaticResource SubtitleTextStyle}" Margin="0,12,0,4" />
                 <TextBox x:Name="SysPromptBox" Style="{StaticResource DarkTextBoxStyle}"

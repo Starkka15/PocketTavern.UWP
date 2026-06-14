@@ -49,6 +49,10 @@ namespace PocketTavern.UWP.Views
                 LorebookCombo.Items.Add(new ComboBoxItem { Content = lb, Tag = lb });
             SelectLorebookCombo(_vm.AttachedWorldInfo);
 
+            // Embedded character book
+            UpdateCharBookInfo();
+            LoreHintsBox.Text = _vm.LoreHints;
+
             // Load personal notes
             NotesBox.Text = _vm.Notes;
 
@@ -132,6 +136,23 @@ namespace PocketTavern.UWP.Views
 
         private void OnBackClick(object sender, RoutedEventArgs e) => App.Navigation.GoBack();
 
+        private void UpdateCharBookInfo()
+        {
+            if (_vm.HasCharacterBook)
+            {
+                CharBookInfo.Text = $"{_vm.CharacterBookEntryCount} entries";
+                CharBookBtn.Visibility = Visibility.Visible;
+            }
+            else
+            {
+                CharBookInfo.Text = "None";
+                CharBookBtn.Visibility = Visibility.Collapsed;
+            }
+        }
+
+        private void OnCharBookClick(object sender, RoutedEventArgs e)
+            => App.Navigation.NavigateToCharacterBook(_avatarFileName);
+
         private async void OnSaveClick(object sender, RoutedEventArgs e)
         {
             _vm.SystemPrompt            = SysPromptBox.Text;
@@ -156,7 +177,8 @@ namespace PocketTavern.UWP.Views
             else
                 TtsVoiceStorage.SetVoiceId(_avatarFileName, selectedVoiceId);
 
-            _vm.Notes = NotesBox.Text;
+            _vm.LoreHints = LoreHintsBox.Text;
+            _vm.Notes     = NotesBox.Text;
 
             await _vm.SaveAsync();
         }

@@ -109,7 +109,7 @@
                             <Border Width="48" Height="48" CornerRadius="24"
                                     Background="{StaticResource BackgroundCardBrush}">
                                 <Grid>
-                                    <Image Source="{Binding AvatarUrl}" Stretch="UniformToFill" />
+                                    <Image Source="{Binding AvatarImage}" Stretch="UniformToFill" />
                                     <TextBlock Text="{Binding Initial}"
                                                HorizontalAlignment="Center" VerticalAlignment="Center"
                                                FontSize="22" FontWeight="SemiBold"

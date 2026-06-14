@@ -8,7 +8,6 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using PocketTavern.UWP;
 using PocketTavern.UWP.Models;
-using PocketTavern.UWP.Services;
 
 namespace PocketTavern.UWP.Data
 {
@@ -161,6 +160,13 @@ namespace PocketTavern.UWP.Data
             // Support both flat and V2 nested formats
             var data = obj["data"] as JObject ?? obj;
 
+            var cbToken = data["character_book"];
+            var cbObj = cbToken as JObject;
+            var cbJson = cbObj?.ToString(Formatting.None) ?? "";
+
+            var extensions = data["extensions"] as JObject;
+            var loreHints = extensions?.Value<string>("pockettavern_lore_hints") ?? "";
+
             return new Character
             {
                 Name = (string)data["name"] ?? "",
@@ -181,37 +187,59 @@ namespace PocketTavern.UWP.Data
                 Talkativeness = (float?)data["talkativeness"] ?? 0.5f,
                 IsFavorite = (bool?)data["fav"] ?? false,
                 UseAvatarForImageGen = (bool?)data["use_avatar_for_image_gen"] ?? true,
-                HasCharacterBook = data["character_book"] != null
+                HasCharacterBook = cbObj != null,
+                CharacterBookJson = cbJson,
+                CharacterBookEntryCount = cbObj?.Value<JArray>("entries")?.Count ?? 0,
+                LoreHints = loreHints
             };
         }
 
         private string CharacterToJson(Character ch)
         {
+            var dataObj = new JObject
+            {
+                ["name"] = ch.Name,
+                ["avatar"] = ch.Avatar,
+                ["description"] = ch.Description,
+                ["personality"] = ch.Personality,
+                ["scenario"] = ch.Scenario,
+                ["first_mes"] = ch.FirstMessage,
+                ["mes_example"] = ch.MessageExample,
+                ["creator_notes"] = ch.CreatorNotes,
+                ["system_prompt"] = ch.SystemPrompt,
+                ["tags"] = JArray.FromObject(ch.Tags ?? new List<string>()),
+                ["alternate_greetings"] = JArray.FromObject(ch.AlternateGreetings ?? new List<string>()),
+                ["post_history_instructions"] = ch.PostHistoryInstructions,
+                ["depth_prompt"] = ch.DepthPrompt,
+                ["depth_prompt_depth"] = ch.DepthPromptDepth,
+                ["depth_prompt_role"] = ch.DepthPromptRole,
+                ["talkativeness"] = ch.Talkativeness,
+                ["fav"] = ch.IsFavorite,
+                ["use_avatar_for_image_gen"] = ch.UseAvatarForImageGen
+            };
+
+            if (!string.IsNullOrEmpty(ch.CharacterBookJson))
+            {
+                try
+                {
+                    dataObj["character_book"] = JObject.Parse(ch.CharacterBookJson);
+                }
+                catch { }
+            }
+
+            if (!string.IsNullOrEmpty(ch.LoreHints))
+            {
+                dataObj["extensions"] = new JObject
+                {
+                    ["pockettavern_lore_hints"] = ch.LoreHints
+                };
+            }
+
             var data = new JObject
             {
                 ["spec"] = "chara_card_v2",
                 ["spec_version"] = "2.0",
-                ["data"] = new JObject
-                {
-                    ["name"] = ch.Name,
-                    ["avatar"] = ch.Avatar,
-                    ["description"] = ch.Description,
-                    ["personality"] = ch.Personality,
-                    ["scenario"] = ch.Scenario,
-                    ["first_mes"] = ch.FirstMessage,
-                    ["mes_example"] = ch.MessageExample,
-                    ["creator_notes"] = ch.CreatorNotes,
-                    ["system_prompt"] = ch.SystemPrompt,
-                    ["tags"] = JArray.FromObject(ch.Tags ?? new List<string>()),
-                    ["alternate_greetings"] = JArray.FromObject(ch.AlternateGreetings ?? new List<string>()),
-                    ["post_history_instructions"] = ch.PostHistoryInstructions,
-                    ["depth_prompt"] = ch.DepthPrompt,
-                    ["depth_prompt_depth"] = ch.DepthPromptDepth,
-                    ["depth_prompt_role"] = ch.DepthPromptRole,
-                    ["talkativeness"] = ch.Talkativeness,
-                    ["fav"] = ch.IsFavorite,
-                    ["use_avatar_for_image_gen"] = ch.UseAvatarForImageGen
-                }
+                ["data"] = dataObj
             };
             return data.ToString(Formatting.Indented);
         }
@@ -219,51 +247,15 @@ namespace PocketTavern.UWP.Data
         // ── charx / PNG card import ───────────────────────────────────────────────
 
         /// <summary>
-        /// Imports a character card from a StorageFile — supports both .charx and .png.
-        /// charx: parse ZIP, save sprites, build PNG with embedded card JSON. (V1,V2)
-        /// Both paths converge at SaveRawPng / SaveCharacterAsync.
+        /// Imports a character card from a StorageFile — supports .png cards.
         /// </summary>
         /// <summary>Returns the fileName (avatar key) of the imported character.</summary>
         public async Task<string> ImportCharacterCardAsync(StorageFile file)
         {
-            var ext = file.FileType?.ToLowerInvariant();
             var bytes = await ReadStorageFileAsync(file);
-
-            bool isCharx = ext == ".charx" || IsZipMagic(bytes);
-
-            if (isCharx)
-            {
-                var parsed = CharxParser.Parse(bytes);
-
-                var character = ParseCharacterJson(parsed.CardJson);
-                if (character == null) character = new Character();
-                if (string.IsNullOrEmpty(character.Name))
-                    character.Name = System.IO.Path.GetFileNameWithoutExtension(file.Name);
-
-                var fileName = MakeSafeFileName(character.Name);
-                character.Avatar = fileName;
-
-                if (parsed.Sprites.Count > 0)
-                    await App.Sprites.SaveAsync(fileName, parsed.Sprites);
-
-                var iconPng = parsed.IconPng ?? BuildMinimalPng();
-                var cardJson = CharacterToJson(character);
-                var pngWithCard = EmbedCharaInPng(iconPng, cardJson);
-
-                await WriteBytesAsync(Path.Combine(_avatarsDir, fileName + ".png"), pngWithCard);
-                await SaveCharacterAsync(fileName, character);
-                return fileName;
-            }
-            else
-            {
-                var name = System.IO.Path.GetFileNameWithoutExtension(file.Name);
-                return await ImportCharacterFromBytesAsync(name, bytes);
-            }
+            var name = System.IO.Path.GetFileNameWithoutExtension(file.Name);
+            return await ImportCharacterFromBytesAsync(name, bytes);
         }
-
-        private static bool IsZipMagic(byte[] data)
-            => data != null && data.Length >= 4
-            && data[0] == 0x50 && data[1] == 0x4B && data[2] == 0x03 && data[3] == 0x04;
 
         private static async Task<byte[]> ReadStorageFileAsync(StorageFile file)
         {
@@ -337,24 +329,6 @@ namespace PocketTavern.UWP.Data
             for (int i = 0; i < 8; i++)
                 crc = (crc & 1) != 0 ? (crc >> 1) ^ 0xEDB88320 : (crc >> 1);
             return crc;
-        }
-
-        /// <summary>Returns a 1×1 white PNG as fallback when charx has no icon.</summary>
-        private static byte[] BuildMinimalPng()
-        {
-            // Pre-built 1x1 white PNG
-            return new byte[]
-            {
-                0x89,0x50,0x4E,0x47,0x0D,0x0A,0x1A,0x0A,
-                0x00,0x00,0x00,0x0D,0x49,0x48,0x44,0x52,
-                0x00,0x00,0x00,0x01,0x00,0x00,0x00,0x01,
-                0x08,0x02,0x00,0x00,0x00,0x90,0x77,0x53,
-                0xDE,0x00,0x00,0x00,0x0C,0x49,0x44,0x41,
-                0x54,0x08,0xD7,0x63,0xF8,0xFF,0xFF,0x3F,
-                0x00,0x05,0xFE,0x02,0xFE,0xDC,0xCC,0x59,
-                0xE7,0x00,0x00,0x00,0x00,0x49,0x45,0x4E,
-                0x44,0xAE,0x42,0x60,0x82
-            };
         }
 
         /// <summary>

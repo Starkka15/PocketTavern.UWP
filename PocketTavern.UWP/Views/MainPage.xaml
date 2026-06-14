@@ -176,7 +176,6 @@
                                           FontSize="13"
                                           Foreground="{StaticResource TextSecondaryBrush}">
                                     <ComboBoxItem Content="CharaVault" IsSelected="True" />
-                                    <ComboBoxItem Content="RisuRealm" />
                                 </ComboBox>
                             </StackPanel>
                         </Grid>

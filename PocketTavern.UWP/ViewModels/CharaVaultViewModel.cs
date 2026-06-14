@@ -1,12 +1,19 @@
 using System;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
+using System.IO;
 using System.Net.Http;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
+using Windows.ApplicationModel.Core;
+using Windows.UI.Core;
+using Windows.UI.Xaml.Media;
+using Windows.UI.Xaml.Media.Imaging;
 
 namespace PocketTavern.UWP.ViewModels
 {
-    public class CharaVaultCardItem
+    public class CharaVaultCardItem : INotifyPropertyChanged
     {
         public string Id { get; set; }
         public string Name { get; set; }
@@ -16,6 +23,23 @@ namespace PocketTavern.UWP.ViewModels
         public int Stars { get; set; }
         public string FullPath { get; set; }
         public string Initial => Name?.Length > 0 ? Name[0].ToString().ToUpper() : "?";
+
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        private ImageSource _avatarImage;
+        public ImageSource AvatarImage
+        {
+            get => _avatarImage;
+            set
+            {
+                if (_avatarImage == value) return;
+                _avatarImage = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private void OnPropertyChanged([CallerMemberName] string name = null)
+            => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
     }
 
     public class CharaVaultViewModel : ViewModelBase
@@ -25,7 +49,9 @@ namespace PocketTavern.UWP.ViewModels
         private static HttpClient CreateHttpClient()
         {
             var client = new HttpClient { Timeout = TimeSpan.FromSeconds(60) };
-            client.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent", "PocketTavern/1.0");
+            client.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent",
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 " +
+                "(KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36");
             return client;
         }
 
@@ -153,6 +179,8 @@ namespace PocketTavern.UWP.ViewModels
                     return;
                 }
 
+                var items = new System.Collections.Generic.List<CharaVaultCardItem>();
+
                 foreach (var n in nodes)
                 {
                     var folder = n["folder"]?.ToString() ?? "";
@@ -168,9 +196,11 @@ namespace PocketTavern.UWP.ViewModels
                     // Thumbnail served from /cards/thumb/{folder}/{file}
                     var thumbUrl = (!string.IsNullOrEmpty(folder) && !string.IsNullOrEmpty(file))
                                   ? $"{baseUrl}/cards/thumb/{folder}/{file}"
+                                  : !string.IsNullOrEmpty(path)
+                                  ? $"{baseUrl}/cards/thumb/{path}"
                                   : "";
 
-                    Results.Add(new CharaVaultCardItem
+                    items.Add(new CharaVaultCardItem
                     {
                         Id        = n["id"]?.ToString() ?? path,
                         FullPath  = path,
@@ -181,6 +211,13 @@ namespace PocketTavern.UWP.ViewModels
                         Stars     = (int)(n["avg_rating"]?.Value<float>() ?? n["rating"]?.Value<float>() ?? 0f)
                     });
                 }
+
+                // Add results immediately so the UI is responsive
+                foreach (var item in items)
+                    Results.Add(item);
+
+                // Load thumbnails in background — sequential, non-blocking on UI thread
+                LoadThumbnailsInBackgroundAsync(items, token); // fire-and-forget
 
                 var total = root["total"]?.Value<int>()
                          ?? root["data"]?["total"]?.Value<int>()
@@ -197,6 +234,61 @@ namespace PocketTavern.UWP.ViewModels
             finally
             {
                 IsLoading = false;
+            }
+        }
+
+        /// <summary>
+        /// Loads thumbnails one-at-a-time on a background thread.  Never blocks the UI thread.
+        /// Uses SetSourceAsync (non-blocking decode) when dispatching to the UI thread.
+        /// </summary>
+        private async void LoadThumbnailsInBackgroundAsync(
+            System.Collections.Generic.List<CharaVaultCardItem> items, string token)
+        {
+            var dispatcher = CoreApplication.MainView.CoreWindow.Dispatcher;
+
+            foreach (var item in items)
+            {
+                if (string.IsNullOrEmpty(item?.AvatarUrl)) continue;
+
+                try
+                {
+                    var request = new HttpRequestMessage(HttpMethod.Get, item.AvatarUrl);
+                    if (!string.IsNullOrEmpty(token))
+                        request.Headers.Authorization =
+                            new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+
+                    // Download on thread pool — never capture UI context
+                    var response = await _http.SendAsync(request).ConfigureAwait(false);
+                    if (!response.IsSuccessStatusCode) continue;
+
+                    var bytes = await response.Content.ReadAsByteArrayAsync().ConfigureAwait(false);
+
+                    // Dispatch to UI thread and await the full async operation before moving on
+                    var tcs = new TaskCompletionSource<bool>();
+                    var dispatched = dispatcher.RunAsync(CoreDispatcherPriority.Normal, async () =>
+                    {
+                        try
+                        {
+                            using (var ms = new MemoryStream(bytes))
+                            {
+                                var bmp = new BitmapImage();
+                                await bmp.SetSourceAsync(ms.AsRandomAccessStream());
+                                item.AvatarImage = bmp;
+                            }
+                            tcs.TrySetResult(true);
+                        }
+                        catch (Exception ex)
+                        {
+                            tcs.TrySetException(ex);
+                        }
+                    });
+
+                    await tcs.Task.ConfigureAwait(false);
+                }
+                catch
+                {
+                    // Silent — initial-letter fallback shows instead
+                }
             }
         }
 

@@ -36,6 +36,7 @@ namespace PocketTavern.UWP.Views
         private void OnImageGenClick(object sender, RoutedEventArgs e)           => App.Navigation.NavigateToImageGenSettings();
         private void OnTtsClick(object sender, RoutedEventArgs e)                => App.Navigation.NavigateToTtsSettings();
         private void OnDebugLogClick(object sender, RoutedEventArgs e)           => App.Navigation.NavigateToDebugLog();
+        private void OnStorageBrowserClick(object sender, RoutedEventArgs e)     => App.Navigation.NavigateToStorageBrowser();
         private void OnStImportClick(object sender, RoutedEventArgs e)           => App.Navigation.NavigateToStImport();
         private void OnExportClick(object sender, RoutedEventArgs e)             => App.Navigation.NavigateToBackupExport();
         private void OnHelpClick(object sender, RoutedEventArgs e)               => App.Navigation.NavigateToSetupGuide();

@@ -40,12 +40,20 @@
                 <!-- Avatar circle -->
                 <Border Width="80" Height="80" CornerRadius="40"
                         Background="{StaticResource BackgroundCardBrush}"
-                        HorizontalAlignment="Center" Margin="0,16,0,0">
-                    <TextBlock x:Name="AvatarInitial" Text="U"
-                               HorizontalAlignment="Center" VerticalAlignment="Center"
-                               FontSize="36" FontWeight="Bold"
-                               Foreground="{StaticResource AccentPrimaryBrush}" />
+                        HorizontalAlignment="Center" Margin="0,16,0,0"
+                        Tapped="OnAvatarTapped">
+                    <Grid>
+                        <Image x:Name="AvatarImage" Width="80" Height="80"
+                               Visibility="Collapsed" Stretch="UniformToFill"
+                               HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        <TextBlock x:Name="AvatarInitial" Text="U"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center"
+                                   FontSize="36" FontWeight="Bold"
+                                   Foreground="{StaticResource AccentPrimaryBrush}" />
+                    </Grid>
                 </Border>
+                <TextBlock Text="Tap to change avatar" Foreground="{StaticResource TextSecondaryBrush}"
+                           FontSize="11" HorizontalAlignment="Center" Margin="0,4,0,0" />
 
                 <!-- Fields card -->
                 <Border Background="{StaticResource BackgroundCardBrush}" CornerRadius="12"
@@ -93,6 +101,45 @@
                             <ComboBoxItem Content="User" />
                             <ComboBoxItem Content="Assistant" />
                         </ComboBox>
+                    </controls:SpacedPanel>
+                </Border>
+
+                <!-- Stats card -->
+                <Border Background="{StaticResource BackgroundCardBrush}" CornerRadius="12"
+                        Padding="16,12" Margin="0,8,0,0">
+                    <controls:SpacedPanel Spacing="8">
+                        <TextBlock Text="Stats" Style="{StaticResource SubtitleTextStyle}"
+                                   Foreground="{StaticResource AccentPrimaryBrush}" />
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="Characters"
+                                       Style="{StaticResource SubtitleTextStyle}" />
+                            <TextBlock Grid.Column="1" x:Name="CharCountText"
+                                       Style="{StaticResource SubtitleTextStyle}" />
+                        </Grid>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="Total Chats"
+                                       Style="{StaticResource SubtitleTextStyle}" />
+                            <TextBlock Grid.Column="1" x:Name="ChatCountText"
+                                       Style="{StaticResource SubtitleTextStyle}" />
+                        </Grid>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="Messages Sent"
+                                       Style="{StaticResource SubtitleTextStyle}" />
+                            <TextBlock Grid.Column="1" x:Name="MsgCountText"
+                                       Style="{StaticResource SubtitleTextStyle}" />
+                        </Grid>
                     </controls:SpacedPanel>
                 </Border>
 

@@ -270,6 +270,45 @@ namespace PocketTavern.UWP.Views
             }
         }
 
+        private async void OnImportClick(object sender, RoutedEventArgs e)
+        {
+            var picker = new Windows.Storage.Pickers.FileOpenPicker
+            {
+                ViewMode = Windows.Storage.Pickers.PickerViewMode.List,
+                SuggestedStartLocation = Windows.Storage.Pickers.PickerLocationId.DocumentsLibrary
+            };
+            picker.FileTypeFilter.Add(".json");
+
+            var file = await picker.PickSingleFileAsync();
+            if (file == null) return;
+
+            var result = await _vm.ImportPresetAsync(file);
+            if (result == null)
+            {
+                var errDialog = new ContentDialog
+                {
+                    Title = "Import Failed",
+                    Content = "Could not parse the file as a valid preset. Supported formats: OAI, TextGen, Instruct, Context, System Prompt.",
+                    CloseButtonText = "OK",
+                    RequestedTheme = ElementTheme.Dark
+                };
+                await errDialog.ShowAsync();
+                return;
+            }
+
+            _suppressPresetChanged = true;
+            PresetCombo.ItemsSource = null;
+            PresetCombo.ItemsSource = _vm.PresetNames;
+            PresetCombo.SelectedItem = _vm.SelectedPreset;
+            _suppressPresetChanged = false;
+
+            if (_vm.PresetNames.Count > 0)
+            {
+                await _vm.SelectPresetAsync(PresetCombo.SelectedItem as string);
+                PopulateControls();
+            }
+        }
+
         private void OnBackClick(object sender, RoutedEventArgs e) => App.Navigation.GoBack();
     }
 }

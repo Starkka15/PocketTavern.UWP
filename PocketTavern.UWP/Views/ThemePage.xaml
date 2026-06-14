@@ -16,6 +16,7 @@
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="48" />
                 <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
             <Button Grid.Column="0" Background="Transparent" BorderThickness="0"
                     Foreground="{StaticResource TextPrimaryBrush}" Click="OnBackClick"
@@ -24,6 +25,15 @@
             </Button>
             <TextBlock Grid.Column="1" Text="Appearance" Style="{StaticResource TitleTextStyle}"
                        VerticalAlignment="Center" Margin="4,0" />
+            <Button Grid.Column="2" Background="Transparent" BorderThickness="0"
+                    Foreground="{StaticResource AccentPrimaryBrush}"
+                    Click="OnCreateThemeClick" Padding="8,4"
+                    ToolTipService.ToolTip="Create a new theme">
+                <controls:SpacedPanel Orientation="Horizontal" Spacing="4">
+                    <TextBlock Text="&#xE710;" FontFamily="Segoe MDL2 Assets" FontSize="16" />
+                    <TextBlock Text="Create" FontSize="13" />
+                </controls:SpacedPanel>
+            </Button>
         </Grid>
 
         <ScrollViewer Grid.Row="1" Padding="16">
